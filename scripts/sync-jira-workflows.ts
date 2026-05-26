@@ -996,21 +996,25 @@ async function syncWorkType(
     workflow = await fetchWorkflowDefinition(config, projectId, issueType.id);
   }
   catch (e) {
-    log.error(`Failed to fetch workflow for ${workType.slug}: ${(e as Error).message}`);
-    return null;
+    const status = (e as { status?: number }).status;
+    log.warn(`Could not fetch workflow definition for ${workType.slug}: ${(e as Error).message.split('—')[0]?.trim() ?? 'unknown'}. Statuses will be mapped but transitions will be empty.`);
+    if (status === 403) {
+      log.warn(`${workType.slug}: workflow definition requires admin permissions — transition mapping unavailable.`);
+    }
   }
   if (!workflow) {
-    log.warn(`No workflow returned for ${workType.slug} (${issueType.name}) — skipping.`);
-    return null;
+    log.info(`${workType.slug}: continuing with statuses only (no workflow definition).`);
   }
 
   // Resolve workflow id from the polymorphic shape Jira returns.
   let workflowId: string | null = null;
-  if (typeof workflow.id === 'string') {
-    workflowId = workflow.id;
-  }
-  else if (workflow.id && typeof workflow.id === 'object' && 'workflowId' in workflow.id) {
-    workflowId = (workflow.id as { workflowId?: string }).workflowId ?? null;
+  if (workflow) {
+    if (typeof workflow.id === 'string') {
+      workflowId = workflow.id;
+    }
+    else if (workflow.id && typeof workflow.id === 'object' && 'workflowId' in workflow.id) {
+      workflowId = (workflow.id as { workflowId?: string }).workflowId ?? null;
+    }
   }
 
   // 4. Build per-status discovered map (slug → JiraStatus). Names + categories
@@ -1030,7 +1034,7 @@ async function syncWorkType(
   const entry: OutputWorkType = emptyWorkTypeEntry();
   entry.jira_issue_type = { id: issueType.id, name: issueType.name };
   entry.workflow_scheme = schemeOut;
-  entry.workflow = { id: workflowId, name: workflow.name };
+  entry.workflow = workflow ? { id: workflowId, name: workflow.name } : null;
 
   // 5. Status mapping pass.
   // 5a. Always capture every discovered status under its slug — completeness
@@ -1110,167 +1114,126 @@ async function syncWorkType(
     }
   }
 
-  // 6. Transition mapping pass.
+  // 6. Transition mapping pass (only if workflow definition is available).
+  if (workflow) {
   // 6a. Build a discovered map keyed by base slug, disambiguating collisions
   // by appending `_from_<from_status_slug>` (per B.1 §5 convention).
   // Resolve status references to canonical slugs first.
-  const statusRefToCanonical = new Map<string, string>(); // statusReference → discovered slug
-  for (const s of workflow.statuses) {
-    if (!s.statusReference) { continue; }
-    // Workflow status objects sometimes lack a name; cross-reference via
-    // idToStatus when the reference happens to be the status id.
-    const matched = idToStatus.get(s.statusReference);
-    if (matched) {
-      const slug = statusIdToOutputSlug.get(matched.id);
-      if (slug) { statusRefToCanonical.set(s.statusReference, slug); }
-    }
-  }
-
-  interface DiscoveredTransition {
-    transition: JiraWorkflowTransition
-    baseSlug: string
-    finalSlug: string
-    fromCanonical: string | null
-    toCanonical: string | null
-    fromStatusId: string | null
-    toStatusId: string | null
-  }
-
-  const discoveredTransitions: DiscoveredTransition[] = [];
-  // First pass: compute base slugs + count occurrences.
-  const transitionBaseSlugCounts = new Map<string, number>();
-  for (const t of workflow.transitions) {
-    const baseSlug = slugify(t.name);
-    if (!baseSlug) { continue; }
-    transitionBaseSlugCounts.set(baseSlug, (transitionBaseSlugCounts.get(baseSlug) ?? 0) + 1);
-  }
-  // Second pass: assign final slugs (disambiguate when count > 1).
-  for (const t of workflow.transitions) {
-    const baseSlug = slugify(t.name);
-    if (!baseSlug) { continue; }
-    const toRef = t.toStatusReference ?? null;
-    const toCanonical = toRef ? statusRefToCanonical.get(toRef) ?? null : null;
-    const toStatus = toCanonical ? entry.statuses[toCanonical] ?? null : null;
-    const toStatusId = toStatus?.id ?? null;
-
-    // A transition can have multiple links (multiple from-statuses) or zero
-    // (global / initial). For the discovered catalog we emit one entry per
-    // (transition, link) pair. Global transitions emit a single entry with
-    // from=null.
-    const links = (t.links && t.links.length > 0) ? t.links : [{ fromStatusReference: undefined }];
-    const isAmbiguous = (transitionBaseSlugCounts.get(baseSlug) ?? 0) > 1 || links.length > 1;
-    for (const link of links) {
-      const fromRef = link.fromStatusReference ?? null;
-      const fromCanonical = fromRef ? statusRefToCanonical.get(fromRef) ?? null : null;
-      const fromStatus = fromCanonical ? entry.statuses[fromCanonical] ?? null : null;
-      const fromStatusId = fromStatus?.id ?? null;
-
-      let finalSlug = baseSlug;
-      if (isAmbiguous) {
-        finalSlug = fromCanonical
-          ? `${baseSlug}_from_${fromCanonical}`
-          : `${baseSlug}_global`;
-      }
-      discoveredTransitions.push({
-        transition: t,
-        baseSlug,
-        finalSlug,
-        fromCanonical,
-        toCanonical,
-        fromStatusId,
-        toStatusId,
-      });
-    }
-  }
-
-  // 6b. Capture every discovered transition under its slug. If two end up with
-  // the same finalSlug (rare but possible with weird naming), suffix _2, _3.
-  const transitionFinalSlugCounts = new Map<string, number>();
-  const transitionsBySlug = new Map<string, DiscoveredTransition>();
-  for (const dt of discoveredTransitions) {
-    const occ = (transitionFinalSlugCounts.get(dt.finalSlug) ?? 0) + 1;
-    transitionFinalSlugCounts.set(dt.finalSlug, occ);
-    const slug = occ === 1 ? dt.finalSlug : `${dt.finalSlug}_${occ}`;
-    entry.transitions[slug] = {
-      id: dt.transition.id,
-      name: dt.transition.name,
-      from_status_id: dt.fromStatusId,
-      to_status_id: dt.toStatusId,
-      from_canonical: dt.fromCanonical,
-      to_canonical: dt.toCanonical,
-    };
-    transitionsBySlug.set(slug, dt);
-  }
-
-  // 6c. For each required canonical transition, try to find a match.
-  for (const reqTrans of workType.requiredTransitions) {
-    const existing = previousEntry?.transitions?.[reqTrans.slug];
-    if (existing && existing.id && !flags.force) {
-      entry.transitions[reqTrans.slug] = existing;
-      stats.transitionsMapped++;
-      if (flags.verbose) {
-        log.dim(`  ${workType.slug}.${reqTrans.slug}: kept existing mapping → "${existing.name}" (id ${existing.id})`);
-      }
-      continue;
-    }
-
-    // Candidates: every discovered transition whose baseSlug equals the
-    // required slug OR whose finalSlug equals the required slug. We also try
-    // to decode a manifest slug of the form `<base>_from_<from_status_slug>`
-    // and match against discovered transitions whose baseSlug equals `<base>`
-    // AND whose fromCanonical equals `<from_status_slug>` — this is what makes
-    // `automated_from_manual` auto-resolve to the (single) discovered
-    // `automated` transition that has from_canonical == `manual`, even when
-    // it didn't get auto-suffixed because there was no ambiguity.
-    const candidates: TransitionChoice[] = [];
-    const seen = new Set<string>(); // discovered transition id+slug
-    function pushCandidate(slug: string, dt: DiscoveredTransition): void {
-      const key = `${dt.transition.id}::${slug}`;
-      if (seen.has(key)) { return; }
-      seen.add(key);
-      candidates.push({
-        slug,
-        transition: dt.transition,
-        fromStatusId: dt.fromStatusId,
-        toStatusId: dt.toStatusId,
-        fromCanonical: dt.fromCanonical,
-        toCanonical: dt.toCanonical,
-      });
-    }
-    // Decode `<base>_from_<from_status_slug>` once if applicable.
-    let decodedBase: string | null = null;
-    let decodedFromStatus: string | null = null;
-    {
-      const m = /^(.+?)_from_(.+)$/.exec(reqTrans.slug);
-      if (m) {
-        decodedBase = m[1];
-        decodedFromStatus = m[2];
+    const statusRefToCanonical = new Map<string, string>(); // statusReference → discovered slug
+    for (const s of workflow.statuses) {
+      if (!s.statusReference) { continue; }
+      // Workflow status objects sometimes lack a name; cross-reference via
+      // idToStatus when the reference happens to be the status id.
+      const matched = idToStatus.get(s.statusReference);
+      if (matched) {
+        const slug = statusIdToOutputSlug.get(matched.id);
+        if (slug) { statusRefToCanonical.set(s.statusReference, slug); }
       }
     }
-    for (const [slug, dt] of transitionsBySlug.entries()) {
-      // (a) direct base / final-slug match.
-      if (dt.baseSlug === reqTrans.slug || slug === reqTrans.slug) {
-        pushCandidate(slug, dt);
+
+    interface DiscoveredTransition {
+      transition: JiraWorkflowTransition
+      baseSlug: string
+      finalSlug: string
+      fromCanonical: string | null
+      toCanonical: string | null
+      fromStatusId: string | null
+      toStatusId: string | null
+    }
+
+    const discoveredTransitions: DiscoveredTransition[] = [];
+    // First pass: compute base slugs + count occurrences.
+    const transitionBaseSlugCounts = new Map<string, number>();
+    for (const t of workflow.transitions) {
+      const baseSlug = slugify(t.name);
+      if (!baseSlug) { continue; }
+      transitionBaseSlugCounts.set(baseSlug, (transitionBaseSlugCounts.get(baseSlug) ?? 0) + 1);
+    }
+    // Second pass: assign final slugs (disambiguate when count > 1).
+    for (const t of workflow.transitions) {
+      const baseSlug = slugify(t.name);
+      if (!baseSlug) { continue; }
+      const toRef = t.toStatusReference ?? null;
+      const toCanonical = toRef ? statusRefToCanonical.get(toRef) ?? null : null;
+      const toStatus = toCanonical ? entry.statuses[toCanonical] ?? null : null;
+      const toStatusId = toStatus?.id ?? null;
+
+      // A transition can have multiple links (multiple from-statuses) or zero
+      // (global / initial). For the discovered catalog we emit one entry per
+      // (transition, link) pair. Global transitions emit a single entry with
+      // from=null.
+      const links = (t.links && t.links.length > 0) ? t.links : [{ fromStatusReference: undefined }];
+      const isAmbiguous = (transitionBaseSlugCounts.get(baseSlug) ?? 0) > 1 || links.length > 1;
+      for (const link of links) {
+        const fromRef = link.fromStatusReference ?? null;
+        const fromCanonical = fromRef ? statusRefToCanonical.get(fromRef) ?? null : null;
+        const fromStatus = fromCanonical ? entry.statuses[fromCanonical] ?? null : null;
+        const fromStatusId = fromStatus?.id ?? null;
+
+        let finalSlug = baseSlug;
+        if (isAmbiguous) {
+          finalSlug = fromCanonical
+            ? `${baseSlug}_from_${fromCanonical}`
+            : `${baseSlug}_global`;
+        }
+        discoveredTransitions.push({
+          transition: t,
+          baseSlug,
+          finalSlug,
+          fromCanonical,
+          toCanonical,
+          fromStatusId,
+          toStatusId,
+        });
+      }
+    }
+
+    // 6b. Capture every discovered transition under its slug. If two end up with
+    // the same finalSlug (rare but possible with weird naming), suffix _2, _3.
+    const transitionFinalSlugCounts = new Map<string, number>();
+    const transitionsBySlug = new Map<string, DiscoveredTransition>();
+    for (const dt of discoveredTransitions) {
+      const occ = (transitionFinalSlugCounts.get(dt.finalSlug) ?? 0) + 1;
+      transitionFinalSlugCounts.set(dt.finalSlug, occ);
+      const slug = occ === 1 ? dt.finalSlug : `${dt.finalSlug}_${occ}`;
+      entry.transitions[slug] = {
+        id: dt.transition.id,
+        name: dt.transition.name,
+        from_status_id: dt.fromStatusId,
+        to_status_id: dt.toStatusId,
+        from_canonical: dt.fromCanonical,
+        to_canonical: dt.toCanonical,
+      };
+      transitionsBySlug.set(slug, dt);
+    }
+
+    // 6c. For each required canonical transition, try to find a match.
+    for (const reqTrans of workType.requiredTransitions) {
+      const existing = previousEntry?.transitions?.[reqTrans.slug];
+      if (existing && existing.id && !flags.force) {
+        entry.transitions[reqTrans.slug] = existing;
+        stats.transitionsMapped++;
+        if (flags.verbose) {
+          log.dim(`  ${workType.slug}.${reqTrans.slug}: kept existing mapping → "${existing.name}" (id ${existing.id})`);
+        }
         continue;
       }
-      // (b) decoded `_from_<status>` match.
-      if (
-        decodedBase
-        && decodedFromStatus
-        && dt.baseSlug === decodedBase
-        && dt.fromCanonical === decodedFromStatus
-      ) {
-        pushCandidate(slug, dt);
-      }
-    }
 
-    let picked: TransitionChoice | null = null;
-
-    if (candidates.length === 0) {
-      // Fall back to a free-pick across all discovered transitions.
-      const allChoices: TransitionChoice[] = [];
-      for (const [slug, dt] of transitionsBySlug.entries()) {
-        allChoices.push({
+      // Candidates: every discovered transition whose baseSlug equals the
+      // required slug OR whose finalSlug equals the required slug. We also try
+      // to decode a manifest slug of the form `<base>_from_<from_status_slug>`
+      // and match against discovered transitions whose baseSlug equals `<base>`
+      // AND whose fromCanonical equals `<from_status_slug>` — this is what makes
+      // `automated_from_manual` auto-resolve to the (single) discovered
+      // `automated` transition that has from_canonical == `manual`, even when
+      // it didn't get auto-suffixed because there was no ambiguity.
+      const candidates: TransitionChoice[] = [];
+      const seen = new Set<string>(); // discovered transition id+slug
+      function pushCandidate(slug: string, dt: DiscoveredTransition): void {
+        const key = `${dt.transition.id}::${slug}`;
+        if (seen.has(key)) { return; }
+        seen.add(key);
+        candidates.push({
           slug,
           transition: dt.transition,
           fromStatusId: dt.fromStatusId,
@@ -1279,68 +1242,111 @@ async function syncWorkType(
           toCanonical: dt.toCanonical,
         });
       }
-      picked = await promptTransitionPick(workType.slug, reqTrans, allChoices, 'missing');
-    }
-    else if (candidates.length === 1) {
-      const c = candidates[0];
-      // Verify from/to match the manifest declaration. The manifest may
-      // declare `from: any` (or omit `from:`) for global transitions like
-      // `bug.re_open` — those accept any source state, including null
-      // (Jira-global, no specific from_status_id).
-      const fromOk = !reqTrans.from || reqTrans.from === 'any' || c.fromCanonical === reqTrans.from;
-      const toOk = !reqTrans.to || reqTrans.to === 'any' || c.toCanonical === reqTrans.to;
-      if (fromOk && toOk) {
-        picked = c;
-      }
-      else {
-        log.warn(
-          `  ${workType.slug}.${reqTrans.slug}: discovered transition "${c.transition.name}" connects ${c.fromCanonical ?? '(global)'} → ${c.toCanonical ?? '(?)'}, manifest expects ${reqTrans.from ?? '(any)'} → ${reqTrans.to ?? '(any)'}`,
-        );
-        // Build a fresh choice list scoped to candidates with the same baseSlug
-        // so the user can pick the right one (or skip).
-        picked = await promptTransitionPick(workType.slug, reqTrans, candidates, 'mismatch');
-      }
-    }
-    else {
-      // Multi-candidate. Prefer the one that matches from/to exactly.
-      // `from: any` (or omitted) accepts any source state.
-      const exact = candidates.find(
-        c => (!reqTrans.from || reqTrans.from === 'any' || c.fromCanonical === reqTrans.from)
-          && (!reqTrans.to || reqTrans.to === 'any' || c.toCanonical === reqTrans.to),
-      );
-      if (exact) {
-        picked = exact;
-        if (flags.verbose) {
-          log.dim(`  ${workType.slug}.${reqTrans.slug}: ${candidates.length} candidates; auto-picked the one matching from/to`);
+      // Decode `<base>_from_<from_status_slug>` once if applicable.
+      let decodedBase: string | null = null;
+      let decodedFromStatus: string | null = null;
+      {
+        const m = /^(.+?)_from_(.+)$/.exec(reqTrans.slug);
+        if (m) {
+          decodedBase = m[1];
+          decodedFromStatus = m[2];
         }
       }
-      else if (flags.allowCollisions) {
-        picked = candidates[0];
-        log.warn(`  ${workType.slug}.${reqTrans.slug}: ${candidates.length} candidates, none match from/to — picked first deterministically (--allow-collisions).`);
+      for (const [slug, dt] of transitionsBySlug.entries()) {
+      // (a) direct base / final-slug match.
+        if (dt.baseSlug === reqTrans.slug || slug === reqTrans.slug) {
+          pushCandidate(slug, dt);
+          continue;
+        }
+        // (b) decoded `_from_<status>` match.
+        if (
+          decodedBase
+          && decodedFromStatus
+          && dt.baseSlug === decodedBase
+          && dt.fromCanonical === decodedFromStatus
+        ) {
+          pushCandidate(slug, dt);
+        }
+      }
+
+      let picked: TransitionChoice | null = null;
+
+      if (candidates.length === 0) {
+      // Fall back to a free-pick across all discovered transitions.
+        const allChoices: TransitionChoice[] = [];
+        for (const [slug, dt] of transitionsBySlug.entries()) {
+          allChoices.push({
+            slug,
+            transition: dt.transition,
+            fromStatusId: dt.fromStatusId,
+            toStatusId: dt.toStatusId,
+            fromCanonical: dt.fromCanonical,
+            toCanonical: dt.toCanonical,
+          });
+        }
+        picked = await promptTransitionPick(workType.slug, reqTrans, allChoices, 'missing');
+      }
+      else if (candidates.length === 1) {
+        const c = candidates[0];
+        // Verify from/to match the manifest declaration. The manifest may
+        // declare `from: any` (or omit `from:`) for global transitions like
+        // `bug.re_open` — those accept any source state, including null
+        // (Jira-global, no specific from_status_id).
+        const fromOk = !reqTrans.from || reqTrans.from === 'any' || c.fromCanonical === reqTrans.from;
+        const toOk = !reqTrans.to || reqTrans.to === 'any' || c.toCanonical === reqTrans.to;
+        if (fromOk && toOk) {
+          picked = c;
+        }
+        else {
+          log.warn(
+            `  ${workType.slug}.${reqTrans.slug}: discovered transition "${c.transition.name}" connects ${c.fromCanonical ?? '(global)'} → ${c.toCanonical ?? '(?)'}, manifest expects ${reqTrans.from ?? '(any)'} → ${reqTrans.to ?? '(any)'}`,
+          );
+          // Build a fresh choice list scoped to candidates with the same baseSlug
+          // so the user can pick the right one (or skip).
+          picked = await promptTransitionPick(workType.slug, reqTrans, candidates, 'mismatch');
+        }
       }
       else {
-        picked = await promptTransitionPick(workType.slug, reqTrans, candidates, 'collision');
+      // Multi-candidate. Prefer the one that matches from/to exactly.
+      // `from: any` (or omitted) accepts any source state.
+        const exact = candidates.find(
+          c => (!reqTrans.from || reqTrans.from === 'any' || c.fromCanonical === reqTrans.from)
+            && (!reqTrans.to || reqTrans.to === 'any' || c.toCanonical === reqTrans.to),
+        );
+        if (exact) {
+          picked = exact;
+          if (flags.verbose) {
+            log.dim(`  ${workType.slug}.${reqTrans.slug}: ${candidates.length} candidates; auto-picked the one matching from/to`);
+          }
+        }
+        else if (flags.allowCollisions) {
+          picked = candidates[0];
+          log.warn(`  ${workType.slug}.${reqTrans.slug}: ${candidates.length} candidates, none match from/to — picked first deterministically (--allow-collisions).`);
+        }
+        else {
+          picked = await promptTransitionPick(workType.slug, reqTrans, candidates, 'collision');
+        }
       }
-    }
 
-    if (picked) {
-      entry.transitions[reqTrans.slug] = {
-        id: picked.transition.id,
-        name: picked.transition.name,
-        from_status_id: picked.fromStatusId,
-        to_status_id: picked.toStatusId,
-        from_canonical: picked.fromCanonical,
-        to_canonical: picked.toCanonical,
-      };
-      stats.transitionsMapped++;
-      if (flags.verbose) {
-        log.dim(`  ${workType.slug}.${reqTrans.slug} → "${picked.transition.name}" (id ${picked.transition.id})`);
+      if (picked) {
+        entry.transitions[reqTrans.slug] = {
+          id: picked.transition.id,
+          name: picked.transition.name,
+          from_status_id: picked.fromStatusId,
+          to_status_id: picked.toStatusId,
+          from_canonical: picked.fromCanonical,
+          to_canonical: picked.toCanonical,
+        };
+        stats.transitionsMapped++;
+        if (flags.verbose) {
+          log.dim(`  ${workType.slug}.${reqTrans.slug} → "${picked.transition.name}" (id ${picked.transition.id})`);
+        }
+      }
+      else {
+        stats.missingRequired++;
       }
     }
-    else {
-      stats.missingRequired++;
-    }
-  }
+  } // end if(workflow)
 
   return { entry, stats };
 }

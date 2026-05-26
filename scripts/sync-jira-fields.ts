@@ -934,7 +934,7 @@ async function buildFieldsOutput(
       }
       catch (e) {
         const status = (e as { status?: number }).status;
-        if (status === 404 || status === 400) {
+        if (status === 404 || status === 400 || status === 403) {
           log.warn(`Could not fetch options for "${field.name}" (${field.id}): ${(e as Error).message.split('—')[0]?.trim() ?? 'unknown'}. Continuing.`);
           if (declaredSlugs.has(slug)) {
             log.warn(`${slug} (${field.id}): declared in jira-required.yaml but options fetch failed — options map will be empty.`);
