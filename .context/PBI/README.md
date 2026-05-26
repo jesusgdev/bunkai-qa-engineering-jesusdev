@@ -1,138 +1,91 @@
-# Product Backlog Items (PBI)
+# PBI Structure — Bunkai TMS
 
-This directory contains User Stories, module-level test planning, and automation tracking for the testing project.
+> Generated: 2026-05-25
+
+## Module Mapping
+
+| Module | Features | ATC Context | Priority | File Owner |
+|--------|----------|-------------|----------|------------|
+| `auth` | Magic-link login, session, callback, PAT tokens | F-001, F-002, F-003 | P0 | `.context/PBI/auth/` |
+| `workspace` | Onboarding, workspace CRUD, member management | F-004, F-014 | P0 | `.context/PBI/workspace/` |
+| `project` | Project CRUD, navigation routing | F-005 scaffolding | P0 | `.context/PBI/project/` |
+| `module-tree` | Module tree sidebar, navigation | F-006 | P0 | `.context/PBI/module-tree/` |
+| `atc-editor` | ATC steps, assertions, versioning, save | F-007, F-008 | P0 | `.context/PBI/atc-editor/` |
+| `atc-anchoring` | ATC ↔ AC linking, anchoring panel | F-009 | P0 | `.context/PBI/atc-anchoring/` |
+| `atc-search` | Full-text search via GIN index | F-010 | P1 | `.context/PBI/atc-search/` |
+| `api-tokens` | PAT create/list/revoke, middleware | F-002 (API angle) | P0 | `.context/PBI/atc-anchoring/` |
+| `api-docs` | OpenAPI spec + Scalar docs | F-011 | P1 | `.context/PBI/api-docs/` |
+| `idempotency` | Idempotent API operations | F-012 | P1 | `.context/PBI/idempotency/` |
+| `tms-sync` | Jira issue sync, import | F-015, F-016 | P2 | `.context/PBI/tms-sync/` |
+| `test-runner` | ATC execution engine | F-017 | P3 | `.context/PBI/test-runner/` |
 
 ## Structure
 
 ```
-PBI/
-├── README.md                           # This file
-├── templates/                          # Templates for per-module structure
-│   ├── module-context-template.md      # Module technical context
-│   ├── ROADMAP-template.md             # Module roadmap with phases
-│   └── PROGRESS-template.md            # Cross-session progress tracker
-│
-├── ── PER-STORY (simple) ────────────
-├── {TICKET-ID}-feature-name.md         # User Story with ticket ID
-│
-├── ── PER-MODULE (complex) ──────────
-├── {module-name}/                      # Module-level testing folder
-│   ├── {module}-test-plan.md           # Master module test plan
-│   ├── TK-{id}-{feature}/             # Per-ticket context
-│   │   ├── context.md                  # AC summary, code locations, test data
-│   │   └── evidence/                   # Screenshots, logs (gitignored)
-│   └── test-specs/                     # Unified test specifications + implementation
-│       ├── ROADMAP.md                  # Roadmap with phases + dependencies
-│       ├── PROGRESS.md                 # Session-by-session progress tracker
-│       └── {PREFIX}-T01-{name}/        # Ticket directory (one per functional area)
-│           ├── spec.md                 # Business-level: TCs in Gherkin
-│           ├── implementation-plan.md  # Technical-level: KATA components, fixtures
-│           └── atc/                    # Individual ATC specs (for complex ATCs)
-│               └── {TICKET-ID}-{name}.md
-│
-├── ── REAL EXAMPLE ──────────────────
-└── auth/                               # Complete example: Auth module
-    ├── auth-test-plan.md
-    └── test-specs/
-        ├── ROADMAP.md
-        ├── PROGRESS.md
-        └── AUTH-T01-user-session-validation/
-            ├── spec.md
-            ├── implementation-plan.md
-            └── atc/
-                ├── UPEX-101-authenticate-successfully.md
-                └── UPEX-105-login-successfully.md
+.context/PBI/
+├── README.md                  # This file — PBI mapping + conventions
+├── templates/                 # Per-module templates
+│   ├── module-context-template.md     # ℹ️ template for module context docs
+│   ├── PROGRESS-template.md          # ℹ️ progress tracker template
+│   └── ROADMAP-template.md           # ℹ️ roadmap template
+├── auth/                      # Auth module
+│   ├── auth-test-plan.md     # ℹ️ existing test plan
+│   └── test-specs/           # Existing test specs
+├── workspace/                 # Workspace module (pending)
+├── project/                   # Project module (pending)
+├── module-tree/               # Module tree (pending)
+├── atc-editor/                # ATC editor (pending)
+├── atc-anchoring/             # ATC anchoring (pending)
+└── ...                        # Other modules
 ```
-
-## When to Use Each Structure
-
-| Structure | When | Example |
-|-----------|------|---------|
-| **Per-Story** | Single story, few TCs, no cross-session tracking needed | Bug fix, small feature |
-| **Per-Module** | Module with multiple tickets, many TCs, multi-session automation | Dashboard, checkout flow, admin panel |
-
-## Templates
-
-Templates are provided for the per-module structure. Use them as reference when generating your module folder contents.
-
-| Template | Purpose | Copy To |
-|----------|---------|---------|
-| `module-context-template.md` | Technical context: routes, APIs, DB, business rules | `{module}/` |
-| `ROADMAP-template.md` | Roadmap with phases, dependencies, TC counts | `{module}/test-specs/ROADMAP.md` |
-| `PROGRESS-template.md` | Track progress across AI sessions | `{module}/test-specs/PROGRESS.md` |
-
-### Workflow
-
-```
-1. Create module folder: .context/PBI/{module-name}/
-2. Copy templates into the folder structure above
-3. Fill in module-context and roadmap
-4. At the start of each AI session, invoke `/test-automation` (or describe what you want --
-   the skill auto-triggers from natural language). It reads PROGRESS.md + ROADMAP.md and
-   resumes work from the right ticket.
-5. AI updates PROGRESS.md at end of each session
-```
-
-## Real Example: Auth Module
-
-The `auth/` directory contains a complete, real example of the per-module structure applied to the authentication module. Use it as a reference for:
-
-| Document | Path | Purpose |
-|----------|------|---------|
-| Master test plan | `auth/auth-test-plan.md` | How the module was analyzed |
-| Business spec | `auth/test-specs/AUTH-T01-.../spec.md` | TC definitions in Gherkin |
-| Implementation plan | `auth/test-specs/AUTH-T01-.../implementation-plan.md` | KATA components and architecture |
-| ATC spec (API) | `auth/test-specs/AUTH-T01-.../atc/UPEX-101-*.md` | Individual ATC contract |
-| ATC spec (UI) | `auth/test-specs/AUTH-T01-.../atc/UPEX-105-*.md` | Individual ATC contract |
-
-## Test Specs: Unified Documentation
-
-Each ticket directory in `test-specs/` contains **both** levels of documentation:
-
-| File | Level | Created By | When |
-|------|-------|------------|------|
-| `spec.md` | Business (QUE testear) | Test-Manager Agent | During test planning |
-| `implementation-plan.md` | Technical (COMO implementar) | Test-Automation Agent | Before coding |
-| `atc/*.md` | ATC contract (method spec) | Test-Automation Agent | For complex ATCs only |
-
-## Per-Story File Format
-
-Each PBI should follow this format:
-
-```markdown
-# {TICKET-ID} User Story Title
-
-## User Story
-As a [role]
-I want [action]
-So that [benefit]
-
-## Acceptance Criteria
-- [ ] AC1: Criteria description
-- [ ] AC2: Criteria description
-
-## Test Scenarios
-| ID | Scenario | Expected Result | Priority |
-|----|----------|-----------------|----------|
-| TS-001 | ... | ... | High |
-
-## Notes
-Additional information relevant for testing.
-```
-
-## Usage with AI
-
-Files in this directory are used as context by the AI to:
-- Generate test cases based on ACs
-- Create page object components
-- Design precondition flows
-- Document test scenarios
-- Track automation progress across sessions
-- Resume work without losing context
 
 ## Conventions
 
-- **Prefix**: Use your Jira project key as prefix — `{{PROJECT_KEY}}-` (declared in `.agents/project.yaml`).
-- **Names**: Use kebab-case for file names
-- **Status**: Mark ACs as `[x]` when covered by tests
-- **Evidence**: Add `evidence/` to `.gitignore` (screenshots, logs are ephemeral)
+| Rule | Convention |
+|------|-----------|
+| Module name | kebab-case |
+| PBI folder | `.context/PBI/{module-name}/` |
+| Context doc | `{module-name}-context.md` |
+| Test plan | `{module-name}-test-plan.md` |
+| Test report | `{module-name}-test-report.md` |
+| Evidence | `{module-name}/evidence/` (gitignored) |
+| Ticket subfolder | `.context/PBI/{module-name}/{TICKET-ID}-{brief-title}/` |
+
+## Template Usage
+
+When creating a new module PBI:
+
+1. Copy `templates/module-context-template.md` → `{module}/context.md`
+2. Copy `templates/PROGRESS-template.md` → `{module}/PROGRESS.md`
+3. Copy `templates/ROADMAP-template.md` → `{module}/ROADMAP.md`
+4. Fill placeholders (`{{module-name}}`, `{{description}}`, etc.)
+5. Update this README to reflect the new module
+
+## Ticket → Module Map
+
+| TMS ID | Title | Module | Priority |
+|--------|-------|--------|----------|
+| BK-??? | Magic-link authentication | auth | P0 |
+| BK-??? | PAT token management | auth | P0 |
+| BK-??? | Workspace onboarding | workspace | P0 |
+| BK-??? | Workspace member roles (RBAC) | workspace | P0 |
+| BK-??? | Project dashboard | project | P0 |
+| BK-??? | Module tree navigation | module-tree | P0 |
+| BK-??? | ATC editor with steps/assertions | atc-editor | P0 |
+| BK-??? | ATC anchoring to AC | atc-anchoring | P0 |
+| BK-??? | ATC full-text search | atc-search | P1 |
+| BK-??? | OpenAPI spec + docs | api-docs | P1 |
+| BK-??? | Jira issue sync | tms-sync | P2 |
+
+## Test Suite Recommendations
+
+| Scope | Test Type | Priority | Tool |
+|-------|-----------|----------|------|
+| Auth flows | E2E | P0 | Playwright |
+| API (CRUD) | Integration | P0 | Playwright API |
+| RLS policies | Integration | P0 | Supabase tests |
+| ATC editor | E2E | P0 | Playwright |
+| Module tree | Component | P1 | Playwright |
+| Full-text search | Integration | P1 | Playwright |
+| OpenAPI spec | Unit (auto) | P1 | — |
+| PAT middleware | Unit/Integration | P0 | Playwright |
