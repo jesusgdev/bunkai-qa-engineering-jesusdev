@@ -153,7 +153,7 @@ In a QA repo most work lands as `test/`, `fix/`, or `chore/` branches. Feature b
 **Issue key extraction** (in order):
 
 1. Current branch name regex: `(?:feat|feature|fix|test|docs|refactor|chore)/([A-Z]+-\d+)-`.
-2. `$ARGUMENTS` for `[A-Z]+-\d+`.
+2. `commitea todos los cambios de mi repositorio de manera inteligente y haz push al remoto` for `[A-Z]+-\d+`.
 3. Ask the user once: "Is there an issue key for this work?" — accept "no" gracefully.
 
 **Branch name format**:
@@ -189,7 +189,7 @@ Group changes by responsibility, not by file type:
 
 - With issue key: `{type}({ISSUE-KEY}): {description}` (e.g. `test(UPEX-123): cover bulk-assign empty states`).
 - Without key: `{type}: {description}`.
-- Breaking changes: append `!` after type/scope and add `BREAKING CHANGE:` footer.
+- Breaking changes: append `BREAKING CHANGE:` footer.
 
 **Vocabulary**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, `revert` (full list in `references/conventional-commits.md`).
 
