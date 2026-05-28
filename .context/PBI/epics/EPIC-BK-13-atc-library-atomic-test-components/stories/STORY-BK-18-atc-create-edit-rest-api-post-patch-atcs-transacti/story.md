@@ -60,7 +60,7 @@ And an atc.updated event is emitted with affected_test_ids
 
 > Added 2026-05-27 by Shift-Left QA. Full ATP DRAFT lives in custom field 🧪 Acceptance Test Plan (ATP) and mirrored as a comment on this issue. This section captures the slices PO + Dev need before estimation.
 
-### 🔍 Refined Acceptance Criteria — summary
+### Refined Acceptance Criteria — summary
 
 **13 Gherkin scenarios produced** (Happy 2 / Negative 7 / Boundary 2 / Integration 2). Key contract decisions:
 
@@ -75,7 +75,7 @@ And an atc.updated event is emitted with affected_test_ids
 | 7 | **`affected_test_ids` (PATCH event)**: Query `test_steps` table joining `atc_id`. Empty array = event still fires (consumers filter by `affected_test_ids.length === 0` if they only care about dependency impact). | The SRS shows `used_in` field on ATC response → `test_steps` links. This is the canonical source. | Senior DEV |
 | 8 | **PATCH `user_story_id` mutability**: Immutable on PATCH. If client sends `user_story_id`, it is silently ignored (or 422 if different). ACs are bound to the ATC's original user story. | Re-assigning user_story_id would break AC validation (ACs belong to original US). Cascade re-validation is expensive and adds risk. The architect annotation confirms this. | Senior PO + Senior DEV |
 
-### ⚠️ Edge Cases Identified
+### Edge Cases Identified
 
 **14 edge cases catalogued** (6 High, 5 Medium, 3 Low):
 
@@ -90,13 +90,13 @@ And an atc.updated event is emitted with affected_test_ids
 | 🟡 Medium | POST with empty `steps[]` array | `ATCCreate` schema requires `minItems: 1`. Zod rejects → 422 `validation_failed`. |
 | 🟡 Medium | POST with layer value outside enum `{UI, API, Unit}` | Zod enum rejects → 422 `validation_failed`. |
 | 🟡 Medium | POST with 11 tags (exceeds max 10) | Zod `maxItems: 10` rejects → 422. |
-| 🟡 Medium | PATCH with empty body (no fields changed) | **Decision**: Accept empty PATCH as no-op → 200 with same version (no bump). RPC not called. | Senior DEV |
-| 🟡 Medium | POST with `acceptance_criterion_ids` that are valid UUIDs but don't exist in DB | 422 `ac_outside_user_story` (same code — the query returns empty for non-existent IDs too). |
+| 🟡 Medium | PATCH with empty body (no fields changed) | **Decision**: Accept empty PATCH as no-op → 200 with same version (no bump). RPC not called. — Senior DEV |
+| 🟡 Medium | POST with `acceptance_criterion_ids` that are valid UUIDs but don't exist in DB | 422 `ac_outside_user_story` (same code — the query returns empty for non-existent IDs too) |
 | 🟢 Low | Title with Unicode/emoji | Existing DB `text` type handles UTF-8. Zod string accepts it. No special handling needed. |
 | 🟢 Low | Step content > 2KB | Zod `maxLength: 2048` on step content. |
 | 🟢 Low | POST with `acceptance_criterion_ids: []` (empty array) | Zod `minItems: 1` rejects → 422. |
 
-### 📋 Clarified Business Rules
+### Clarified Business Rules
 
 - **Slug uniqueness**: DB-level UNIQUE `(project_id, slug)`. On collision → 409 `slug_collision`. ATCs in different projects can share slugs.
 - **Version semantics**: Monotonically increasing integer, per-ATC. POST starts at 1, PATCH increments by 1 (unless no-op).
@@ -108,7 +108,7 @@ And an atc.updated event is emitted with affected_test_ids
 - **Soft-delete**: OUT of scope for BK-18. DELETE endpoint will be BK-? (future Story). Status field exists in schema but is not touched by POST/PATCH.
 - **`used_in` field in response**: OUT of scope for BK-18. The GET endpoint (BK-? future) will expand it. POST/PATCH responses return the ATC object without `used_in`.
 
-### ❓ Open Questions for PO / Dev / Design
+### Open Questions for PO / Dev / Design
 
 **For PO (3):**
 
@@ -127,9 +127,9 @@ And an atc.updated event is emitted with affected_test_ids
 
 No design questions — this is an API-only Story (no UI). The UI counterpart is BK-19.
 
-### 📐 Scope refinement — IN vs OUT of BK-18
+### Scope refinement — IN vs OUT of BK-18
 
-**✅ IN BK-18:**
+***IN BK-18:***
 - `POST /api/v1/atcs` endpoint (NEW)
 - `PATCH /api/v1/atcs/{id}` endpoint (NEW)
 - `bunkai_create_atc` RPC (NEW — returns uuid)
@@ -144,7 +144,7 @@ No design questions — this is an API-only Story (no UI). The UI counterpart is
 - OpenAPI spec registration for both endpoints
 - Integration tests for transactional rollback + auth gating + cross-entity rules
 
-**🚫 OUT (delegated to other Stories):**
+***OUT (delegated to other Stories):***
 - GET /atcs, GET /atcs/{id} → BK-20 (search/browse)
 - DELETE /atcs/{id} → BK-? (future, soft-delete)
 - POST /atcs/{id}/duplicate → BK-23
