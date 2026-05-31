@@ -349,13 +349,6 @@ Test files (orchestrate ATCs)
 
 Git / PR work → `/git-flow-master` auto-loads. Details in `.claude/skills/git-flow-master/` + `docs/workflows/git-flow.md`.
 
-**Protected branches**:
-
-| Branch | Role |
-|---|---|
-| `main` | Production. PRs merged from `staging` or semantic branch after review. |
-| `staging` | Integration branch for AI commits + pre-release validation. |
-
 **Critical commit rules**:
 
 - Semantic prefixes: `feat:` / `fix:` / `docs:` / `test:` / `refactor:` / `chore:`
@@ -363,6 +356,21 @@ Git / PR work → `/git-flow-master` auto-loads. Details in `.claude/skills/git-
 - **NO AI attribution** in commits.
 - **Confirm before push to `main`**.
 - Test-automation PRs use `.claude/skills/git-flow-master/references/pr-test-automation.md` (auto-loaded by `/git-flow-master` on `test/*` branches). Title format: `{type}({ISSUE-KEY}): {description}`.
+
+---
+
+## Git Strategy
+
+<!-- git-flow-master:strategy:solo-main -->
+
+This project uses the `solo-main` flow. One long-lived branch; every push to `main` is a release.
+
+| Branch | Role |
+| ------ | --------------------------------------------------------- |
+| main   | The only long-lived branch. All work lands here directly. |
+
+Work lands on `main` directly, or via an optional PR → `main` when a review/CI gate is wanted.
+Commits: atomic, conventional, no AI attribution. No promotion or hotfix ceremony — there is one branch.
 
 ---
 
