@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bunkai TMS Master Test Plan Presentation</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="../../../../../../.agents/skills/html-ppt/assets/fonts.css">
+  <link rel="stylesheet" href="../../../../../../.agents/skills/html-ppt/assets/base.css">
+  <link rel="stylesheet" id="theme-link" href="../../../../../../.agents/skills/html-ppt/assets/themes/engineering-whiteprint.css">
+  <link rel="stylesheet" href="../../../../../../.agents/skills/html-ppt/assets/animations/animations.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="tpl-bunkai-mtp" data-themes="engineering-whiteprint,blueprint,tokyo-night,corporate-clean">
+<div class="deck">
+
+  <section class="slide cover" data-title="Cover">
+    <p class="kicker">master-test-plan / Bunkai TMS / 2026-06-09</p>
+    <h1 class="h1 anim-fade-up" data-anim="fade-up">Testing the chain, not the screen.</h1>
+    <p class="lede">A business-risk QA roadmap for tenant safety, Jira import integrity, and ATC traceability.</p>
+    <div class="metric-strip">
+      <div><b>4</b><span>Critical flows</span></div>
+      <div><b>6</b><span>High-risk flows</span></div>
+      <div><b>12</b><span>Silent killers</span></div>
+      <div><b>15</b><span>Release checks</span></div>
+    </div>
+    <div class="deck-footer"><span class="mono">.context/master-test-plan.md</span><span class="slide-number" data-current="1" data-total="14"></span></div>
+    <div class="notes">Open by framing this as a strategic plan, not a list of test cases. The key message: Bunkai's risk is not one isolated page or endpoint. The product succeeds only when auth, workspace scope, imported requirements, ACs, and ATCs stay consistent as one chain. Tell the audience that this deck compresses the master test plan into the decisions QA should make first: what must be tested, why it matters, and what should not be allowed to ship without evidence.</div>
+  </section>
+
+  <section class="slide" data-title="Plan Intent">
+    <p class="kicker">01 / intent</p>
+    <h2 class="h2">What this plan is designed to answer</h2>
+    <div class="grid g3 mt-l">
+      <div class="card card-accent"><h3>What to test first</h3><p>Rank the flows where failure damages tenant safety, traceability, or release confidence.</p></div>
+      <div class="card card-accent"><h3>Why it matters</h3><p>Connect every priority to business impact instead of raw endpoint count.</p></div>
+      <div class="card card-accent"><h3>Where defects hide</h3><p>Surface async jobs, DB side effects, secrets, and observability gaps that normal UI passes miss.</p></div>
+    </div>
+    <div class="source-box mt-l"><span>Grounded in</span><b>business-data-map</b><b>feature-map</b><b>api-map</b><b>PRD/SRS</b><b>target source validation</b></div>
+    <div class="notes">Explain that the plan sits above test cases. It is the prioritization layer for shift-left, sprint testing, documentation, automation, and regression. The audience should not expect endpoint schemas or TMS steps here. Those belong to other artifacts. This deck answers the strategic question: if we have limited QA time, where does coverage matter most and what failures would hurt the business?</div>
+  </section>
+
+  <section class="slide" data-title="Executive Risk Map">
+    <p class="kicker">02 / executive-risk-map</p>
+    <h2 class="h2">The release risk concentrates in 10 areas</h2>
+    <div class="risk-table mt-m">
+      <div class="row critical"><span>CRITICAL</span><b>Auth, principal resolution, workspace/RLS</b><em>Tenant boundary for everything</em></div>
+      <div class="row critical"><span>CRITICAL</span><b>ATC create/update with AC anchoring</b><em>Traceability core</em></div>
+      <div class="row critical"><span>CRITICAL</span><b>Jira import to Story/AC materialization</b><em>Requirement source quality</em></div>
+      <div class="row critical"><span>CRITICAL</span><b>Workspace bootstrap and onboarding</b><em>First value moment</em></div>
+      <div class="row high"><span>HIGH</span><b>Module tree, Story/AC readiness, PATs, invites, Markdown, runtime confidence</b><em>Blast radius and release trust</em></div>
+    </div>
+    <div class="deck-footer"><span class="mono">Risk = business impact x breakage likelihood x blast radius</span><span class="slide-number" data-current="3" data-total="14"></span></div>
+    <div class="notes">Walk through the map from top to bottom. Emphasize that CRITICAL does not mean the code is broken; it means the cost of being wrong is highest. Auth and RLS protect all data. ATC anchoring protects the product promise. Jira import protects the requirement source. Workspace bootstrap protects adoption. The HIGH group is the second ring: tree mutation, AC readiness, automation access, invite access, user content safety, and release gates.</div>
+  </section>
+
+  <section class="slide" data-title="System Chain">
+    <p class="kicker">03 / test-the-chain</p>
+    <h2 class="h2">Bunkai fails as a cascade, not as a page</h2>
+    <div class="cascade mt-l">
+      <div>Auth bootstrap</div><span>-></span><div>Principal</div><span>-></span><div>Workspace/RLS</div><span>-></span><div>Hierarchy</div><span>-></span><div>Story/AC</div><span>-></span><div>ATC provenance</div>
+    </div>
+    <div class="grid g2 mt-l">
+      <div class="card"><h3>Human path</h3><p>Login, workspace, project, module, story, AC, ATC.</p><span class="tag">UI + API + DB evidence</span></div>
+      <div class="card"><h3>Import path</h3><p>Jira issue, ADF parser, module mapping, AC extraction, ATC anchoring.</p><span class="tag">Async + external dependency</span></div>
+    </div>
+    <div class="notes">This is the central mental model for the whole presentation. A test can pass at the page level while the business chain is still broken. For example, an ATC can save successfully but be linked to the wrong AC. A Jira import can be marked completed but place stories into the wrong module. A PAT can authenticate but see data outside its workspace. The strategy is to test the chain end to end around each risk.</div>
+  </section>
+
+  <section class="slide" data-title="Identity and RLS">
+    <p class="kicker">04 / critical-flow</p>
+    <h2 class="h2">Critical 1: identity and tenant safety</h2>
+    <div class="grid g2 mt-l">
+      <div class="card danger"><h3>What can break</h3><ul><li>Viewer mutates via API</li><li>PAT bypasses workspace RLS</li><li>Mixed cookie + bearer uses wrong principal</li><li>Non-member infers data from errors</li></ul></div>
+      <div class="card success"><h3>What QA must prove</h3><ul><li>Role matrix holds in UI and API</li><li>Cross-workspace reads stay hidden/forbidden</li><li>PAT and session produce same tenant boundary</li><li>Service-role actions are pre-authorized</li></ul></div>
+    </div>
+    <div class="callout mt-l">If this layer fails, every downstream test result becomes untrustworthy.</div>
+    <div class="notes">This slide is about the most important security and quality risk. Explain that the system is workspace-scoped by design. The release cannot be considered safe unless viewer, member, admin, owner, session, and PAT behavior all line up with the same tenant boundary. The service-role exception is not automatically bad, but it must be tested negatively route by route because it intentionally bypasses RLS after app-level authorization.</div>
+  </section>
+
+  <section class="slide" data-title="ATC Provenance">
+    <p class="kicker">05 / critical-flow</p>
+    <h2 class="h2">Critical 2: ATC provenance is the product promise</h2>
+    <div class="provenance mt-l">
+      <div class="node">Story</div><div class="node">Acceptance Criteria</div><div class="node hot">ATC</div><div class="node">Steps + Assertions</div><div class="node">Activity + Version</div>
+    </div>
+    <div class="grid g3 mt-l">
+      <div class="card"><h3>Reject</h3><p>No AC, wrong-story AC, cross-project module, insufficient PAT scope.</p></div>
+      <div class="card"><h3>Protect</h3><p>Optimistic lock with <span class="mono">X-If-Match</span> and version bump.</p></div>
+      <div class="card"><h3>Verify</h3><p>Full child replacement is exact and transactional.</p></div>
+    </div>
+    <div class="notes">Position ATC provenance as the core product quality attribute. The business value is not just that an ATC exists. It is that the ATC is anchored to the correct AC and preserves the exact steps, assertions, version, and activity record. Focus on negative tests: wrong IDs, no ACs, stale versions, omitted child rows, and PAT/session parity.</div>
+  </section>
+
+  <section class="slide" data-title="Jira Import">
+    <p class="kicker">06 / critical-flow</p>
+    <h2 class="h2">Critical 3: Jira import can poison the source of truth</h2>
+    <div class="pipeline mt-l">
+      <div>Jira JQL</div><span>-></span><div>ImportJob</div><span>-></span><div>Vercel after()</div><span>-></span><div>ADF parser</div><span>-></span><div>Stories + ACs</div>
+    </div>
+    <div class="grid g2 mt-l">
+      <div class="card"><h3>Business failure</h3><p>Shift-left and automation start from stale, duplicated, or misplaced requirements.</p></div>
+      <div class="card"><h3>QA evidence</h3><p>Status polling, counts, failure reasons, module mapping, Inbox fallback, dedupe.</p></div>
+    </div>
+    <div class="notes">Make it clear that enqueue success is not import success. The import returns quickly, then the worker does real work later. A release check must prove that completed jobs really created the expected stories and ACs, failed jobs explain why they failed, duplicate active jobs are blocked, and unknown components do not silently hide structure problems.</div>
+  </section>
+
+  <section class="slide" data-title="Hierarchy Readiness">
+    <p class="kicker">07 / high-flow</p>
+    <h2 class="h2">High risk: hierarchy and readiness gates</h2>
+    <div class="tree-card mt-l">
+      <div>Workspace</div><span>|</span><div>Project</div><span>|</span><div>Module tree</div><span>|</span><div>Story</div><span>|</span><div>Acceptance Criteria</div><span>|</span><div>ATC</div>
+    </div>
+    <div class="grid g3 mt-l">
+      <div class="card"><h3>Move</h3><p>Reject cycles, cross-project parents, and max-depth overflow before mutation.</p></div>
+      <div class="card"><h3>Archive</h3><p>Cascade descendants without creating active orphans or hard deletes.</p></div>
+      <div class="card"><h3>Ready</h3><p>A story with zero active ACs must never remain <span class="mono">ready_to_test</span>.</p></div>
+    </div>
+    <div class="notes">This slide connects product organization to quality. The module tree is not just navigation; it is the structure that drives stories, ACs, and ATCs. A broken move or archive changes what QA sees. The readiness gate is also critical because it prevents untestable stories from entering QA planning. The target checks are tree path rebuilds, cascade scope, active-only AC ordering, and readiness downgrade after last AC archive.</div>
+  </section>
+
+  <section class="slide" data-title="Secrets and Access">
+    <p class="kicker">08 / access-risk</p>
+    <h2 class="h2">High risk: one-time secrets and delegated access</h2>
+    <div class="grid g2 mt-l">
+      <div class="terminal-card"><h3>PAT lifecycle</h3><pre>create -> raw shown once
+      <div class="terminal-card"><h3>Invite lifecycle</h3><pre>pending -> accepted
+    </div>
+    <div class="callout mt-l">Every token test needs both happy-path access and replay/wrong-user rejection.</div>
+    <div class="notes">Tie PATs and invites together as secret-like flows. They are different business actions, but the risk pattern is similar: raw values are shown once, tokens can be replayed, and access must be bounded. For PATs, the key risk is automation access with scopes and RLS parity. For invites, the key risk is wrong-email acceptance, replay after revoke or expiry, and role escalation.</div>
+  </section>
+
+  <section class="slide" data-title="Silent Killers">
+    <p class="kicker">09 / silent-killers</p>
+    <h2 class="h2">The most undertested risk: invisible side effects</h2>
+    <div class="silent-grid mt-l">
+      <div><b>Import worker</b><span>Can stall after enqueue</span></div>
+      <div><b>ADF extraction</b><span>Can lose requirement meaning</span></div>
+      <div><b>Module cascade</b><span>Can leave active orphans</span></div>
+      <div><b>AC rebalance</b><span>Can duplicate positions</span></div>
+      <div><b>ATC RPC</b><span>Can partially replace children</span></div>
+      <div><b>Audit writes</b><span>Can silently fail</span></div>
+      <div><b>Manual migrations</b><span>Can drift by environment</span></div>
+      <div><b>No APM/CI</b><span>Can ship regressions unseen</span></div>
+    </div>
+    <div class="notes">Silent killers are where the plan becomes especially valuable. These processes may not have a direct visible failure at the moment the user clicks. The user can enqueue import, save an ATC, move a module, or revoke a PAT, and the UI can appear fine while the DB side effect is wrong. Recommend synthetic probes, read-only DB validation, status polling, audit assertions, and release-time schema checks.</div>
+  </section>
+
+  <section class="slide" data-title="External Dependencies">
+    <p class="kicker">10 / integrations</p>
+    <h2 class="h2">External failures need acceptable degradation</h2>
+    <div class="integration-table mt-m">
+      <div><b>Supabase Auth</b><span>Login/session failures</span><em>Recoverable login error</em></div>
+      <div><b>Supabase Postgres/RLS</b><span>Hidden rows/write denials</span><em>Consistent 403/404/error envelope</em></div>
+      <div><b>Jira Cloud</b><span>Auth/JQL/rate/parser failures</span><em>Failed job with reason</em></div>
+      <div><b>Vercel</b><span>Route timeout / after() stall</span><em>Observable health and import status</em></div>
+      <div><b>OpenAPI/Scalar</b><span>Stale docs</span><em>Validate via generated spec/source</em></div>
+      <div><b>SMTP/Resend</b><span>Email delivery delay</span><em>Retry path, no false success</em></div>
+    </div>
+    <div class="notes">The main point is that dependency failures should not create ambiguous product behavior. Supabase failures should not leak data or mutate partially. Jira failures should not look like successful imports. Vercel worker issues should be visible through import status. OpenAPI issues should not block the app, but they do affect automation reliability. For each integration, QA should define what still works and what must hard-fail.</div>
+  </section>
+
+  <section class="slide" data-title="Edge Cases">
+    <p class="kicker">11 / edge-cases</p>
+    <h2 class="h2">Edge cases worth designing tests around</h2>
+    <div class="edge-cloud mt-l">
+      <span>cross-tenant UUID</span><span>mixed credentials</span><span>wrong-email invite</span><span>rotated token replay</span><span>cycle module move</span><span>AC reorder race</span><span>last AC archived</span><span>wrong-story AC</span><span>stale ATC edit</span><span>Jira duplicate AC</span><span>Inbox fallback drift</span><span>Markdown XSS</span><span>audit side-effect loss</span><span>staging/main drift</span>
+    </div>
+    <div class="notes">This slide should feel like a practical checklist for senior QA thinking. These are the places a developer can reasonably miss because the happy path does not reveal them. Explain that edge cases are grouped around boundaries: identity, tokens, tree structure, concurrency, import quality, content safety, and environment drift. These should feed future TMS test case design.</div>
+  </section>
+
+  <section class="slide" data-title="Release Checklist">
+    <p class="kicker">12 / pre-release</p>
+    <h2 class="h2">Pre-release evidence checklist</h2>
+    <div class="checklist-grid mt-m">
+      <div><span>01</span>Session + PAT cannot cross workspace</div>
+      <div><span>02</span>Workspace bootstrap creates owner atomically</div>
+      <div><span>03</span>ATC rejects bad provenance and stale versions</div>
+      <div><span>04</span>ATC replacement is exact and transactional</div>
+      <div><span>05</span>Jira import reports counts and failures</div>
+      <div><span>06</span>Module move/archive preserves tree integrity</div>
+      <div><span>07</span>Story readiness blocks zero active ACs</div>
+      <div><span>08</span>PAT/invite replay paths are rejected</div>
+      <div><span>09</span>Markdown renders safely</div>
+      <div><span>10</span>Staging schema matches expected migrations</div>
+    </div>
+    <div class="notes">This is the operating checklist before release. The source plan has fifteen checks; this slide compresses them into the ten strongest evidence categories. If the audience asks for the full list, point them back to `.context/master-test-plan.md`. The checklist is ordered by criticality: tenant boundary, bootstrap, ATC integrity, Jira import, tree readiness, secrets, sanitization, and schema confidence.</div>
+  </section>
+
+  <section class="slide" data-title="Gaps and Next Actions">
+    <p class="kicker">13 / gaps-and-next-actions</p>
+    <h2 class="h2">Open gaps shape the next quality work</h2>
+    <div class="grid g2 mt-l">
+      <div class="card danger"><h3>Context drift</h3><p><span class="mono">project-config.md</span> says branch <span class="mono">main</span> and 8 migrations. Validated target is <span class="mono">staging</span> with 21 migrations.</p></div>
+      <div class="card"><h3>Unverified product paths</h3><p>ATC delete/archive, workspace delete/transfer, member removal, invite email delivery, feature flags, activity UI.</p></div>
+      <div class="card"><h3>Runtime confidence</h3><p>No GitHub Actions gate, no APM/Sentry verified, no backup/restore strategy verified.</p></div>
+      <div class="card"><h3>Planned-only scope</h3><p>OAuth, Test Repository, and Test Chains are visible/planned but not implemented release flows.</p></div>
+    </div>
+    <div class="action-mini mt-m">
+      <div><b>/test-documentation</b><span>Priorities -> TMS cases</span></div>
+      <div><b>/test-automation</b><span>High-ROI KATA flows</span></div>
+      <div><b>/regression-testing</b><span>Release evidence</span></div>
+    </div>
+    <div class="notes">Close by making the deck actionable. Do not hide the gaps. The plan is valuable because it separates verified risk from unknowns. The most actionable drift is project-config: branch and migration count should be corrected or confirmed. Product gaps should become discovery or shift-left questions. Runtime gaps should shape regression and release readiness. The next step is to turn priorities into TMS cases, then automate selected high-ROI KATA flows, then run regression evidence. End with the rule: no release confidence without tenant boundary, ATC provenance, and Jira import evidence.</div>
+  </section>
+
+</div>
+<script src="../../../../../../.agents/skills/html-ppt/assets/runtime.js"></script>
+</body>
+</html>
