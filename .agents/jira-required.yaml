@@ -416,3 +416,71 @@ work_types:
       deprecated: { from: any, to: deprecated, description: Retire the TC (global transition) }
       recover: { from: deprecated, to: draft, description: Restore a deprecated TC back to draft }
     used_by: [test-documentation, test-automation]
+
+# Issue link types the methodology requires for QA traceability. Validated by
+# `bun run jira:check` against the catalog at `.agents/jira-link-types.json`.
+# Each entry's KEY is the canonical slug — resolved at runtime via
+# `{{jira.link_types.<slug>}}`. NEVER hardcode workspace link-type names.
+#
+# Sections mirror custom fields:
+#   required — methodology fails without these. `bun run jira:check` exits 1
+#              if any are missing AND their fallback is also absent.
+#   optional — enhance traceability but won't break it if missing.
+link_types:
+  required:
+    test:
+      name: Test
+      outward: tests
+      inward: is tested by
+      fallback: relates
+      description: Canonical Story↔test-artifact coverage edge.
+      used_by: [shift-left-testing, sprint-testing, test-documentation, regression-testing]
+
+    problem_incident:
+      name: Problem/Incident
+      outward: causes
+      inward: is caused by
+      fallback: relates
+      description: Story→Bug causation — filed during sprint-testing bug reporting.
+      used_by: [sprint-testing]
+
+    blocks:
+      name: Blocks
+      outward: blocks
+      inward: is blocked by
+      fallback: relates
+      description: Bug→Story blocking — the defect_reported→blocked gate edge.
+      used_by: [sprint-testing]
+
+  optional:
+    relates:
+      name: Relates
+      outward: relates to
+      inward: relates to
+      fallback: null
+      description: Symmetric fallback target when a required type is absent. Direction is lost.
+      used_by: [all]
+
+    test_design:
+      name: Test Design
+      outward: designs
+      inward: is designed by
+      fallback: test
+      description: Xray refinement — Test designs a requirement/spec.
+      used_by: [test-documentation]
+
+    test_execute:
+      name: Test Execute
+      outward: executes
+      inward: is executed by
+      fallback: test
+      description: Xray refinement — Test Execution executes a Test.
+      used_by: [test-documentation]
+
+    test_automation:
+      name: Test Automation
+      outward: automation test for
+      inward: is automated by
+      fallback: test
+      description: Xray refinement — automation covers a manual Test.
+      used_by: [test-automation]
