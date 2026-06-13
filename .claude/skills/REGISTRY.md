@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-06-09T21:50:13.870Z`
+> Generated: `2026-06-12T18:41:43.752Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 20
+Skills indexed: 23
 
 ---
 ## Skill: acli
@@ -252,6 +252,34 @@ Skills indexed: 20
 
 ---
 
+## Skill: expert-panel-review
+
+**Purpose**: Run a cross-functional expert panel to refine patterns, Jira stories, QA artifacts, workflow decisions, or skill drafts before implementa...
+
+**Compact Rules**:
+- Applying the former `expert-development-team-analysis` pattern.
+- Refining another pattern before converting it into a skill.
+- Reviewing Jira Story improvements before publication.
+- Improving a workflow with cross-functional perspectives.
+- Deciding whether a new learning should update Engram or a skill.
+- Replacing domain skills such as `/shift-left-testing`, `/sprint-testing`, `/test-automation`, or `/test-documentation`.
+- Rubber-stamping a decision already made without review.
+- Creating permanent rules from a single unvalidated opinion.
+- Start with recent memory context.
+- If signal is missing, run 2-3 targeted searches using pattern names, ticket keys, and domain terms.
+- Read full observations only for the top 1-3 relevant memories.
+- Extract at most 3-5 applied learnings for the current task.
+- Label each learning as `validated`, `candidate`, or `conflicting`.
+- If memories conflict, ask or judge before treating either as a rule.
+- `Engram`: prior project memory or user preference.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/expert-panel-review/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
 ## Skill: framework-development
 
 **Purpose**: Framework evolution mode — evolves the QA boilerplate itself (KATA, fixtures, cli/, scripts/, api/schemas/ pipeline, package.json deps).
@@ -392,6 +420,34 @@ Skills indexed: 20
 
 ---
 
+## Skill: shift-left-refinement
+
+**Purpose**: Refine a Jira Story before development by turning rough requirements into a professional shift-left package: user story, source trace, in...
+
+**Compact Rules**:
+- Refining acceptance criteria before estimation or sprint planning.
+- Applying the former `shift-left-workflow-pattern`.
+- Rebuilding a weak refinement using the BK-34 structure.
+- Checking whether a Story is good enough for `/shift-left-testing` handoff.
+- Preparing Jira description content, comments, or ATP DRAFT structure.
+- Batch selection, workflow transitions, or full Stage 0 orchestration; use `/shift-left-testing`.
+- In-sprint manual QA, bug retesting, ATP/ATR execution, or evidence capture; use `/sprint-testing`.
+- Test case creation in Jira/Xray; use `/test-documentation`.
+- Automated test code; use `/test-automation`.
+- Story title, description, acceptance criteria, scope, business rules, and source spec.
+- Parent epic or module context when dependencies matter.
+- Prior comments that contain PO, Dev, QA, or expert decisions.
+- Relevant Engram memories for prior pattern learnings: `BK-28`, `BK-34`, `BK-91`, `shift-left-workflow-pattern`.
+- Jira publishing rules when writing rich text: use Markdown-to-ADF conversion, never raw Markdown in rich-text Jira fields.
+- Agile Alliance ATDD / Three Amigos: product, development, and testing perspectives collaborate before implementation.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/shift-left-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
 ## Skill: shift-left-testing
 
 **Purpose**: Orchestrates pre-sprint Shift-Left QA on a batch of backlog Stories.
@@ -432,6 +488,7 @@ Skills indexed: 20
 - `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — ticket-local context: session notes, open questions (hand-authored; read if it already exists from a prior Session Start). NON-Jira file — never a Jira mirror.
 - `.context/master-test-plan.md` — regression Epic pointer, modality decision (Xray vs Jira-native), what to test and why.
 - `.context/business/business-feature-map.md` — feature catalog vocabulary; resolves "what epic owns this story" for the `epics/EPIC-<KEY>-<slug>/` PBI folder naming (module = Epic, 1:1).
+- `.context/business/domain-glossary.md` (if present) — canonical domain vocabulary; consult BEFORE authoring the ATP, refined ACs, and TC outlines so test names, entity terms, and Gherkin wording use canonical terms and avoid anti-glossary banned terms. If a new or ambiguous term surfaces during testing, flag it in the Stage 3 QA comment for the PM to add via the glossary's change protocol — NEVER edit the glossary from a testing session.
 - The Story or Bug ticket itself — AC, ATP, comments — read via `bun run jira:sync-issues get <KEY> --include-comments`, then read the synced `.md` files (`story.md`, `acceptance-criteria.md`, `acceptance-test-plan.md`, `comments.md`) under the STORY folder. Jira is source-of-truth; the synced `.md` is a read-only cache. NEVER `acli workitem view` for custom fields — it returns `null`.
 - `.env` — `LOCAL_USER_*` / `STAGING_USER_*` credentials. NEVER hardcode; always read at runtime.
 - `kata-manifest.json` — registry of existing KATA Components + ATCs. Check before proposing new ATCs in Stage 3 hand-off so the test-automation phase doesn't duplicate work.
@@ -439,7 +496,6 @@ Skills indexed: 20
 - Bug ID deployed to staging -> Single ticket / Bug.
 - Sprint number, "process sprint X", or an existing `SPRINT-{N}-TESTING.md` -> Batch sprint.
 - If the framework file does not exist yet, generate it first (see `sprint-orchestration.md`).
-- Compute prospective `<scope>` from invocation: `<JIRA-KEY>` (single-ticket) or `sprint-<N>/<JIRA-KEY>` (batch — once per ticket in the wave loop).
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
@@ -501,6 +557,34 @@ Skills indexed: 20
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/test-documentation/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
+## Skill: tickets-board-statuses
+
+**Purpose**: Create a lean PM/QA Jira board status report based on the former jira-board-status pattern: backlog Stories ordered by shift-left viabili...
+
+**Compact Rules**:
+- Applying the former `jira-board-status` pattern with fewer tokens.
+- Finding unassigned backlog Stories and ordering them by shift-left viability.
+- Finding Ready For QA tickets needing the user's attention.
+- Listing tickets where the user has commented or contributed.
+- Showing dependency/context evidence inside the backlog table, not as a separate table.
+- Jira writes, assignments, transitions, label changes, or comments.
+- Full `/shift-left-testing` execution.
+- Full `/sprint-testing` execution.
+- Replacing `/acli`; this skill defines analysis and reporting, while `/acli` owns Jira CLI mechanics.
+- Jira project key, board scope, or explicit JQL.
+- User identifier for comment matching, usually Jira display/account string.
+- Status names for Backlog and Ready For QA.
+- Optional assignee names to include in QA intake, such as `ely`.
+- Epic scope when dependency analysis should stay inside a product area.
+- Use `assignee is EMPTY`, not `assignee = unassigned`.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/tickets-board-statuses/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
