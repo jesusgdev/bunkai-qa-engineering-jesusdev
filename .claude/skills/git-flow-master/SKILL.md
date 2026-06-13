@@ -195,6 +195,13 @@ Always **propose** the name and ask for OK before `git checkout -b`. Never creat
 
 ### 3.2 Commits
 
+**Grouping decision process** (apply before the table):
+
+1. Identify the dominant change type per file cluster (`feat` / `fix` / `docs` / `chore`).
+2. If supporting files (tests, docs, config) exist ONLY because of the dominant change → same commit.
+3. If files are independently meaningful without the dominant change → separate commit.
+4. In `solo-main`, small independent housekeeping items may share a `chore:` commit. In multi-branch strategies, split them.
+
 Group changes by responsibility, not by file type:
 
 | Group       | Typical paths                                                                 |
@@ -221,6 +228,7 @@ Group changes by responsibility, not by file type:
 - Never `git add -A` or `git add .` — list explicit paths to avoid leaking secrets (`.env`, credentials) or unrelated work.
 - **No AI attribution.** No `Generated with Claude Code`, no `Co-Authored-By: Claude`, no equivalent line. Commits look human-authored. (Critical Reminder #3 in `CLAUDE.md`.)
 - If a pre-commit hook fails, **stop, fix the underlying issue, create a NEW commit**. Never `--amend` a commit the hook rejected — `--amend` operates on the previous commit, which destroys context.
+- **Triage untracked binaries at repo root.** Files like `.png`, `.jpg`, `.log`, `.csv` sitting at the repo root (outside known directories like `tests/`, `docs/`, `.claude/`) are likely evidence, screenshots, or temp exports — not project assets. Ask the user: _"These untracked files appear to be evidence/temp. Exclude from commits?"_ before proposing the commit plan. Never silently include or exclude them.
 
 Present all proposed commits as one block. Wait for OK / modify / reject before executing.
 

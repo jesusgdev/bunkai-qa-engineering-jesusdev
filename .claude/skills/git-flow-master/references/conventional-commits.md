@@ -106,6 +106,8 @@ Examples:
 
 This is also the **branch-prefix** precedence rule (a `feat/UPEX-123-foo` branch is fine even if it ships tests).
 
+**Strategy-aware chore bundling**: In `solo-main` flows, a single `chore:` commit may bundle multiple small independent housekeeping changes (lock files, IDE settings, generated HTML). In strategies with PR review, each housekeeping item should be its own commit for clean revert.
+
 ---
 
 ## Breaking changes
