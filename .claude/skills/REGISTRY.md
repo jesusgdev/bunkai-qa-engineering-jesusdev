@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-06-12T18:41:43.752Z`
+> Generated: `2026-06-14T00:59:47.796Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -422,12 +422,13 @@ Skills indexed: 23
 
 ## Skill: shift-left-refinement
 
-**Purpose**: Refine a Jira Story before development by turning rough requirements into a professional shift-left package: user story, source trace, in...
+**Purpose**: Refine a Jira Story before development by turning rough requirements into an Ely-style shift-left package: metadata snapshot, source evid...
 
 **Compact Rules**:
 - Refining acceptance criteria before estimation or sprint planning.
 - Applying the former `shift-left-workflow-pattern`.
 - Rebuilding a weak refinement using the BK-34 structure.
+- Rebuilding a shallow refinement using the richer Ely-style BK-2/BK-18/BK-28/BK-27 pattern.
 - Checking whether a Story is good enough for `/shift-left-testing` handoff.
 - Preparing Jira description content, comments, or ATP DRAFT structure.
 - Batch selection, workflow transitions, or full Stage 0 orchestration; use `/shift-left-testing`.
@@ -437,9 +438,8 @@ Skills indexed: 23
 - Story title, description, acceptance criteria, scope, business rules, and source spec.
 - Parent epic or module context when dependencies matter.
 - Prior comments that contain PO, Dev, QA, or expert decisions.
-- Relevant Engram memories for prior pattern learnings: `BK-28`, `BK-34`, `BK-91`, `shift-left-workflow-pattern`.
+- Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-34`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`.
 - Jira publishing rules when writing rich text: use Markdown-to-ADF conversion, never raw Markdown in rich-text Jira fields.
-- Agile Alliance ATDD / Three Amigos: product, development, and testing perspectives collaborate before implementation.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
@@ -562,24 +562,24 @@ Skills indexed: 23
 
 ## Skill: tickets-board-statuses
 
-**Purpose**: Create a lean PM/QA Jira board status report based on the former jira-board-status pattern: backlog Stories ordered by shift-left viabili...
+**Purpose**: Create a lean PM/QA Jira board status report from the original jira-board-status pattern: shift-left candidates, user-worked Stories read...
 
 **Compact Rules**:
-- Applying the former `jira-board-status` pattern with fewer tokens.
-- Finding unassigned backlog Stories and ordering them by shift-left viability.
-- Finding Ready For QA tickets needing the user's attention.
-- Listing tickets where the user has commented or contributed.
-- Showing dependency/context evidence inside the backlog table, not as a separate table.
+- Finding unassigned Backlog Stories the user can take for `/shift-left-testing`.
+- Finding Stories the user already worked via shift-left and that are now Ready For QA for `/sprint-testing`.
+- Listing the user's shift-left footprint without comment counts.
+- Mapping formal and inferred Story dependencies to recommend the next best work.
 - Jira writes, assignments, transitions, label changes, or comments.
 - Full `/shift-left-testing` execution.
 - Full `/sprint-testing` execution.
 - Replacing `/acli`; this skill defines analysis and reporting, while `/acli` owns Jira CLI mechanics.
 - Jira project key, board scope, or explicit JQL.
-- User identifier for comment matching, usually Jira display/account string.
+- Exact user comment author string, usually Jira display/account string such as `jesusgpythondev`.
 - Status names for Backlog and Ready For QA.
-- Optional assignee names to include in QA intake, such as `ely`.
-- Epic scope when dependency analysis should stay inside a product area.
+- The shift-left completion label, default `shift-left-reviewed`.
+- Optional epic scope when dependency analysis should stay inside a product area.
 - Use `assignee is EMPTY`, not `assignee = unassigned`.
+- `workitem search --json` may return a root array or an object with `.issues`; parsers must handle both.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
