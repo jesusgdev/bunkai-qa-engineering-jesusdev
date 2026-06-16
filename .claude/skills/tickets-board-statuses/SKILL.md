@@ -1,6 +1,6 @@
 ---
 name: tickets-board-statuses
-description: "Create a lean PM/QA Jira board status report from the original jira-board-status pattern: shift-left candidates, user-worked Stories ready for sprint testing, user shift-left footprint, and dependency priority map. Analysis-only; no Jira writes."
+description: "Create a token-efficient PM/QA Jira board status report: shift-left candidates, user-worked Stories needing follow-up or sprint testing, and dependency priority. Analysis-only; no Jira writes."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [issue-tracker, tms]
@@ -8,58 +8,49 @@ complementary_categories: [issue-tracker, tms]
 
 # Tickets Board Statuses
 
-Produce the practical PM/QA board view from the original `jira-board-status` pattern. Keep it lean: answer what the user can shift-left next, which user-worked Stories are Ready For QA, where the user already applied shift-left, and which dependencies drive priority.
+Produce a lean PM/QA board view that answers: what can be shift-lefted next, which user-worked Stories now need `/sprint-testing`, where the user already applied shift-left, and which dependencies drive priority.
+
+Optimize for low token/process cost: query small fields, derive related views from the same result set, and avoid duplicate comment checks.
 
 ## Use This Skill For
 
 - Finding unassigned Backlog Stories the user can take for `/shift-left-testing`.
-- Finding Stories the user already worked via shift-left and that are now Ready For QA for `/sprint-testing`.
-- Listing the user's shift-left footprint without comment counts.
-- Mapping formal and inferred Story dependencies to recommend the next best work.
+- Finding user-worked `shift-left-reviewed` Stories that are Ready For QA for `/sprint-testing`.
+- Listing the user's shift-left continuity without comment counts.
+- Mapping formal or inferred dependencies that change next-work priority.
 
 ## Do Not Use This Skill For
 
-- Jira writes, assignments, transitions, label changes, or comments.
-- Full `/shift-left-testing` execution.
-- Full `/sprint-testing` execution.
+- Jira writes, assignments, transitions, labels, comments, or mutations.
+- Full `/shift-left-testing` or `/sprint-testing` execution.
 - Replacing `/acli`; this skill defines analysis and reporting, while `/acli` owns Jira CLI mechanics.
 
 ## Inputs
 
 - Jira project key, board scope, or explicit JQL.
-- Exact user comment author string, usually Jira display/account string such as `jesusgpythondev`.
+- Exact user comment author string, e.g. `jesusgpythondev`.
 - Status names for Backlog and Ready For QA.
-- The shift-left completion label, default `shift-left-reviewed`.
-- Optional epic scope when dependency analysis should stay inside a product area.
+- Shift-left completion label, default `shift-left-reviewed`.
+- Optional epic/product scope for dependency analysis.
 
-## BK Jira Quirks
+## Jira Quirks And Cost Rules
 
 - Use `assignee is EMPTY`, not `assignee = unassigned`.
+- Use `--paginate` for every search that feeds decisions.
+- Request minimal fields on searches: `key,parent,summary,status,priority,assignee,labels,updated,created,issuelinks` as needed.
 - `workitem search --json` may return a root array or an object with `.issues`; parsers must handle both.
-- Always use `--paginate`; default output can truncate silently.
-- The `[ISSUE_TRACKER_TOOL]` comment-list JSON returns `.comments[]` and comment `.author` is a plain string such as `jesusgpythondev`.
-- Count user involvement by exact string matching on `.comments[].author`, but do not display comment counts.
-- Query Epic Link explicitly with `"Epic Link" = <EPIC_KEY>` or `"Epic Link" is not EMPTY` when needed.
-- Missing formal Jira links do not mean no dependency exists; dependency can be functional and inferred from epic/story flow.
-- Jira label exclusion must include empty labels explicitly: `(labels is EMPTY OR labels not in (shift-left-reviewed))`.
-- When a JQL includes `labels in (shift-left-reviewed)`, treat the result as label-confirmed even if the search JSON omits or empties `fields.labels`.
+- Comment list returns `.comments[]`; `.comments[].author` is a plain string. Match it exactly and do not display comment counts.
+- Build one unique comment-check key set per run. Fetch comments once per key and cache `hasExactUserComment`.
+- Jira label exclusion must include empty labels: `(labels is EMPTY OR labels not in (shift-left-reviewed))`.
+- When JQL includes `labels in (shift-left-reviewed)`, treat the result as label-confirmed even if search JSON omits labels.
+- To read Epic Link/parent via `workitem view`, request explicit fields: `--fields 'key,parent'` or `--fields '*all'`. Default view omits parent.
+- Do not use `--fields '*all'` during normal runs; reserve it for one-off diagnostics.
 
-## Report Tables
+## Optimized Execution Plan
 
-| Table | Name | Question answered |
-|---|---|---|
-| 1 | Shift-Left Candidates | Which unworked Backlog Stories can the user take for shift-left now? |
-| 2 | Ready For My Sprint Testing | Which user-worked Stories are now Ready For QA? |
-| 3 | My Shift-Left Footprint | Which Stories has the user already shift-lefted and where are they now? |
-| 4 | Dependency Priority Map | Which Stories depend on others, and what should be refined/tested first? |
+1. Retrieve recent Engram/Jira quirks. Apply only validated or directly observed learnings.
 
-## Table Criteria
-
-### Table 1 - Shift-Left Candidates
-
-Include ONLY unassigned Story work whose current Jira status is exactly Backlog and that does NOT have the `shift-left-reviewed` label. The label means `/shift-left-testing` already processed the Story; exclude those even if they remain in Backlog.
-
-Baseline JQL:
+2. Query shift-left candidates once:
 
 ```jql
 project = <PROJECT_KEY>
@@ -70,41 +61,9 @@ AND (labels is EMPTY OR labels not in (shift-left-reviewed))
 ORDER BY priority DESC, created ASC
 ```
 
-Columns: `Key | Epic | Summary | Priority | Dependency Signal | Recommended Action`.
+Use fields: `key,parent,summary,priority,status,labels,created`.
 
-Recommended action values:
-- `shift-left-now`
-- `needs-context`
-- `wait-for-parent`
-
-### Table 2 - Ready For My Sprint Testing
-
-Include ONLY Stories that are Ready For QA, have `shift-left-reviewed`, and have at least one exact-author comment by the current user. This identifies Stories the user already worked during shift-left and can now test with `/sprint-testing`.
-
-Baseline JQL before comment filtering:
-
-```jql
-project = <PROJECT_KEY>
-AND issuetype = Story
-AND status = "Ready For QA"
-AND labels in (shift-left-reviewed)
-ORDER BY priority DESC, updated DESC
-```
-
-Then fetch comments for each candidate and keep only tickets where `.comments[].author == <EXACT_USER_AUTHOR>`.
-
-Columns: `Key | Epic | Summary | Assignee | Last Signal | Recommended Action`.
-
-Recommended action values:
-- `sprint-test-now`
-- `needs-context`
-- `blocked`
-
-### Table 3 - My Shift-Left Footprint
-
-Include Stories with `shift-left-reviewed` and at least one exact-author comment by the current user. Do not show comment counts; the table is a lightweight ownership/continuity view.
-
-Baseline JQL before comment filtering:
+3. Query user-worked shift-left seed once:
 
 ```jql
 project = <PROJECT_KEY>
@@ -114,21 +73,17 @@ AND statusCategory != Done
 ORDER BY updated DESC
 ```
 
-Then fetch comments for each candidate and keep only tickets where `.comments[].author == <EXACT_USER_AUTHOR>`.
+Use fields: `key,parent,summary,status,assignee,priority,updated`.
 
-Columns: `Key | Epic | Status | Summary | Next Check`.
+4. Filter the seed by exact user comments. De-duplicate keys first; run `workitem comment list --key <KEY> --json` once per unique key; keep rows where `.comments[].author == <EXACT_USER_AUTHOR>`.
 
-Recommended next-check values:
-- `watch-ready-for-qa`
-- `sprint-test-now`
-- `monitor-dev-progress`
-- `closed-context`
+5. Derive both continuity views from the filtered seed:
+- `Ready for my sprint-testing` count/keys = filtered rows where status is exactly Ready For QA.
+- `My Shift-Left Continuity` table = all filtered rows, with `Next Action = sprint-test-now` for Ready For QA rows.
 
-### Table 4 - Dependency Priority Map
+6. Build dependency scope from Table 1 keys, filtered continuity keys, their parent/Epic keys, formal `issuelinks`, and only same-scope sibling Stories that change readiness or priority. Use the old broad active-Story query only as fallback when parent/link data is missing.
 
-Include Story dependencies that affect Table 1, Table 2, or near-term refinement order. Treat formal Jira links as facts. Treat epic ordering and domain sequence as inference. Keep the table compact; include only dependencies that change priority or readiness.
-
-Baseline JQL:
+Fallback dependency JQL:
 
 ```jql
 project = <PROJECT_KEY>
@@ -137,20 +92,46 @@ AND status not in (Closed, ABORTED, "Deployed to Production", QA Approved)
 ORDER BY priority DESC, created ASC
 ```
 
+## Report Tables
+
+| Table | Name | Question answered |
+|---|---|---|
+| 1 | Shift-Left Candidates | Which unworked Backlog Stories can the user take now? |
+| 2 | My Shift-Left Continuity | Which user-worked Stories need monitoring or sprint testing? |
+| 3 | Dependency Priority Map | Which Stories drive near-term order? |
+
+## Table Rules
+
+### Table 1 - Shift-Left Candidates
+
+Include only unassigned Story work in exact Backlog status without `shift-left-reviewed`.
+
+Columns: `Key | Epic | Summary | Priority | Dependency Signal | Recommended Action`.
+
+Recommended actions: `shift-left-now`, `needs-context`, `wait-for-parent`.
+
+### Table 2 - My Shift-Left Continuity
+
+Include only `shift-left-reviewed`, non-Done Stories with at least one exact-author comment by the current user. Do not show comment counts.
+
+Columns: `Key | Epic | Status | Summary | Assignee | Next Action`.
+
+Next actions: `sprint-test-now`, `watch-ready-for-qa`, `monitor-dev-progress`, `closed-context`.
+
+### Table 3 - Dependency Priority Map
+
+Include only dependencies that affect Table 1, Ready For QA follow-up, or near-term refinement order. Formal Jira links are facts. Epic/story flow is inference.
+
 Columns: `Priority | Key | Depends On | Dependency Type | Status | Recommendation`.
 
-Recommended recommendation values:
-- `do-first`
-- `ready-after-parent`
-- `wait`
-- `reference-only`
+Recommendations: `do-first`, `ready-after-parent`, `wait`, `reference-only`.
 
-## Dependency Inference Rules
+## Dependency Rules
 
-- `formal link: <KEY>` when Jira has a dependency link.
-- `functional dependency inferred: <short reason>` when no Jira link exists but epic/story flow implies order.
-- Use `functional dependency inferred`, not `blocked in Jira`, unless Jira has a formal blocker link.
-- Shift-left viability is about requirements clarity, not implementation readiness.
+- Use `formal link: <KEY>` only when Jira has a dependency link.
+- Use `functional dependency inferred: <short reason>` when epic/story flow implies order without a Jira link.
+- Do not call inferred dependencies `blocked in Jira`.
+- Shift-left viability is requirements clarity, not implementation readiness.
 - A Story can be viable for refinement even if implementation depends on another Story.
 
 ## Output Contract
@@ -160,43 +141,41 @@ Recommended recommendation values:
 
 ### Executive Summary
 - Shift-left candidates: <count + keys>
-- Ready for my sprint-testing: <count + keys>
-- My shift-left footprint: <count + keys>
+- Ready for my sprint-testing: <count + keys derived from Table 2>
+- My shift-left footprint: <count + keys from Table 2>
 - Dependency-driven priority: <top recommendation>
 
 ### Table 1 - Shift-Left Candidates
 | Key | Epic | Summary | Priority | Dependency Signal | Recommended Action |
 |---|---|---|---|---|---|
 
-### Table 2 - Ready For My Sprint Testing
-| Key | Epic | Summary | Assignee | Last Signal | Recommended Action |
+### Table 2 - My Shift-Left Continuity
+| Key | Epic | Status | Summary | Assignee | Next Action |
 |---|---|---|---|---|---|
 
-### Table 3 - My Shift-Left Footprint
-| Key | Epic | Status | Summary | Next Check |
-|---|---|---|---|---|
-
-### Table 4 - Dependency Priority Map
+### Table 3 - Dependency Priority Map
 | Priority | Key | Depends On | Dependency Type | Status | Recommendation |
 |---|---|---|---|---|---|
 
 ### Data Quality Notes
-- <pagination, parser, JQL, missing field, comment-filter, or inference caveat>
+- <pagination, field selection, parser, comment-filter, fallback, or inference caveat>
 ```
+
+If a table is empty, show `No tickets found matching criteria`.
 
 ## Quality Gates
 
-- Every query that can return many issues uses pagination.
-- JSON parsing handles both root arrays and `.issues` wrappers.
+- Search queries use `--paginate` and minimal `--fields`.
+- Parser handles root array and `.issues` wrapper.
 - Table 1 excludes `shift-left-reviewed` and all post-Backlog statuses.
-- Table 2 requires Ready For QA + `shift-left-reviewed` + exact user comment author.
-- Table 3 requires `shift-left-reviewed` + exact user comment author, but shows no comment counts.
-- Table 4 separates formal Jira links from functional inference.
-- Every table stays visible; if empty, show `No tickets found matching criteria`.
-- Every row ends with a recommended action or next check.
+- Table 2 requires `shift-left-reviewed`, non-Done, and exact user comment author.
+- Ready For QA sprint-testing count is derived from Table 2, not from a separate comment-filter pass.
+- Dependency map separates formal Jira links from functional inference.
+- Broad active-board dependency query is fallback only; note when used.
+- Every row ends with an action or recommendation.
 
 ## Engram Loop
 
-- Before running analysis, retrieve Jira quirks and prior board pattern learnings from memory.
+- Before analysis, retrieve Jira quirks and prior board pattern learnings from memory.
 - Save new quirks only when observed in a real Jira response or confirmed by the user.
 - If a JQL/parser/comment assumption fails, save the root cause and corrected pattern.
