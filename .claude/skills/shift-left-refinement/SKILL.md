@@ -1,6 +1,6 @@
 ---
 name: shift-left-refinement
-description: "Refine a Jira Story before development by turning rough requirements into an Ely-style shift-left package: metadata snapshot, source evidence, expert findings, scope, dependency map, key contract decisions, AC reconciliation, Gherkin criteria, business rules, edge-case risk matrix, ATP draft, readiness gates, handoff notes, and Jira publication checklist. Use when the user mentions shift-left-workflow-pattern, shift-left refinement, pre-sprint quality review, AC refinement, BK-34/BK-28/Ely-style structure, Jira story grooming, or asks to improve a Story before estimation. This is a single-Story refinement pattern, not the full /shift-left-testing batch workflow."
+description: "Refine a single Jira Story before development into an Ely-style shift-left package: evidence, scope, decisions, refined ACs, risks, ATP draft, QA story-point recommendation, readiness gates, and Jira publication checklist. Use for one-Story pre-sprint refinement, Jira QA-field/comment preparation, or improving a weak AC package before estimation. Use /shift-left-testing for batch backlog grooming and workflow orchestration."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [testing-e2e, issue-tracker, tms]
@@ -8,236 +8,172 @@ complementary_categories: [testing-e2e, issue-tracker, tms]
 
 # Shift-Left Refinement
 
-Convert an under-specified Jira Story into a clear, testable, pre-sprint refinement package. The goal is shared understanding before development starts, not test execution.
+Convert one under-specified Jira Story into a clear, testable, pre-sprint refinement package. Goal: shared PO/Dev/QA understanding before development starts, not test execution.
 
-## Use This Skill For
+## Scope
 
-- Refining acceptance criteria before estimation or sprint planning.
-- Applying the former `shift-left-workflow-pattern`.
-- Rebuilding a weak refinement using the BK-34 structure.
-- Rebuilding a shallow refinement using the richer Ely-style BK-2/BK-18/BK-28/BK-27 pattern.
-- Checking whether a Story is good enough for `/shift-left-testing` handoff.
-- Preparing Jira description content, comments, or ATP DRAFT structure.
+| Use for | Do not use for | Route instead |
+|---|---|---|
+| Single-Story AC refinement before estimation/sprint planning | Batch selection, workflow transitions, or Stage 0 orchestration | `/shift-left-testing` |
+| Former `shift-left-workflow-pattern` / BK-34 / Ely-style refinement | In-sprint QA, bug retest, ATP/ATR execution, evidence capture | `/sprint-testing` |
+| Jira description, QA comment/field, or ATP DRAFT preparation | Formal Jira/Xray test cases | `/test-documentation` |
+| Advisory QA story-point recommendation | Automated test code / KATA implementation | `/test-automation` |
 
-## Do Not Use This Skill For
-
-- Batch selection, workflow transitions, or full Stage 0 orchestration; use `/shift-left-testing`.
-- In-sprint manual QA, bug retesting, ATP/ATR execution, or evidence capture; use `/sprint-testing`.
-- Test case creation in Jira/Xray; use `/test-documentation`.
-- Automated test code; use `/test-automation`.
+If the Jira issue is not a Story, stop and route to the correct skill. Do not adapt this workflow to Bugs, Spikes, Tasks, or Tech-debt.
 
 ## Inputs
 
-Read only what is needed for the current Story:
+Read only what adds signal for the current Story:
 
-1. Story title, description, acceptance criteria, scope, business rules, and source spec.
-2. Parent epic or module context when dependencies matter.
-3. Prior comments that contain PO, Dev, QA, or expert decisions.
-4. Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-34`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`.
-5. Jira publishing rules when writing rich text: use Markdown-to-ADF conversion, never raw Markdown in rich-text Jira fields.
+1. Story detail via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced Markdown. Never use `acli view` for custom fields.
+2. Story title, description, ACs, scope, business rules, source spec, labels, status, points, parent epic, and comments.
+3. Parent epic/module context when dependencies matter.
+4. `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
+5. Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-32`, `BK-34`, `BK-38`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`, `QA Handoff Mirror`, `story points`.
+6. Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
 
-## Professional References
+If labels include `shift-left-reviewed` plus a dated `shift-left-YYYY-MM-DD` from the last 30 days, surface it and ask whether to refresh or reuse. If the Story changed after that label, recommend refresh.
 
-Use these as principles, not as prose to copy:
+## Principles
 
-- Agile Alliance ATDD / Three Amigos: product, development, and testing perspectives collaborate before implementation.
-- Martin Fowler Given-When-Then: scenarios describe preconditions, behavior, and expected outcome.
-- Roman Pichler story refinement: acceptance criteria should verify the story, not hide extra requirements.
-- Teresa Torres product trio: product, design, and engineering perspectives reduce opinion battles.
-- Agile Testing Quadrants: combine business-facing and technology-facing quality concerns.
+Apply ATDD / Three Amigos, Given-When-Then, product trio, and Agile Testing Quadrants as analysis principles; do not copy citation prose into the output.
 
-## Refinement Structure
+Story points are advisory and use Fibonacci values `1, 2, 3, 5, 8, 13, 21`. Base the QA recommendation on effort, complexity, uncertainty, and risk. Jira estimation fields remain canonical unless the user explicitly requests an update.
 
-Use this structure unless the user asks for a different format:
+Evidence labels: `Jira`, `Repo`, `Engram`, `External`, `Inference`.
 
-````markdown
-# <Story Key>: <Story Title>
+## Required Package Sections
 
-## Metadata Snapshot
-- Jira key: <key>
-- Status: <status>
-- Priority / points: <priority / points>
-- Reporter / assignee: <names>
-- Labels: <labels>
-- Last updated: <date or unknown>
+Use these H2 sections unless the user requests another format. Keep empty sections with `None identified.` so reviewers can verify completeness.
 
-## User Story
-As a <user/persona>, I want <capability>, so that <business outcome>.
+| Section | Purpose |
+|---|---|
+| `Metadata Snapshot` | Key, status, priority/points, reporter/assignee, labels, updated date |
+| `User Story` | Persona, capability, business outcome |
+| `Source & Evidence` | Inputs used and evidence labels |
+| `Shift-Left Review Status` | Verdict: Ready for estimation / Needs PO confirmation / Needs Dev confirmation / Blocked |
+| `Expert Review Summary` | Role findings for PO, Dev, QA, Design, Security, Workflow, Automation only when relevant |
+| `Scope` | In scope, out of scope, deferred/follow-up Stories |
+| `Dependency Map` | Formal and functional dependencies, owner, status, impact |
+| `Key Contract Decisions` | Endpoint, state, validation, error, permission, UI-flow, or data contract decisions |
+| `AC Reconciliation` | Original/source claim vs refined outcome and reason |
+| `Refined Acceptance Criteria` | Gherkin-style scenarios grouped by Happy, Negative, Boundary, Integration |
+| `Business Rules` | Confirmed rules; inferred rules marked clearly |
+| `Edge Cases & Risk Matrix` | Severity, expected behavior, mitigation, AC/ATP coverage |
+| `ATP Draft Matrix` | Outline names only, coverage target, priority, automation hint |
+| `QA Story Points Recommendation` | Advisory SP, confidence, basis, rationale, re-estimation triggers, boundary |
+| `Open Clarifications With Expert Recommendations` | Question, recommendation, pending owner |
+| `Implementation Readiness Gates` | PO contract, Dev feasibility, QA testability, Data/API, UX, Security/Ops |
+| `Handoff Notes` | PO, Dev, QA, Automation, not requested/not done |
+| `QA Handoff Mirror` | Compact Jira QA comment/field mirror, not full duplication |
+| `Publication Checklist` | What was or was not published/verified |
+| `References` | Source links, tickets, memories, repo paths |
 
-## Source & Evidence
-- Source spec: <link or source reference>
-- Parent epic/module: <key/name>
-- Evidence used: <Jira fields, comments, context files, repo files>
-- Evidence labels used: Jira | Repo | Engram | External | Inference
+## Quality Gates
 
-## Shift-Left Review Status
-- Verdict: Ready for estimation | Needs PO confirmation | Needs Dev confirmation | Blocked
-- Summary: <one paragraph explaining value, risk, and next decision>
+- ACs are the floor. Push beyond happy path into boundaries, exceptions, states, and anomalies.
+- 1:N is the default for non-trivial ACs. Derive scenarios through equivalence partitions, BVA, state transitions, decision tables, or pairwise. If an AC maps to one scenario, justify why it is trivially atomic.
+- Avoid padding. Every added AC, edge case, and ATP row must explore a distinct risk or contract.
+- Use exact marker `NEEDS PO/DEV CONFIRMATION` for every inferred AC or edge case. Never paraphrase it.
+- Label every contract decision, AC change, and High risk with evidence.
+- Every High risk must map to at least one refined AC or ATP row.
+- Prefer fewer stronger ACs over long lists that hide new requirements.
+- If ACs exceed about five independent behaviors, recommend story splitting.
+- If refined ACs exceed about eight scenarios or edge cases exceed about ten, summarize in the Story description and push detailed coverage to ATP/comment mirror.
+- Do not mark `Ready for estimation` unless PO contract, Dev feasibility, and QA testability gates pass or are explicitly accepted as non-blocking.
+- Do not invent PO/Dev questions for clean Stories. `No significant gaps found` is valid.
+- Do not ask a question already answered clearly by the ACs, description, source spec, or comments.
 
-## Expert Review Summary
-| Role | Finding | Recommendation | Confirmation |
-|---|---|---|---|
-| PO, Dev, QA, Design, Security, or Workflow | <finding> | <recommendation> | Confirmed / Needs confirmation / Not applicable |
+## ATP Draft Rules
 
-## Scope
-### In Scope
-- <included behavior>
+- ATP DRAFT is outline-level only: scenario name, one-line precondition, one-line expected result.
+- Include coverage estimate with zero counts shown: Positive, Negative, Boundary, Integration, API, Total.
+- Include 2-3 sentence rationale tied to Story complexity and risk.
+- Exclude parametrization tables, per-outline test-data JSON, numbered test steps, Faker recipes, and data generation strategy.
+- Formal TC creation belongs to `/test-documentation`; automated code belongs to `/test-automation`.
 
-### Out of Scope
-- <excluded behavior>
+## QA Story Points Recommendation
 
-### Deferred / Follow-up Stories
-- <future behavior or ticket>
+Add a compact advisory estimate to the package and QA mirror:
 
-## Dependency Map
-| Dependency | Type | Impact | Owner | Status |
-|---|---|---|---|---|
-| <ticket/system/table/API> | formal / functional / inferred | <impact> | <owner> | <current state> |
-
-## Key Contract Decisions
-| Decision | Rationale | Source | Confirmation |
-|---|---|---|---|
-| <contract decision> | <why this is the right contract> | Jira / Repo / Engram / Inference | Confirmed / Needs PO-DEV confirmation |
-
-## AC Reconciliation
-| Original AC / source claim | Evidence | Refined outcome | Reason | Owner |
-|---|---|---|---|---|
-| <original or missing requirement> | <observed evidence> | kept / changed / removed / added | <why> | PO / Dev / QA |
-
-## Refined Acceptance Criteria
-Group scenarios as needed: Happy Path, Negative, Boundary, Integration.
-
-```gherkin
-Background:
-  Given <shared precondition>
-
-Scenario: <behavior>
-  Given <precondition>
-  When <action>
-  Then <observable result>
+```markdown
+## QA Story Points Recommendation
+- Recommendation: <1|2|3|5|8|13|21> SP
+- Confidence: <0.00-1.00>
+- Basis: effort=<Low/Med/High>; complexity=<Low/Med/High>; uncertainty=<Low/Med/High>; risk=<Low/Med/High>
+- Rationale: <one sentence tied to ATP size, dependencies, open confirmations, and risk>
+- Re-estimation triggers: <scope change>; <new dependency>; <open confirmation resolved differently>; <security/performance/data risk expands>
+- Boundary: QA recommendation only; Jira Story Points / Epic / User Story fields remain canonical unless the user explicitly requests an update.
 ```
 
-## Business Rules
-- <confirmed rule only; inferred rules must be marked>
+Role inputs:
 
-## Edge Cases & Risk Matrix
-| Severity | Edge case | Expected behavior | Mitigation | Coverage |
-|---|---|---|---|---|
-| High / Medium / Low | <case> | <expected behavior> | <mitigation> | AC/ATP reference |
+| Role | Contribution |
+|---|---|
+| PO/Product | Scope and business-value clarity |
+| Dev/Architecture | Implementation complexity, dependencies, feasibility |
+| QA | Coverage size, testability, edge-case risk, confidence |
+| UX/Design | Flow ambiguity and user-state complexity |
+| Security/Ops | Auth, permission, rollout, data, or operational risk |
+| Skeptical Reviewer | Rejects inflated points without evidence |
 
-## ATP Draft Matrix
-| ID | Type | Scenario | Coverage target | Priority | Automation hint |
-|---|---|---|---|---|---|
-| <KEY>-ATC-01 | Happy / Negative / Boundary / Integration | <scenario> | <risk/rule> | High / Medium / Low | UI / API / DB / Manual |
-
-## Open Clarifications With Expert Recommendations
-### <Role> - <Topic>
-- Question: <specific decision needed>
-- Expert recommendation: <recommended answer and why>
-- Pending confirmation: PO | Dev | Design | QA | Security
-
-## Implementation Readiness Gates
-| Gate | Status | Evidence | Blocker / Next action |
-|---|---|---|---|
-| PO contract | Pass / Needs / Blocked | <evidence> | <next action> |
-| Dev feasibility | Pass / Needs / Blocked | <evidence> | <next action> |
-| QA testability | Pass / Needs / Blocked | <evidence> | <next action> |
-| Data/API | Pass / Needs / Blocked | <evidence> | <next action> |
-| UX | Pass / Needs / Blocked | <evidence> | <next action> |
-| Security/Ops | Pass / Needs / Blocked | <evidence> | <next action> |
-
-## Handoff Notes
-- For PO: <decision or confirmation needed>
-- For Dev: <contract, dependency, or implementation risk>
-- For QA: <minimum ATP and risk focus>
-- For Automation: <candidate surfaces and blockers>
-- Not requested / not done: <explicitly skipped work>
+Keep the recommendation advisory and under six lines in the QA mirror. If more justification is needed, point to `ATP Draft Matrix`, `Edge Cases & Risk Matrix`, and `Implementation Readiness Gates` instead of expanding the SP block.
 
 ## QA Handoff Mirror
-- Executive summary: <what changed and why QA/PO/Dev should care>
-- Refinement delta: <contract decisions, AC reconciliation, high risks, ATP rows, readiness gates>
-- ATP draft summary: <compact matrix or scenario list>
-- High/Medium risks: <risk list with coverage reference>
-- Open confirmations: <owner + decision needed>
-- Dependency note: <formal and functional dependencies that affect testing>
-- Out of scope: <what QA should not test for this Story>
-- Publication status: <description, AC field, comment mirror, labels, status, verification>
 
-## Publication Checklist
-- Description updated: yes/no/not requested
-- AC field updated: yes/no/not requested
-- ATP DRAFT or comment mirror updated: yes/no/not requested
-- Labels applied: `shift-left-reviewed`, `shift-left-YYYY-MM-DD` yes/no/not requested
-- Transition status: no transition needed | ready for `/shift-left-testing` handoff | completed externally
-- Rendered verification: re-read Jira/rendered content yes/no/not requested
-- Ownership handback: PO | Dev | QA | not requested
+The QA mirror is for Jira comments or QA fields. It complements canonical US/Epic fields; it does not duplicate the full description.
 
-## References
-- <source links or prior tickets>
-````
+Include:
 
-## Ely-Style Enrichment Rules
+- Executive summary: what changed and why QA/PO/Dev should care.
+- Refinement delta: contract decisions, AC reconciliation, high risks, ATP rows, readiness gates.
+- ATP draft summary: compact scenario list or matrix.
+- High/Medium risks: risk list with coverage reference.
+- Open confirmations: owner + decision needed.
+- Dependency note: dependencies affecting testing or estimation.
+- QA story points recommendation: SP, confidence, effort/complexity/uncertainty/risk basis, re-estimation triggers, advisory boundary.
+- Out of scope: what QA should not test for this Story.
+- Publication status: description, AC field, ATP field/comment, labels, status, verification.
 
-Use the Ely-style sections when a Story affects API, data, auth, workflow state, UX flow, permissions, integration, or cross-ticket dependencies. These sections prevent a shallow output that only has a user story and ACs.
+## Publication Rules
 
-- `Key Contract Decisions` captures decisions that Dev must implement consistently: endpoint behavior, state transitions, validation, errors, transactions, RLS, permissions, idempotency, or UI flow.
-- `AC Reconciliation` is required when original ACs are vague, contradicted by repo/Jira evidence, missing negative paths, or changed during refinement.
-- `Edge Cases & Risk Matrix` replaces loose risk bullets. Every High risk must map to at least one AC or ATP row.
-- `ATP Draft Matrix` is a testing handoff outline only. Do not create Jira/Xray test cases here; that belongs to `/test-documentation`.
-- `Implementation Readiness Gates` decides whether `Ready for estimation` is honest. If a required gate is `Blocked`, the verdict cannot be Ready.
-- `Handoff Notes` tells the next PO/Dev/QA/Automation actor what remains.
-- `QA Handoff Mirror` is the Jira comment/QA-field summary. It should not duplicate the full description, but it must be operationally useful: summary, deltas, ATP draft, risks, open confirmations, dependencies, out-of-scope, and publication status.
+Only publish when the user explicitly requests Jira writes. If the user requested analysis only, leave every checklist item as `not requested`.
 
-## Artifact Boundaries
+When publishing:
 
-Separate artifact types so shift-left does not absorb sprint execution work:
+1. Read current synced Story content first; append, never overwrite.
+2. Write refined ACs to `{{jira.acceptance_criteria}}`; fallback to a structured `## Acceptance Criteria` comment only if the field is absent.
+3. Append a condensed `QA Refinements (Shift-Left Analysis)` section to the Story description; keep refined ACs in the AC field.
+4. Write full ATP DRAFT to `{{jira.acceptance_test_plan}}`; fallback to `## Acceptance Test Plan (ATP)` comment only if the field is absent.
+5. Add one QA Handoff Mirror comment/field entry. If ATP field exists, comment is a compact notification and mirror, not the full ATP body.
+6. Add labels `shift-left-reviewed` and `shift-left-YYYY-MM-DD`; the dated label lets `/sprint-testing` judge freshness and skip redundant planning later.
+7. Never transition beyond `{{jira.status.story.estimation}}`; PO/Dev own estimation and Ready For Dev.
+8. Re-sync or visually verify rendered Jira content after writes.
 
-| Artifact | Belongs here? | Signals | Route elsewhere when |
-|---|---|---|---|
-| Shift-left refinement | Yes | ACs, decisions, risks, scope, ATP draft, open confirmations | N/A |
-| Architect annotation | Input evidence | schema/API/RLS/migration notes | It becomes the whole output instead of evidence |
-| Ready For QA handoff | No | deployment link, PR, "what shipped" | use `/sprint-testing` context |
-| QA execution / ATR | No | pass/fail, evidence, bugs, test run result | use `/sprint-testing` |
-| Jira/Xray test cases | No | formal TC creation/linking | use `/test-documentation` |
-
-## Expert Analysis Rules
-
-- Every open question needs four parts: role/topic heading, question, expert recommendation, pending confirmation.
-- Separate confirmed facts from inferred recommendations.
-- Label every contract decision, AC change, and High risk with evidence: `Jira`, `Repo`, `Engram`, `External`, or `Inference`.
-- Mark any inferred AC or edge case as `NEEDS PO/DEV CONFIRMATION` when it is not explicit in the original Story.
-- Prefer fewer, stronger ACs over long lists that hide new requirements.
-- If acceptance criteria exceed about five independent behaviors, recommend story splitting.
-- If refined ACs exceed about eight scenarios or edge cases exceed about ten, summarize in the Story description and push detailed coverage to ATP/comment mirror.
-- Do not mark a Story `Ready for estimation` unless PO contract, Dev feasibility, and QA testability gates are Pass or explicitly accepted as non-blocking.
-- Any referenced prior/future Story must appear in `Dependency Map`, `Out of Scope`, or `Deferred / Follow-up Stories`.
-- If the output only contains User Story, Scope, ACs, and Business Rules, treat it as probably too shallow for Ely-style shift-left unless the Story is genuinely trivial.
-
-## BK Failure Prevention
-
-The BK-28 failure mode was: good analysis lived only in comments, but the Jira description, labels, and transition were not completed. Prevent that by reporting publication status explicitly:
+Publication checklist:
 
 ```markdown
 ## Publication Checklist
 - Description updated: yes/no/not requested
 - AC field updated: yes/no/not requested
-- ATP DRAFT or comment mirror updated: yes/no/not requested
+- ATP DRAFT field or fallback comment updated: yes/no/not requested
+- QA Handoff Mirror comment/field updated: yes/no/not requested
+- QA story points recommendation included: yes/no/not assessed
 - Labels applied: `shift-left-reviewed`, `shift-left-YYYY-MM-DD` yes/no/not requested
 - Transition status: no transition needed | ready for `/shift-left-testing` handoff | completed externally
-- Rendered verification: re-read Jira/rendered content yes/no/not requested
+- Rendered/read-back verification: yes/no/not requested
 - Ownership handback: PO | Dev | QA | not requested
 ```
 
-If the user only asked for analysis, do not mutate Jira. Still include the checklist with `not requested` so the next agent sees what remains.
+## Boundaries
 
-## Rich Text Jira Publishing
-
-- Author in Markdown first for review.
-- Convert Markdown to ADF before Jira rich-text writes.
-- Native ADF tables, panels, nested lists, and expand blocks are preferred when the content is complex.
-- Do not pass raw Markdown to `--description`, `--body`, or rich-text custom fields.
-- After publishing, re-read or visually verify the rendered result when the task includes Jira writes.
-- When writing the QA comment or QA-field mirror, use the `QA Handoff Mirror` content, not a one-paragraph changelog. The mirror is shorter than the description but rich enough for QA, PO, and Dev to act without re-reading every section.
+- No Jira mutation unless explicitly requested.
+- No smoke, browser, API, or DB execution. Feasibility is established by reading Jira, context docs, code, API maps, or schema docs only.
+- No `evidence/` folder; feature does not exist yet.
+- No formal TCs, ATP/ATR execution, or Xray Test creation.
+- No git branch, commit, or PR. Jira is canonical for this workflow.
+- No raw Markdown to Jira rich-text fields; convert to ADF first.
+- No full duplication in comments when canonical fields already hold the body.
 
 ## Output Contract
 
@@ -247,20 +183,21 @@ Return:
 ## Shift-Left Refinement - <Story Key>
 
 ### Executive Summary
-<what changed and what decision is needed>
+<what changed, value/risk, and decision needed>
 
 ### Refined Package
-<full structure above>
+<required package sections above>
 
-### Improvement Summary
+### Improvement Metrics
 - Contract decisions added: <count / none>
 - AC reconciliation rows added: <count / none>
 - High risks covered: <count / none>
 - ATP draft rows added: <count / none>
 - Readiness gates blocked: <list / none>
+- QA story points recommendation: <SP / not assessed> (confidence <0.00>; re-estimation triggers: <list / none>)
 
 ### Publication Checklist
-<checklist>
+<checklist from Publication Rules>
 
 ### Next Action
 <publish to Jira | ask PO/Dev/QA | split story | no action requested>
@@ -268,7 +205,7 @@ Return:
 
 ## Engram Loop
 
-- Before refining, use recent memory first; then search only targeted terms if needed.
-- Pull full observations only for the most relevant 1-3 memories.
-- Convert memory into short applied learnings; do not paste long history into the output.
-- Save new learning only after a validated decision, bugfix, gotcha, or accepted convention.
+- Use recent memory first; then search targeted terms only if needed.
+- Pull full observations only for the top 1-3 relevant memories.
+- Apply at most 3-5 learnings; label each as validated, candidate, or conflicting.
+- Save only validated decisions, user-approved conventions, repeated patterns, bugfixes, or gotchas per global Engram protocol.
