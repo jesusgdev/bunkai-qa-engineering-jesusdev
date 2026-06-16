@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-06-14T00:59:47.796Z`
+> Generated: `2026-06-15T20:20:30.446Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 23
+Skills indexed: 24
 
 ---
 ## Skill: acli
@@ -336,6 +336,34 @@ Skills indexed: 23
 
 ---
 
+## Skill: git-flow-master-refinement
+
+**Purpose**: Use alongside /git-flow-master when a dirty worktree needs expert staging classification before commit/push.
+
+**Compact Rules**:
+- Classifying dirty worktrees into atomic conventional commits.
+- Reviewing modified + untracked files before staging.
+- Separating product, test, docs, generated metadata, config, and tooling changes.
+- Creating a commit plan with exact paths per commit.
+- Flagging files that should stay unstaged or need user confirmation.
+- Branch creation, commits, push, PR creation, conflict resolution, or strategy setup. Use `/git-flow-master` for those actions.
+- Replacing `/git-flow-master` safety rules.
+- Running destructive git commands or broad staging commands.
+- `git status --porcelain` or `git status --short`
+- `git diff --stat`
+- Relevant `git diff -- <path>` for each changed group
+- For untracked files, inspect content/type before recommending staging
+- Classify by responsibility and outcome, not by directory alone.
+- Identify the dominant change type per file cluster: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
+- If supporting files exist only because of the dominant change, keep them in the same commit.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/git-flow-master-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
 ## Skill: judgment-day
 
 **Purpose**: Trigger: judgment day, dual review, adversarial review, juzgar.
@@ -422,24 +450,24 @@ Skills indexed: 23
 
 ## Skill: shift-left-refinement
 
-**Purpose**: Refine a Jira Story before development by turning rough requirements into an Ely-style shift-left package: metadata snapshot, source evid...
+**Purpose**: Refine a single Jira Story before development into an Ely-style shift-left package: evidence, scope, decisions, refined ACs, risks, ATP d...
 
 **Compact Rules**:
-- Refining acceptance criteria before estimation or sprint planning.
-- Applying the former `shift-left-workflow-pattern`.
-- Rebuilding a weak refinement using the BK-34 structure.
-- Rebuilding a shallow refinement using the richer Ely-style BK-2/BK-18/BK-28/BK-27 pattern.
-- Checking whether a Story is good enough for `/shift-left-testing` handoff.
-- Preparing Jira description content, comments, or ATP DRAFT structure.
-- Batch selection, workflow transitions, or full Stage 0 orchestration; use `/shift-left-testing`.
-- In-sprint manual QA, bug retesting, ATP/ATR execution, or evidence capture; use `/sprint-testing`.
-- Test case creation in Jira/Xray; use `/test-documentation`.
-- Automated test code; use `/test-automation`.
-- Story title, description, acceptance criteria, scope, business rules, and source spec.
-- Parent epic or module context when dependencies matter.
-- Prior comments that contain PO, Dev, QA, or expert decisions.
-- Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-34`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`.
-- Jira publishing rules when writing rich text: use Markdown-to-ADF conversion, never raw Markdown in rich-text Jira fields.
+- Story detail via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced Markdown. Never use `acli view` for custom fields.
+- Story title, description, ACs, scope, business rules, source spec, labels, status, points, parent epic, and comments.
+- Parent epic/module context when dependencies matter.
+- `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
+- Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-32`, `BK-34`, `BK-38`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`, `QA Handoff Mirror`, `story points`.
+- Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
+- ACs are the floor. Push beyond happy path into boundaries, exceptions, states, and anomalies.
+- 1:N is the default for non-trivial ACs. Derive scenarios through equivalence partitions, BVA, state transitions, decision tables, or pairwise. If an AC maps to one scenario, justify why it is trivially atomic.
+- Avoid padding. Every added AC, edge case, and ATP row must explore a distinct risk or contract.
+- Use exact marker `NEEDS PO/DEV CONFIRMATION` for every inferred AC or edge case. Never paraphrase it.
+- Label every contract decision, AC change, and High risk with evidence.
+- Every High risk must map to at least one refined AC or ATP row.
+- Prefer fewer stronger ACs over long lists that hide new requirements.
+- If ACs exceed about five independent behaviors, recommend story splitting.
+- If refined ACs exceed about eight scenarios or edge cases exceed about ten, summarize in the Story description and push detailed coverage to ATP/comment mirror.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
@@ -453,26 +481,18 @@ Skills indexed: 23
 **Purpose**: Orchestrates pre-sprint Shift-Left QA on a batch of backlog Stories.
 
 **Compact Rules**:
-- `.context/business/business-feature-map.md` + `.context/business/business-data-map.md` — domain vocabulary, entity model, CRUD matrix. Anchors refined ACs in real entities and flows.
-- `.context/master-test-plan.md` — regression Epic + in-scope modules. Tells the refinement whether the Story falls inside an already-prioritized area.
-- The Story's Acceptance Criteria + `**Source spec:**` reference on Jira. Detailed read via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced `acceptance-criteria.md` (+ description). NEVER `acli view` for custom fields. Canonical input — every refined AC must trace back here.
-- `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/` if a PBI folder already exists for this Story (created by a prior `/sprint-testing` cycle). Carries earlier session notes worth honoring.
-- `.agents/jira-workflows.json` — Story workflow + valid transitions (`backlog -> shift_left_qa -> estimation`). Source of `{{jira.transition.story.*}}` slugs used in Phase 3.
-- `.agents/jira-required.yaml` — canonical slug catalog. Source of `{{jira.acceptance_test_plan}}` and other Jira field slugs touched in handoff.
-- Update Jira description with "QA Refinements (Shift-Left Analysis)"
-- Populate ATP DRAFT (Modality jira-native: custom field + comment mirror;
-- Labels: shift-left-reviewed + shift-left-{YYYY-MM-DD}
-- Transition: backlog -> shift_left_qa (analyze) -> estimation (estimate)
-- Verify trace
-- Always load `/acli` (custom-field update, comment, transition, label, link — all writes; plus the trivial key+summary+status candidate search). Story DETAIL reads (description, ACs, scope, comments, parent epic) go through `bun run jira:sync-issues get/jql` — NOT `acli view`.
-- **Modality jira-xray** AND user opts into Test Plan link draft for each Story -> also load `/xray-cli`. The default in shift-left is NO Test Plan creation (PO has not estimated yet, scope may shrink) — the ATP DRAFT lives on the Story description + comment + custom field. Ask the user before creating Test Plan issues.
-- **Modality jira-native** -> `/acli` alone covers `[ISSUE_TRACKER_TOOL]` and `[TMS_TOOL]`.
-- `.context/business/business-data-map.md`
-- (truncated — read full SKILL.md for the rest)
+- ACs are the FLOOR. Refinement's job is to push past the happy-path contract: surface the boundaries, exceptions, states, and anomalies the Story is silent on.
+- 1:N is the default: a non-trivial AC implies multiple outlines (valid partition + each distinct invalid + boundaries + states). A 1-outline AC requires a written "trivially atomic" justification — never the default.
+- Tag each refinement gap to a technique: ranges/limits → BVA; status/lifecycle fields → State-Transition; 2+ interacting conditions → Decision Table; 3+ combinable factors → Pairwise.
+- A refined AC (Given/When/Then) is the business assertion; the outline (`Should <behavior> <condition>`) is its exploration. Keep them distinct.
+- Stories ONLY (no bugs — nothing to refine upstream). Entry status Backlog / Shift-Left QA / Estimation / Ready For Dev.
+- Output = refined ACs + gap/ambiguity questions + ATP DRAFT (outline NAMES + coverage estimate, no test code, no execution).
+- The heart of the skill (Phase 2) = edge cases not in story + ambiguities + gaps — feed them to PO/Dev as questions AND as derived outlines.
+- On completion: add label `shift-left-reviewed`; transition Backlog → Shift-Left QA → Estimation.
 
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+**Read full SKILL.md when**: running the batch grooming pipeline, writing the per-Story `shift-left-refinement.md`, or handling the PO/Dev handoff.
 
-> Source: `.claude/skills/shift-left-testing/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.claude/skills/shift-left-testing/SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -481,26 +501,20 @@ Skills indexed: 23
 **Purpose**: Orchestrates in-sprint manual QA per ticket across Stages 1 (Planning), 2 (Execution) and 3 (Reporting).
 
 **Compact Rules**:
-- `.agents/project.yaml` — project identity, env URLs, `{{PROJECT_KEY}}`, MCP names, active environment.
-- `.agents/jira-required.yaml` — canonical slug catalog (custom fields, statuses, transitions) for the active workspace.
-- `.agents/jira-fields.json` — slug → numeric custom-field-ID mapping for `{{jira.<slug>}}` resolution at runtime.
-- `.agents/jira-workflows.json` — workflow + transition catalog (resolves Ready For QA → In Testing → Tested for Story / Bug / Test Case work types).
-- `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — ticket-local context: session notes, open questions (hand-authored; read if it already exists from a prior Session Start). NON-Jira file — never a Jira mirror.
-- `.context/master-test-plan.md` — regression Epic pointer, modality decision (Xray vs Jira-native), what to test and why.
-- `.context/business/business-feature-map.md` — feature catalog vocabulary; resolves "what epic owns this story" for the `epics/EPIC-<KEY>-<slug>/` PBI folder naming (module = Epic, 1:1).
-- `.context/business/domain-glossary.md` (if present) — canonical domain vocabulary; consult BEFORE authoring the ATP, refined ACs, and TC outlines so test names, entity terms, and Gherkin wording use canonical terms and avoid anti-glossary banned terms. If a new or ambiguous term surfaces during testing, flag it in the Stage 3 QA comment for the PM to add via the glossary's change protocol — NEVER edit the glossary from a testing session.
-- The Story or Bug ticket itself — AC, ATP, comments — read via `bun run jira:sync-issues get <KEY> --include-comments`, then read the synced `.md` files (`story.md`, `acceptance-criteria.md`, `acceptance-test-plan.md`, `comments.md`) under the STORY folder. Jira is source-of-truth; the synced `.md` is a read-only cache. NEVER `acli workitem view` for custom fields — it returns `null`.
-- `.env` — `LOCAL_USER_*` / `STAGING_USER_*` credentials. NEVER hardcode; always read at runtime.
-- `kata-manifest.json` — registry of existing KATA Components + ATCs. Check before proposing new ATCs in Stage 3 hand-off so the test-automation phase doesn't duplicate work.
-- Story ID with status Ready-for-QA -> Single ticket / User Story.
-- Bug ID deployed to staging -> Single ticket / Bug.
-- Sprint number, "process sprint X", or an existing `SPRINT-{N}-TESTING.md` -> Batch sprint.
-- If the framework file does not exist yet, generate it first (see `sprint-orchestration.md`).
-- (truncated — read full SKILL.md for the rest)
+- AC-pass is the FLOOR, not the goal. Coverage = AC-conformance + risk-beyond-AC (boundaries, errors, states, anomalies). Never report "% of ACs verified" as completeness.
+- 1:N is the default: explode every non-trivial AC into multiple cases (EP partitions + boundaries + states + contexts). Collapsing an AC to one case requires a written "trivially atomic" justification.
+- Apply techniques by trigger: EP always; BVA wherever a range / limit / length / date-window exists; State-Transition for stateful entities; Decision Table when 2+ conditions interact; Pairwise when 3+ combinable factors (log the reduction); Error-Guessing charters for experience-based risk.
+- A criterion is a business assertion; a test case is a concrete exploration of it. Run the Test-Design Checklist before finalizing the ATP.
+- Three stages, always in order: Stage 1 Planning → Stage 2 Execution → Stage 3 Reporting. Hand off Stages 4/5/6 to `test-documentation` / `test-automation` / `regression-testing`.
+- Jira is source of truth. Read tickets via `bun run jira:sync-issues get <KEY> --include-comments`, then the synced `.md`. NEVER `acli workitem view` for custom fields (returns `null`).
+- Bugs run the veto + triage + risk-score decision tree BEFORE any ATP is written.
+- Execution = smoke pass first, then trifuerza (UI/API/DB) exploration; capture evidence under the PBI folder.
+- Consult `domain-glossary.md` (if present) before authoring the ATP, refined ACs, and TC outlines.
+- On any subagent failure: STOP, report partial state, offer retry / skip-stage / abort. No auto-fix, no auto-rollback.
 
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+**Read full SKILL.md when**: starting a sprint cold, resuming a session, or handling a bug-triage / batch-sprint flow not covered by the rules above.
 
-> Source: `.claude/skills/sprint-testing/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.claude/skills/sprint-testing/SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -509,26 +523,19 @@ Skills indexed: 23
 **Purpose**: Plan, write, and review automated tests following KATA (Component Action Test Architecture) on Playwright + TypeScript.
 
 **Compact Rules**:
-- **Code phase scope rule**: each Code subagent edits multiple files in isolation, returns a list of changed files + a one-line summary per file. The orchestrator never reads the diffs — only the summary. If the user wants to see actual diffs, the orchestrator runs `git diff` inline after the subagent returns.
-- **On any Verifier failure**: STOP, return the failing report verbatim to the user, do NOT auto-fix the test code, do NOT re-dispatch the Code phase without user approval. See `.claude/skills/agentic-qa-core/references/orchestration-doctrine.md`.
-- **MANDATORY context doc for Plan + Code briefings**: include `kata-manifest.json` (root) in the "Context docs" component (item 2 of the 6-component briefing). Without it the subagent will scan `tests/components/**` directly, burn tokens, and risk proposing duplicates. See Critical Rule #12 in `CLAUDE.md`.
-- `kata-manifest.json` (root) — authoritative registry of every Component (`api[]`, `ui[]`) and every `@atc('TICKET-ID')` ID. Anti-duplication gate per Critical Rule #12 in `CLAUDE.md`. MUST load before proposing any new `Page`, `Api`, `Steps` module, or `@atc` ID.
-- `.claude/skills/test-automation/references/kata-architecture.md` + `.claude/skills/test-automation/references/typescript-patterns.md` — full doctrine for KATA layers (TestContext / Base / Domain / Fixture), ATC identity, fixture selection, import-alias rules, params contracts.
-- `tests/components/` — existing Api / Page / Steps shape on disk. Establishes naming, helper-vs-ATC split, fixture registration patterns to follow.
-- The Story's `implementation-plan.md` (dev plan) + the ATP under `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/` — Jira-synced, READ-ONLY caches. Jira is source of truth; NEVER hand-write these. Materialize via `bun run jira:sync-issues get <STORY-KEY> --include-comments`, then **read the ENTIRE synced Story folder** — every per-field `.md` (`story.md`, `acceptance-criteria.md`, scope, business rules, etc.) **plus `comments.md`** — not just one field. Omitting ACs, scope, business rules, or comment context produces incomplete ATCs. The **ATP read is modality-aware** (resolve via `.agents/project.yaml` `testing.tms_cli`, same gate as `/test-documentation` §Phase 0):
-- **Modality jira-native**: ATP = Story field `{{jira.acceptance_test_plan}}` → synced `acceptance-test-plan.md` in the Story folder (from the same `jira:sync-issues get <STORY-KEY> --include-comments`).
-- **Modality jira-xray**: ATP = Test Plan issue `description` → `bun run jira:sync-issues get <ATP_KEY>` → `test-plans/TESTPLAN-<KEY>-<slug>.md`; per-TC run results come from `[TMS_TOOL]` (xray-cli), not the sync.
-- The Story's AC (acceptance criteria) — source of truth for scenarios that become ATCs. Read from the same synced `.md` files (`acceptance-criteria.md` / `story.md`) produced by `bun run jira:sync-issues get <STORY-KEY> --include-comments`. NEVER use `[ISSUE_TRACKER_TOOL]` `view` for these custom fields — `view` returns `null` for `customfield_*`. If a field is absent from the instance, the sync emits a pointer stub and the content lives in comments/description per `.agents/jira-required.yaml` `fallback:`. Resolve the issue key from the scope picker. **TC note**: a TC body = the `Test` issue `description` (synced both modalities via `bun run jira:sync-issues get <TEST-KEY>`); the Xray Gherkin / Test-Steps plugin field is NOT synced — it mirrors the description, so read the synced TC `.md` for Gherkin/steps.
-- `api/schemas/` — OpenAPI-derived TypeScript types. Refresh via `bun run api:sync` if stale. Required for any Api component touching a new endpoint.
-- `.env` — credentials (`LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`, etc.) read via `config.testUser` from `@variables`. Never hardcode; never guess.
-- Determine the prospective `<scope>` from the invocation context (ticket key, regression-driven TC, or module slug — see "Pick the planning scope first" below).
-- Check `.session/test-automation/<scope>/progress.md`.
-- If it does NOT exist → proceed to scope picker + Phase 1.
-- (truncated — read full SKILL.md for the rest)
+- "All ACs covered" is the FLOOR, not the success bar. The ATC set must also cover risk-beyond-AC: invalid/boundary inputs, auth/error paths, state transitions, and anomalies the AC is silent on.
+- 1:N is the default: one AC maps to multiple ATCs. EP-merge collapses same-behavior inputs INSIDE one partition into a parameterized ATC — it must NEVER collapse across distinct partitions, boundaries, or states. BVA cases are required wherever a range/limit/length/date-window exists (EP alone misses off-by-one).
+- Apply techniques by trigger: EP always; BVA on ranges/limits; State-Transition for stateful flows; Decision Table when 2+ conditions interact; Pairwise when 3+ combinable factors (log the reduction).
+- An AC is the business assertion; an ATC is its concrete exploration (Precondition + Action + Assertions). Run the Test-Design Checklist before finalizing the plan.
+- Plan → Code → Review, always in order. Only automate `Candidate` verdicts from `/test-documentation`.
+- Fixture selection: API-only → `{ api }` (no browser); UI-only → `{ ui }`; hybrid → `{ test }`.
+- ATC = atomic mini-flow; NEVER calls another ATC. Reusable chains → a Steps module.
+- Max 2 positional params (3+ → object param). Locators inline (extract only at 2+ uses). Imports via aliases (`@api/`, `@schemas/`, `@utils/`) — no relative imports.
+- Public methods fail fast; utilities silent-fail (return null). Validate against `kata-manifest.json` before adding components/ATCs (anti-duplication gate).
 
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+**Read full SKILL.md when**: writing KATA component code, choosing fixtures for a hybrid flow, or applying the Phase 3 review checklist.
 
-> Source: `.claude/skills/test-automation/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.claude/skills/test-automation/SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
@@ -537,49 +544,42 @@ Skills indexed: 23
 **Purpose**: Analyze, prioritize, and document test cases in TMS (Jira/Xray) -- the bridge between manual QA and test automation.
 
 **Compact Rules**:
-- **Concurrency cap = 10 subagents** for Parallel TC creation. Jira and Xray APIs both rate-limit at ~10 writes/sec sustained; fanning out wider triggers 429 responses. If a module has >100 TCs, batches per subagent must be larger than 10 each (cap is on subagent count, not chunk size).
-- **Error protocol**: On any subagent failure: STOP, report the partial success state (which TCs landed, which failed, with their issue keys / errors), present retry / skip / abort options. Do NOT auto-fix nor auto-rollback. See `.claude/skills/agentic-qa-core/references/orchestration-doctrine.md`.
-- Check `.session/test-documentation/<scope>/progress.md`.
-- If it does NOT exist → proceed to Phase 0 (TMS modality).
-- If it DOES exist:
-- Read `plan.md` (chosen scope, TMS modality, TC list, ROI verdicts).
-- Read tail of `progress.md` (last completed phase + next planned phase).
-- Surface to the user: scope, TMS modality, last completed phase, next phase, any pending TC creation chunks that did not finish (the most common interruption point — Phase 3 parallel bulk create capped at 10 subagents).
-- Offer **resume / restart / abort**. On `restart`, archive to `.session/.archive/<YYYY-MM-DD>-test-documentation-<scope>-aborted/` first.
-- Check `CLAUDE.md` for `{{TMS_CLI}}`. Value `bun xray` (or any Xray CLI) -> **Modality jira-xray**. Value is unset, `acli`-only, or `{{TMS_CLI}}` matches `{{ISSUE_TRACKER_CLI}}` -> **Modality jira-native**.
-- If `CLAUDE.md` is ambiguous, look for a `.context/master-test-plan.md` line such as `TMS: Xray on Jira` or `TMS: Jira native`.
-- If still ambiguous, list existing issue types in the project via `[ISSUE_TRACKER_TOOL] List issue types`. If the project exposes `Test Plan` / `Test Execution` / `Test Set` / `Pre-Condition`, it is **Modality jira-xray**. Otherwise **Modality jira-native**.
-- **Only if all three checks fail**, ask the user the question above. Do NOT ask by default — autoresolve first.
-- Modality jira-xray concepts + Xray REST/GraphQL/CLI -> `references/xray-platform.md`
-- Modality jira-native project setup (Test issue type, Screen Scheme, custom fields) -> `references/jira-setup.md`
-- (truncated — read full SKILL.md for the rest)
+- Documenting an AC→TC map is the FLOOR (≥1 TC per AC is a minimum, never a target). Coverage = AC-conformance + risk-beyond-AC; the TC set must include boundary / negative / state / anomaly cases the AC is silent on.
+- 1:N applies to DERIVATION (consider many cases by technique), not to the REGRESSION repository. Only regression-worthy scenarios (Candidate/Manual) are persisted there; most are Deferred. jira-native: Stage 4 CREATES `Test`s for those only (Deferred = report-only). jira-xray: sprint `Test`s already exist (Stage 1) — Stage 4 PROMOTES the regression-worthy into the Test Plan + enriches them. Document because it will be re-run, never to hit a count.
+- Apply techniques by trigger: EP always; BVA wherever a range/limit/length/date-window exists; State-Transition for stateful entities; Decision Table when 2+ conditions interact; Pairwise when 3+ combinable factors.
+- Cross-cutting characteristics (XSS, perf, a11y) deferred to app-level suites are an EXPLICIT handoff, not a silent drop — name the receiving suite or file the gap.
+- Documents already-validated behavior only — not an exploration tool (exploration belongs to `/sprint-testing`).
+- TC identity = Precondition + Action + verifiable outcome. Naming: `Validate <CORE> <CONDITIONAL>`. Reject `"Login test"`, `"Login - error"`, `"TC1: Test form"`.
+- ROI formula → one of three verdicts per TC: Candidate (feeds test-automation), Manual, Deferred. Prioritize by risk.
+- Cardinality: US→TC is 1:N; AC→TC is N:1 or N:M. Resolve TMS modality (Xray vs Jira-native) in Phase 0 before documenting.
+- Bug-driven (GOLDEN RULE): not every bug is a regression TC, but a regression-worthy bug MUST end with a Test — REUSE the existing failed Test if it came from one, else CREATE one (both modalities). A non-qualifying bug is treated like a failed test → Deferred, no new Test.
 
-**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+**Read full SKILL.md when**: resolving TMS modality, computing ROI, writing Gherkin, or wiring US-ATP-ATR-TC traceability links.
 
-> Source: `.claude/skills/test-documentation/SKILL.md` · phase: `unknown` · extraction strategy: B
+> Source: `.claude/skills/test-documentation/SKILL.md` · phase: `unknown` · extraction strategy: A
 
 ---
 
 ## Skill: tickets-board-statuses
 
-**Purpose**: Create a lean PM/QA Jira board status report from the original jira-board-status pattern: shift-left candidates, user-worked Stories read...
+**Purpose**: Create a token-efficient PM/QA Jira board status report: shift-left candidates, user-worked Stories needing follow-up or sprint testing,...
 
 **Compact Rules**:
 - Finding unassigned Backlog Stories the user can take for `/shift-left-testing`.
-- Finding Stories the user already worked via shift-left and that are now Ready For QA for `/sprint-testing`.
-- Listing the user's shift-left footprint without comment counts.
-- Mapping formal and inferred Story dependencies to recommend the next best work.
-- Jira writes, assignments, transitions, label changes, or comments.
-- Full `/shift-left-testing` execution.
-- Full `/sprint-testing` execution.
+- Finding user-worked `shift-left-reviewed` Stories that are Ready For QA for `/sprint-testing`.
+- Listing the user's shift-left continuity without comment counts.
+- Mapping formal or inferred dependencies that change next-work priority.
+- Jira writes, assignments, transitions, labels, comments, or mutations.
+- Full `/shift-left-testing` or `/sprint-testing` execution.
 - Replacing `/acli`; this skill defines analysis and reporting, while `/acli` owns Jira CLI mechanics.
 - Jira project key, board scope, or explicit JQL.
-- Exact user comment author string, usually Jira display/account string such as `jesusgpythondev`.
+- Exact user comment author string, e.g. `jesusgpythondev`.
 - Status names for Backlog and Ready For QA.
-- The shift-left completion label, default `shift-left-reviewed`.
-- Optional epic scope when dependency analysis should stay inside a product area.
+- Shift-left completion label, default `shift-left-reviewed`.
+- Optional epic/product scope for dependency analysis.
 - Use `assignee is EMPTY`, not `assignee = unassigned`.
-- `workitem search --json` may return a root array or an object with `.issues`; parsers must handle both.
+- Use `--paginate` for every search that feeds decisions.
+- Request minimal fields on searches: `key,parent,summary,status,priority,assignee,labels,updated,created,issuelinks` as needed.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
