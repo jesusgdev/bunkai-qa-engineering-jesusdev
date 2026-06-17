@@ -70,7 +70,7 @@ Use these H2 sections unless the user requests another format. Keep empty sectio
 | `Dependency Map` | Formal and functional dependencies, owner, status, impact |
 | `Key Contract Decisions` | Endpoint, state, validation, error, permission, UI-flow, or data contract decisions |
 | `AC Reconciliation` | Original/source claim vs refined outcome and reason |
-| `Refined Acceptance Criteria` | Gherkin-style scenarios grouped by Happy, Negative, Boundary, Integration |
+| `Refined Acceptance Criteria` | Gherkin-style scenarios grouped by Happy, Negative, Boundary, Integration; when published to Jira, scenarios must be inside a fenced `gherkin` code block |
 | `Business Rules` | Confirmed rules; inferred rules marked clearly |
 | `Edge Cases & Risk Matrix` | Severity, expected behavior, mitigation, AC/ATP coverage |
 | `ATP Draft Matrix` | Outline names only, coverage target, priority, automation hint |
@@ -102,8 +102,19 @@ Use these H2 sections unless the user requests another format. Keep empty sectio
 - ATP DRAFT is outline-level only: scenario name, one-line precondition, one-line expected result.
 - Include coverage estimate with zero counts shown: Positive, Negative, Boundary, Integration, API, Total.
 - Include 2-3 sentence rationale tied to Story complexity and risk.
+- Format ATP publication as a scannable table. Use visual severity markers for risk rows (`:red_circle: High`, `:large_orange_circle: Medium`, `:green_circle: Low`) and a `[!CAUTION]`/`[!WARNING]` panel only for risk blocks that must not be missed.
 - Exclude parametrization tables, per-outline test-data JSON, numbered test steps, Faker recipes, and data generation strategy.
 - Formal TC creation belongs to `/test-documentation`; automated code belongs to `/test-automation`.
+
+## Jira Rich-Text Formatting Gate
+
+Before publishing any Jira description, AC fallback comment, ATP fallback comment, or QA mirror:
+
+- Author Markdown, convert with `.claude/skills/acli/scripts/md-to-adf.ts`, and publish the ADF output. Never pass raw Markdown to Jira rich-text flags.
+- Refined AC publication must render as one fenced `gherkin` code block (ADF `codeBlock` with `language: "gherkin"`). Do not publish scenarios as headings, bullets, or plain paragraphs.
+- QA Handoff Mirror should be compact but visually scannable: use tables for ATP/risk summaries, `[!SUCCESS]`/`[!INFO]`/`[!WARNING]`/`[!CAUTION]` panels for handoff status and risks, and status lozenges like `{status:green|READY}` for publication/readiness states.
+- Use BK-39 as the shift-left reference shape and BK-91 / `acli/references/adf-authoring-style.md` as the formatter capability reference when in doubt.
+- Verify converted ADF structurally before publishing: AC must contain a `codeBlock` whose language is `gherkin`; QA mirror should contain at least one `panel` or `status` node when it reports readiness/risk.
 
 ## QA Story Points Recommendation
 
