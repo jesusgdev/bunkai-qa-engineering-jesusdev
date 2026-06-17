@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-06-15T20:20:30.446Z`
+> Generated: `2026-06-17T17:30:44.306Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -453,21 +453,21 @@ Skills indexed: 24
 **Purpose**: Refine a single Jira Story before development into an Ely-style shift-left package: evidence, scope, decisions, refined ACs, risks, ATP d...
 
 **Compact Rules**:
-- Story detail via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced Markdown. Never use `acli view` for custom fields.
+- Story detail via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced Markdown. If sync fails but `acli jira workitem search --jql "key = <STORY_KEY>"` can prove the issue exists and is a Story, continue with `acli` fallback for standard fields, labels, description, comments, and links. Never use `acli view` as proof that custom fields are absent; label custom-field evidence as unavailable and avoid repeated sync retries.
 - Story title, description, ACs, scope, business rules, source spec, labels, status, points, parent epic, and comments.
 - Parent epic/module context when dependencies matter.
 - `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
 - Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-32`, `BK-34`, `BK-38`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`, `QA Handoff Mirror`, `story points`.
 - Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
+- Jira/source evidence conflicts.
+- The decision changes product scope, user promise, security posture, data retention, billing, compliance, or rollout risk.
+- The implementation has two materially different architectures and repo/Jira evidence does not favor one.
+- The user explicitly asks not to decide on behalf of PO/Dev.
 - ACs are the floor. Push beyond happy path into boundaries, exceptions, states, and anomalies.
 - 1:N is the default for non-trivial ACs. Derive scenarios through equivalence partitions, BVA, state transitions, decision tables, or pairwise. If an AC maps to one scenario, justify why it is trivially atomic.
 - Avoid padding. Every added AC, edge case, and ATP row must explore a distinct risk or contract.
-- Use exact marker `NEEDS PO/DEV CONFIRMATION` for every inferred AC or edge case. Never paraphrase it.
+- Use exact marker `NEEDS PO/DEV CONFIRMATION` only for unresolved decisions that pass the Expert Panel Decision Gate above. Never paraphrase it.
 - Label every contract decision, AC change, and High risk with evidence.
-- Every High risk must map to at least one refined AC or ATP row.
-- Prefer fewer stronger ACs over long lists that hide new requirements.
-- If ACs exceed about five independent behaviors, recommend story splitting.
-- If refined ACs exceed about eight scenarios or edge cases exceed about ten, summarize in the Story description and push detailed coverage to ATP/comment mirror.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).

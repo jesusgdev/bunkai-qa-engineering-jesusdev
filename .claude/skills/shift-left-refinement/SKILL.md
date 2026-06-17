@@ -25,7 +25,7 @@ If the Jira issue is not a Story, stop and route to the correct skill. Do not ad
 
 Read only what adds signal for the current Story:
 
-1. Story detail via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced Markdown. Never use `acli view` for custom fields.
+1. Story detail via `bun run jira:sync-issues get <STORY_KEY> --include-comments`, then read the synced Markdown. If sync fails but `acli jira workitem search --jql "key = <STORY_KEY>"` can prove the issue exists and is a Story, continue with `acli` fallback for standard fields, labels, description, comments, and links. Never use `acli view` as proof that custom fields are absent; label custom-field evidence as unavailable and avoid repeated sync retries.
 2. Story title, description, ACs, scope, business rules, source spec, labels, status, points, parent epic, and comments.
 3. Parent epic/module context when dependencies matter.
 4. `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
@@ -41,6 +41,19 @@ Apply ATDD / Three Amigos, Given-When-Then, product trio, and Agile Testing Quad
 Story points are advisory and use Fibonacci values `1, 2, 3, 5, 8, 13, 21`. Base the QA recommendation on effort, complexity, uncertainty, and risk. Jira estimation fields remain canonical unless the user explicitly requests an update.
 
 Evidence labels: `Jira`, `Repo`, `Engram`, `External`, `Inference`.
+
+## Expert Panel Decision Gate
+
+Run the former `expert-development-team-analysis` pattern through `/expert-panel-review` before final readiness. The panel must answer inferable PO/Dev/QA questions inside the ticket instead of leaving them all open.
+
+Use `NEEDS PO/DEV CONFIRMATION` only when one of these is true:
+
+- Jira/source evidence conflicts.
+- The decision changes product scope, user promise, security posture, data retention, billing, compliance, or rollout risk.
+- The implementation has two materially different architectures and repo/Jira evidence does not favor one.
+- The user explicitly asks not to decide on behalf of PO/Dev.
+
+Otherwise, record an `Expert Decision` with evidence labels and move forward. Do not mark the Story blocked merely because the original ACs were under-specified if the expert panel can make a responsible, reversible MVP decision.
 
 ## Required Package Sections
 
@@ -74,7 +87,7 @@ Use these H2 sections unless the user requests another format. Keep empty sectio
 - ACs are the floor. Push beyond happy path into boundaries, exceptions, states, and anomalies.
 - 1:N is the default for non-trivial ACs. Derive scenarios through equivalence partitions, BVA, state transitions, decision tables, or pairwise. If an AC maps to one scenario, justify why it is trivially atomic.
 - Avoid padding. Every added AC, edge case, and ATP row must explore a distinct risk or contract.
-- Use exact marker `NEEDS PO/DEV CONFIRMATION` for every inferred AC or edge case. Never paraphrase it.
+- Use exact marker `NEEDS PO/DEV CONFIRMATION` only for unresolved decisions that pass the Expert Panel Decision Gate above. Never paraphrase it.
 - Label every contract decision, AC change, and High risk with evidence.
 - Every High risk must map to at least one refined AC or ATP row.
 - Prefer fewer stronger ACs over long lists that hide new requirements.
@@ -141,14 +154,16 @@ Only publish when the user explicitly requests Jira writes. If the user requeste
 
 When publishing:
 
-1. Read current synced Story content first; append, never overwrite.
-2. Write refined ACs to `{{jira.acceptance_criteria}}`; fallback to a structured `## Acceptance Criteria` comment only if the field is absent.
+1. Read current synced Story content first; append, never overwrite. If synced content is unavailable but `acli` can read the Story, use that read-back as the current Story content and record the sync failure in the publication checklist.
+2. Write refined ACs to `{{jira.acceptance_criteria}}`; fallback to a structured `## Acceptance Criteria` comment if the field is absent or the single verified custom-field write attempt is blocked.
 3. Append a condensed `QA Refinements (Shift-Left Analysis)` section to the Story description; keep refined ACs in the AC field.
-4. Write full ATP DRAFT to `{{jira.acceptance_test_plan}}`; fallback to `## Acceptance Test Plan (ATP)` comment only if the field is absent.
+4. Write full ATP DRAFT to `{{jira.acceptance_test_plan}}`; fallback to `## Acceptance Test Plan (ATP)` comment if the field is absent or the single verified custom-field write attempt is blocked.
 5. Add one QA Handoff Mirror comment/field entry. If ATP field exists, comment is a compact notification and mirror, not the full ATP body.
 6. Add labels `shift-left-reviewed` and `shift-left-YYYY-MM-DD`; the dated label lets `/sprint-testing` judge freshness and skip redundant planning later.
 7. Never transition beyond `{{jira.status.story.estimation}}`; PO/Dev own estimation and Ready For Dev.
 8. Re-sync or visually verify rendered Jira content after writes.
+
+Existing Jira custom fields on work items may require REST `PUT` even when `acli` can edit description/comments. If one REST custom-field update attempt fails with auth/permission/not-found while `acli` can still mutate the issue, do not loop. Publish AC/ATP as fallback comments, state `AC field updated: no (fallback comment yes)` / `ATP field updated: no (fallback comment yes)`, and save the tool mismatch as a learning if new.
 
 Publication checklist:
 
