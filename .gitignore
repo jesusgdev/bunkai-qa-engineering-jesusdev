@@ -143,3 +143,6 @@ dbhub.local.toml
 playwright-typescript-guide-home.png
 playwright-typescript-guide-mobile.png
 playwright-typescript-guide-mobile-fixed.png
+
+# ----- 2026-06-21 (sync) -----
+.template/claude-md.upstream.sha
