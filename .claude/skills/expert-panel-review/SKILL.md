@@ -1,6 +1,6 @@
 ---
 name: expert-panel-review
-description: "Run a cross-functional expert panel to refine patterns, Jira stories, QA artifacts, workflow decisions, or skill drafts before implementation. Use when the user mentions expert-development-team-analysis, expert team, panel review, cross-functional review, refine this pattern, optimize this workflow, get experts to improve it, or asks for a self-improving Engram-connected review. The skill separates evidence from inference and converts validated learning into future improvements."
+description: "Run a cross-functional expert panel (7 core domain experts + 4 process roles + 4 consultant roles) to refine patterns, Jira stories, QA artifacts, workflow decisions, or skill drafts before implementation. Uses Applied Critical Thinking (Red Team Thinking) for the Skeptical Reviewer pass. Use when the user mentions expert-development-team-analysis, expert team, panel review, cross-functional review, refine this pattern, optimize this workflow, get experts to improve it, or asks for a self-improving Engram-connected review. The skill separates evidence from inference and converts validated learning into future improvements. Core experts: Senior PO, Senior UX/Design, Senior Technical Architect, Senior Developers (Staff/Principal), Senior QA Lead, Delivery/Scrum Lead, Senior Security/AppSec Engineer (OWASP Security Champion)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [meta-skill, issue-tracker, testing-e2e, tms]
@@ -30,20 +30,46 @@ The panel compounds experience through Engram, but it must not turn every idea i
 
 ## Expert Roles
 
-Activate only roles that add signal. For small tasks, use Orchestrator, QA Lead, Engram Curator, and Skeptical Reviewer.
+Activate only roles that add signal. For small tasks, use Orchestrator, QA Lead, Engram Curator, and Skeptical Reviewer. The panel has two tiers: **Core domain experts** (7 roles — the persistent `expert-development-team-analysis` team persisted in Engram under topic `pattern/expert-development-team-analysis`) and **Process roles** (4 roles — orchestration + quality gates, not persisted as domain experts).
+
+### Core Domain Experts (7 roles — activate by signal)
+
+| Role | Use when | Contribution | Verified competency source |
+|---|---|---|---|
+| **Senior Product Owner** | User value, ACs, prioritization, ambiguity, scope trade-offs | Clarifies outcome, customer value, decision gaps. Applies WSJF + Kano + Cost of Delay for value-based prioritization. Distinguishes tactical vs strategic responsibilities. Bridges stakeholders without direct authority. Knowledge broker between business + dev. | Scrum Alliance CSPO + Advanced CSPO; Scrum.org PSPO |
+| **Senior Product/UX Design** | User flow, discoverability, usability, accessibility | Evidence-based design decisions (not opinion). Principal-level: leads big initiatives + mentors juniors + has strategy seat. Core: prototyping, visual design, research, data analysis. AI-era: critique + context architecture. | Nielsen Norman Group UX Certification + UX Maturity Model (6 levels) |
+| **Senior Technical Architect** | Technical feasibility, dependencies, system design, API/DB impact | "Guide, not controller" (mountaineering metaphor — Architectus Oryzus). Architecture = social construct (shared understanding). Removes irreversibility to reduce complexity. Trade-off analysis with acceptance criteria. Soft skills ≥50% of effectiveness. | Martin Fowler IEEE Software columns; ThoughtWorks Rebecca Parsons "Enterprise Architects Join the Team" |
+| **Senior Developers (Staff/Principal)** | Implementation constraints, coupling, code-level risk, testability | Solves non-obvious engineering issues rooted in social/communication/hierarchical complexity. Design-doc-first culture (Google: 3 review levels before code). Production/test boundary is absolute (Netflix/Uber/Meta outages from test-only methods in prod). "System shapes performance more than individual differences." | StaffEng guides; levels.fyi L6+ (Google L6 Staff, Meta E6, Netflix L6) |
+| **Senior QA Lead** | Always — converts ideas into risks, testability, gates, acceptance checks | Risk-based test strategy aligned with org strategy. Continuous monitoring + control. Team skill development. Business case for testing (costs + benefits). Test process improvement. ISTQB AI Testing for AI-based systems. | ISTQB CTAL-TM v3.0 (Advanced Level Test Manager); ISTQB CTAL-TAE (Test Automation Engineering) |
+| **Delivery/Scrum Lead** | Readiness, blockers, dependencies, sequencing, SP calibration, sprint planning risk | Master in Scrum values + empiricism + Lean thinking. Converts complex analysis into Jira/sprint-ready actions. Agile Delivery Lead = technical work + tool building + process facilitation. Empowers delivery manager to take Scrum Master accountabilities. | Scrum.org PSM + PSK; Scrum Alliance CSM + A-CSM + CSP-SM |
+| **Senior Security/AppSec Engineer** (NEW — OWASP Security Champion) | Auth, permissions, sensitive data, external exposure, token scopes, API boundaries | Threat modeling (STRIDE) in design phase. Secure code reviews. Security testing tools (SAST/DAST/SCA). OWASP Top 10 coverage. Token/scope validation. IDOR + privilege escalation checks. Bridges dev team ↔ security team. Escalation thresholds for security-class defects. | OWASP Security Culture project; OWASP SAMM (Software Assurance Maturity Model); OWASP Security Champions Guide |
+
+### Process Roles (4 roles — orchestration + quality gates)
 
 | Role | Use when | Contribution |
 |---|---|---|
 | Orchestrator | Always | Defines scope, chooses roles, keeps context small. |
-| Product/Discovery | User value, ACs, prioritization, ambiguity | Clarifies outcome, customer value, and decision gaps. |
-| QA Lead | Always | Converts ideas into risks, testability, gates, and acceptance checks. |
-| Dev/Architecture | Technical feasibility, dependencies, maintainability | Identifies implementation constraints and coupling. |
-| UX/Design | User flow, discoverability, usability | Checks clarity, feedback, consistency, and error prevention. |
-| Security/AppSec | Auth, permissions, sensitive data, external exposure | Adds threat/risk questions and escalation thresholds. |
 | Workflow/Jira | Statuses, labels, comments, traceability, dependencies | Keeps Jira workflow reliable and auditable. |
-| Automation/KATA | ATCs, fixtures, regression, test code handoff | Finds automation candidates and KATA boundaries. |
 | Engram Curator | Always | Retrieves high-signal memory and proposes learning updates. |
-| Skeptical Reviewer | Always at the end | Challenges assumptions, bloat, and unvalidated rules. |
+| Skeptical Reviewer (Red Team) | Always at the end | Challenges assumptions, bloat, unvalidated rules. Applies Red Team Thinking (see § Critical Thinking Framework). |
+
+### Consultant Roles (activate by trigger — not permanent panel members)
+
+| Role | Trigger | Contribution | Verified source |
+|---|---|---|---|
+| **DevOps/SRE/Platform Engineer** | Environment readiness gates, CI/CD pipeline issues, deployment risk, infra-dependent stories | Validates deployment pipelines, SLO/SLI design, environment reachability, incident response. Triggered when story touches infrastructure, deployment config, or env-readiness is uncertain. | Google SRE Handbook (sre.google); DORA 2024 report; Atlassian engineering handbook |
+| **Accessibility (a11y) Specialist** | Public-facing UI, WCAG/Section-508 compliance, legal exposure | WCAG conformance audits, ARIA validation, assistive technology testing. Triggered when story has UI surface + public reach + compliance risk. | IAAP CPACC/WAS certifications; Section508.gov roles; DigitalA11y |
+| **Data Engineer/Analytics** | Data pipelines, migrations, analytics features, DB schema changes | Data quality metrics (freshness, correctness), pipeline orchestration, schema validation. Triggered when story touches data ingestion, transformation, or analytics. | dbt Labs hiring guide; DataExpert.io |
+| **Performance Engineer** | Strict SLAs, scaling phases, latency-sensitive features, load testing | End-to-end performance testing, benchmarking, bottleneck identification. Triggered when story has performance requirements or scale risk. | Brendan Gregg (performance engineering authority) |
+
+### Role Activation Rules
+
+1. **Always activate**: Orchestrator, QA Lead, Engram Curator, Skeptical Reviewer.
+2. **Signal-driven activation**: Add domain experts only when their surface is in scope. Do NOT activate all 7 for every review — context efficiency matters.
+3. **Consultant roles**: Activate only when the explicit trigger fires. Deactivate after the review.
+4. **Security/AppSec is ALWAYS activated when**: the target touches auth, tokens, permissions, external integrations, user data, or API boundaries. This is non-negotiable for the Bunkai project (auth surface, Resend integration, workspace/member data).
+5. **Small-task minimum**: Orchestrator + QA Lead + Engram Curator + Skeptical Reviewer (4 roles).
+6. **Full panel**: All 7 core + relevant consultants (max 11 roles — but context budget usually limits to 5-7 active). |
 
 ## Engram Retrieval Loop
 
@@ -88,6 +114,45 @@ A good panel recommendation improves at least one of these:
 - Safety: risky assumptions are surfaced early.
 - Context efficiency: high-signal memory without history dumps.
 
+## Critical Thinking Framework (Red Team Thinking)
+
+The Skeptical Reviewer role is enhanced with **Applied Critical Thinking (ACT)** from the US Army UFMCS Red Team Handbook and UK Ministry of Defense Red Teaming Guide. This is NOT ceremony — it is a mechanical set of techniques that surface blind spots the panel would otherwise miss.
+
+### Core ACT Principles (apply during Skeptical Reviewer pass)
+
+1. **Slow down** — engage System 2 thinking. Do not accept the first plausible recommendation.
+2. **Ask "why"** — root-cause every assumption. "Why do we believe this AC is testable?" "Why do we believe this estimate is correct?"
+3. **Seek alternatives** — for every recommendation, generate at least one alternative. If only one path exists, the panel has not explored enough.
+4. **Identify assumptions + biases** — list every implicit assumption the panel made. Tag each as `validated`, `unvalidated`, or `conflicting` with Engram evidence.
+5. **Generate + evaluate alternatives** — do not just find alternatives; score them against the same criteria.
+6. **Groupthink mitigation** — if all panel members agree quickly, that is a signal to slow down, not to proceed. Quick consensus = unexamined assumptions.
+7. **Mirror imaging reduction** — do not assume the user, developer, or external system thinks like the panel. Explicitly model the "other" perspective.
+
+### Red Team Challenge Categories (run during Skeptical Reviewer pass)
+
+| Category | Challenge | When to apply |
+|---|---|---|
+| **Architecture failure modes** | How might components interact unexpectedly? What happens at edge cases? What are data-flow corruption paths? | Every architecture/dev recommendation |
+| **Production vs development** | What works in dev but breaks in prod? Load patterns, cascading failures, resource exhaustion, dependency reliability? | Every deployment/infra recommendation |
+| **Human-AI interaction** | How might users game the system? Over-rely on it? Use it in ways that compound risk? | Every UX/feature recommendation |
+| **Ecosystem** | Regulatory landscape? Competitive dynamics? Societal context? Downstream effects? | Every product/business recommendation |
+| **Evidentiary** | Is the recommendation based on Engram evidence, repo code, Jira observation — or on inference? Tag every claim with its evidence label. | Every recommendation, always |
+| **Reversibility** | Is this decision hard to reverse? If yes, does it warrant an ADR (Architecture Decision Record)? | Every architectural recommendation |
+
+### The Three Cs (Red Team Thinking outcomes)
+
+- **Clarity** — the panel's output is unambiguous and decision-ready.
+- **Capability** — the panel has the skills + evidence to make the call.
+- **Culture** — the panel rewards dissent, not consensus. A dissenting opinion is signal, not noise.
+
+### Anti-patterns the Skeptical Reviewer MUST reject
+
+- Recommendations that add roles, context, or ceremony without verifiable value.
+- Recommendations based on a single unvalidated opinion (Engram `candidate` label, no user approval).
+- Recommendations that assume "this time is different" without citing what changed.
+- Recommendations that collapse 1:N ACs into 1:1 without a "trivially atomic" justification.
+- Estimates that do not cite a calibration anchor (a prior comparable ticket).
+
 ## Self-Improvement Safeguards
 
 - Do not promote a learning into a skill rule unless it has user approval, repeated evidence, or observable success.
@@ -95,6 +160,10 @@ A good panel recommendation improves at least one of these:
 - Any change to required tools, permissions, Jira mutation behavior, or workflow status transitions needs explicit user approval.
 - Prefer small changes with clear acceptance criteria over broad process rewrites.
 - The Skeptical Reviewer must reject improvements that add roles, context, or ceremony without verifiable value.
+- **Role-based learning**: after every successful panel review, each activated domain expert saves 1 learning to Engram tagged with its role (e.g. `qa-lead`, `architect`, `appsec`). This builds role-specific memory that compounds across sessions.
+- **Evidence-label discipline**: every panel recommendation must carry an evidence label (`Engram` | `Repo` | `Jira` | `External` | `Inference`). Recommendations with `Inference` label cannot become rules without user validation.
+- **Calibration anchors**: every estimate (story points, effort, risk score) must cite a prior comparable ticket as anchor. No anchor → flag as `unvalidated-estimate`.
+- **Sources of truth**: the panel always combines live Jira evidence + QA/project documentation + product code BEFORE making recommendations. Never recommend from a single source.
 
 ## Output Contract
 

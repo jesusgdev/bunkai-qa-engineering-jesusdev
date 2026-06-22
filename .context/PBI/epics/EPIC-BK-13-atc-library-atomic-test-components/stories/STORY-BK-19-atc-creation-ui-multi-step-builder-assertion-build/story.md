@@ -1,128 +1,83 @@
-# ATC creation UI (multi-step builder + assertion builder)
+# TMS-ATC Builder | Build an ATC with ordered steps and assertions
 
-**Jira Key:** [BK-19](https://upexgalaxy67.atlassian.net/browse/BK-19)
-**Epic:** [BK-13](https://upexgalaxy67.atlassian.net/browse/BK-13) (ATC Library (Atomic Test Components))
+**Jira Key:** [BK-19](https://jira.upexgalaxy.com/browse/BK-19)
+**Epic:** [BK-13](https://jira.upexgalaxy.com/browse/BK-13) (ATC Library (Acceptance Test Cases))
+**Type:** Story
+**Status:** QA Approved
 **Priority:** Medium
-**Story Points:** -
-**Status:** Shift-Left QA
+**Story Points:** 5
 
 ---
 
-## User Story
+## Overview
 
-***Source spec:*** FR-010b
+## QA Refinements (Shift-Left Analysis)
 
-## User Story
+### Edge Cases Identified
 
-As a tester or QA author, I want a guided UI form to create ATCs with multiple steps and assertions, so that I can build reusable test components without writing JSON or curl commands.
+- ***Empty step/assertion validation***: Exact min/max length for step description and assertion text unclear. Zod schema enforces constraint, but values not specified.
+- ***Tag chip cap UX behavior***: When user attempts to add 11th tag, behavior not specified (disabled button vs. toast vs. silent rejection).
+- ***Minimum required fields***: Can you submit with 0 steps? 0 assertions? Can you submit without assertions (steps only)?
+- ***Error message wording***: Four API error codes listed (`ac*outside*user*story`, `module*outside*project*subtree`, `steps*position*invalid`, `title*too*short`), but user-facing wording not specified.
+- ***Max ATC title length***: No maximum length specified.
+- ***Edit variant scope (BK-21)***: Deferred; may require refactoring of step/assertion builders.
+- ***Accessibility MVP scope***: DoD includes tab order + screen reader announcements — is this mandatory for MVP or backlog-deferred?
+- ***Unit tests mandatory gate***: DoD lists unit tests for step reorder, AC cascade, tag cap — should these block PR merge or just be coverage goal?
 
-## Context
+### Clarified Business Rules
 
-Anchors PRD US 4.1 and US 4.2, implements the client side of SRS FR-010. Consumes the API from Story FR-010a (BK-18) — does not duplicate cross-entity validation.
+- Create-only form (no edit in MVP; BK-21 handles edit variant).
+- No optimistic UI — form state is lossy on error; server is source of truth.
+- Reorder buttons (up/down) in MVP; DnD deferred.
+- Single source of truth: Zod schema mirrors `@schemas/atc.types`.
+- Cascading US → AC selection: two API endpoints (GET /user-stories, GET /acceptance-criteria).
+- Error mapping utility maps 4 error codes to RHF field-level errors.
 
----
+### Open Questions for PO / Dev
 
-## Acceptance Criteria
-
-```gherkin
-Scenario: Author creates an ATC through the multi-step builder
-Given the user is on /modules/{moduleId}/atcs/new
-And the user has selected user story US-100 and acceptance criteria AC-1
-When the user fills title "Login with valid email", layer "UI", adds 3 steps and 2 assertions, and clicks "Create"
-Then the form POSTs to /atcs with the assembled payload
-And on 201 the user is redirected to the new ATC detail page
-And a success toast "ATC created" appears
-
-Scenario: Form surfaces API validation errors without losing user input
-Given the user has filled a valid-looking form
-When the API returns 422 with error code "ac*outside*user_story"
-Then the AC picker shows an inline error "Selected criteria do not belong to this user story"
-And all other form fields keep their values
-And the user can correct the selection and resubmit
-
-Scenario: Step builder enforces strictly increasing positions in the UI
-Given the user adds 3 steps
-When the user drags step 3 above step 1
-Then positions are auto-renumbered to 1, 2, 3
-And the submitted payload reflects the new order
-
-Scenario: AC picker filters by selected user story
-Given the user has selected user story US-100
-When the AC dropdown is opened
-Then only acceptance criteria belonging to US-100 are listed
-And selecting a different user story clears any previously-selected ACs
-
-Scenario: Tag input enforces 10-tag maximum with chip UX
-Given the user has added 10 tags
-When the user attempts to add an 11th tag
-Then the input is disabled
-And a hint "Maximum 10 tags reached" is shown beneath the input
-```
+1. What is the exact min/max length for step description? For assertion text?
+2. What is the UX when user tries to add the 11th tag (disabled button, toast, silent)?
+3. Can you submit with 0 steps? 0 assertions? Without assertions?
+4. What are the user-facing error messages for each error code?
+5. Is there a max ATC title length?
+6. Is the edit variant (BK-21) scope acceptable (MVP create-only, refactoring later)?
+7. Is accessibility (tab order + screen reader) mandatory for MVP or backlog-deferred?
+8. Are unit tests a mandatory PR gate or just a coverage goal?
+9. Is the error mapping utility (`mapApiError`) available? Who owns it?
+10. Will the API contract (BK-18) be finalized before dev starts? (This is a BLOCKER.)
 
 ---
 
-## Business Rules
+## Fields
 
-- Form fields mirror API contract exactly — no client-only fields silently dropped
+> Each rich-text field is a separate file in this folder.
 
-- Title 3..200 chars with live character counter
-
-- At least 1 step and at least 1 acceptance criterion required to enable Submit
-
-- Step content textarea capped at 2KB with character counter
-
-- Optimistic UI is NOT used on create — wait for 201 before redirecting (avoids ghost rows on rollback)
-
-- Form preserves draft in component state across validation failures; only cleared on success
+- [Acceptance Test Plan (QA)](./acceptance-test-plan.md)
 
 ---
 
-## Scope
+## Traceability
 
-- Route /modules/{moduleId}/atcs/new with multi-step builder form
+### Defects (3)
 
-- Step builder: add/remove/reorder steps with position auto-renumber
+- [BK-144](https://jira.upexgalaxy.com/browse/BK-144): ATC builder — tag input remains enabled at 10-tag maximum instead of being disabled _(Open)_
+- [BK-145](https://jira.upexgalaxy.com/browse/BK-145): ATC builder — mapApiError does not handle validation_failed + too_small shows generic error instead of field-level message for short title _(Open)_
+- [BK-146](https://jira.upexgalaxy.com/browse/BK-146): ATC builder — module outside project subtree returns 404 not_found instead of 422 module_outside_project_subtree _(Open)_
 
-- Assertion builder: add/remove assertions in parallel section
+### Story (1)
 
-- Layer picker (UI / API / Unit) as segmented control
-
-- User Story + Acceptance Criteria dropdowns with cascading filter
-
-- Tag chip input with 10-tag cap and inline validation hint
-
-- Server error mapping (error code -> field-level message)
-
-- Loading and disabled states during submit
-
-- Success redirect to ATC detail page
-
----
-
-## Workflow
-
-The author lands on /modules/{moduleId}/atcs/new. The form initializes with the module pre-selected, then the user picks a User Story (dropdown queries /user-stories?module_id=...), which triggers loading of acceptance criteria into the AC picker. The user fills title, picks layer, builds steps and assertions through the inline builders, and adds tags. On Submit the form assembles the payload, calls POST /atcs, shows a spinner, and either redirects to the new ATC detail page on 201 or maps server error codes to inline field messages on 422.
-
----
-
-## Definition of Done
-
-- [ ] Implementation complete
-- [ ] Unit tests written
-- [ ] Code reviewed
-- [ ] Documentation updated
+- [BK-18](https://jira.upexgalaxy.com/browse/BK-18): TMS-ATC API | Create and edit ATCs with steps and assertions _(QA Approved)_
 
 ---
 
 ## Metadata
 
 - **Created:** 5/19/2026
-- **Updated:** 5/21/2026
+- **Updated:** 6/19/2026
 - **Reporter:** Ely
-- **Assignee:** Unassigned
-- **Labels:** atc, frontend, mvp, ui, wave-2
+- **Assignee:** maibeth vega
+- **Labels:** atc, frontend, mvp, shift-left-2026-06-05, shift-left-2026-06-18, shift-left-reviewed, ui, wave-2
 
 ---
 
 _Synced from Jira by sync-jira-issues_
-_Last sync: 2026-05-27T14:56:45.380Z_

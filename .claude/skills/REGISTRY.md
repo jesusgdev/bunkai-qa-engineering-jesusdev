@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-06-21T20:17:40.798Z`
+> Generated: `2026-06-22T20:30:08.964Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -254,7 +254,7 @@ Skills indexed: 24
 
 ## Skill: expert-panel-review
 
-**Purpose**: Run a cross-functional expert panel to refine patterns, Jira stories, QA artifacts, workflow decisions, or skill drafts before implementa...
+**Purpose**: Run a cross-functional expert panel (7 core domain experts + 4 process roles + 4 consultant roles) to refine patterns, Jira stories, QA a...
 
 **Compact Rules**:
 - Applying the former `expert-development-team-analysis` pattern.
@@ -265,13 +265,13 @@ Skills indexed: 24
 - Replacing domain skills such as `/shift-left-testing`, `/sprint-testing`, `/test-automation`, or `/test-documentation`.
 - Rubber-stamping a decision already made without review.
 - Creating permanent rules from a single unvalidated opinion.
+- **Always activate**: Orchestrator, QA Lead, Engram Curator, Skeptical Reviewer.
+- **Signal-driven activation**: Add domain experts only when their surface is in scope. Do NOT activate all 7 for every review — context efficiency matters.
+- **Consultant roles**: Activate only when the explicit trigger fires. Deactivate after the review.
+- **Security/AppSec is ALWAYS activated when**: the target touches auth, tokens, permissions, external integrations, user data, or API boundaries. This is non-negotiable for the Bunkai project (auth surface, Resend integration, workspace/member data).
+- **Small-task minimum**: Orchestrator + QA Lead + Engram Curator + Skeptical Reviewer (4 roles).
+- **Full panel**: All 7 core + relevant consultants (max 11 roles — but context budget usually limits to 5-7 active). |
 - Start with recent memory context.
-- If signal is missing, run 2-3 targeted searches using pattern names, ticket keys, and domain terms.
-- Read full observations only for the top 1-3 relevant memories.
-- Extract at most 3-5 applied learnings for the current task.
-- Label each learning as `validated`, `candidate`, or `conflicting`.
-- If memories conflict, ask or judge before treating either as a rule.
-- `Engram`: prior project memory or user preference.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
