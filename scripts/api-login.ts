@@ -49,9 +49,46 @@ if (args.includes('--help') || args.includes('-h')) {
   process.exit(0);
 }
 
+// Valid values — must match Environment type in config/variables.ts and
+// Role type respectively.
+const validEnvs = ['local', 'staging'];
+const validRoles = ['admin', 'owner', 'member', 'viewer'];
+
+// Parse `--role <value>` (space-separated) anywhere in args.
+let roleFlag: string | undefined;
+const roleIdx = args.indexOf('--role');
+if (roleIdx !== -1) {
+  roleFlag = args[roleIdx + 1];
+  if (!roleFlag) {
+    log('--role requires a value', 'error');
+    log(`Available roles: ${validRoles.join(', ')}`, 'info');
+    process.exit(1);
+  }
+  args.splice(roleIdx, 2);
+}
+// Also accept `--role=<value>` (single-token form).
+for (let i = 0; i < args.length; i++) {
+  if (args[i].startsWith('--role=')) {
+    roleFlag = args[i].slice('--role='.length);
+    args.splice(i, 1);
+    break;
+  }
+}
+
+if (roleFlag) {
+  const roleLower = roleFlag.toLowerCase();
+  if (!validRoles.includes(roleLower)) {
+    log(`Unknown role: "${roleFlag}"`, 'error');
+    log(`Available roles: ${validRoles.join(', ')}`, 'info');
+    process.exit(1);
+  }
+  // Override TEST_ROLE BEFORE importing config, because config/variables.ts
+  // reads TEST_ROLE at evaluation time.
+  process.env.TEST_ROLE = roleLower;
+}
+
 // Validate and override TEST_ENV BEFORE importing config,
 // because config/variables.ts reads TEST_ENV at evaluation time.
-const validEnvs = ['local', 'staging']; // Must match Environment type in config/variables.ts
 const envArg = args[0];
 if (envArg) {
   if (!validEnvs.includes(envArg)) {
@@ -124,10 +161,18 @@ async function authenticate(): Promise<ApiState | null> {
   const { email, password } = config.testUser;
 
   if (!email || !password) {
-    const prefix = env.current.toUpperCase();
+    const envPrefix = env.current.toUpperCase();
+    // When a role is active, the expected var names are role-scoped
+    // (`<ENV>_<ROLE>_EMAIL`); otherwise legacy (`<ENV>_USER_EMAIL`).
+    const emailVar = env.role
+      ? `${envPrefix}_${env.role.toUpperCase()}_EMAIL`
+      : `${envPrefix}_USER_EMAIL`;
+    const passwordVar = env.role
+      ? `${envPrefix}_${env.role.toUpperCase()}_PASSWORD`
+      : `${envPrefix}_USER_PASSWORD`;
     log('Missing credentials in .env file:', 'error');
-    if (!email) { log(`  - ${prefix}_USER_EMAIL is not set`, 'error'); }
-    if (!password) { log(`  - ${prefix}_USER_PASSWORD is not set`, 'error'); }
+    if (!email) { log(`  - ${emailVar} is not set`, 'error'); }
+    if (!password) { log(`  - ${passwordVar} is not set`, 'error'); }
     log('Set these in your .env file and try again.', 'info');
     return null;
   }
@@ -249,16 +294,26 @@ function showHelp(): void {
 \x1B[1mAPI Login\x1B[0m - Authenticate and store token for tests & MCP tools
 
 \x1B[1mUSAGE\x1B[0m
-  bun run api:login [environment]
+  bun run api:login [environment] [--role <role>]
 
 \x1B[1mENVIRONMENTS\x1B[0m
   local       Authenticate against local dev server (default)
   staging     Authenticate against staging server
 
+\x1B[1mROLES\x1B[0m
+  --role <role>   Override TEST_ROLE for this run (reads <ENV>_<ROLE>_EMAIL /
+                  <ENV>_<ROLE>_PASSWORD from .env instead of the legacy
+                  LOCAL_USER_* / STAGING_USER_*). If omitted, TEST_ROLE from
+                  .env (or the shell) is used.
+                  Valid roles: admin, owner, member, viewer
+
 \x1B[1mEXAMPLES\x1B[0m
-  bun run api:login                  # Uses TEST_ENV from .env
-  bun run api:login local            # Force local environment
-  bun run api:login staging          # Force staging environment
+  bun run api:login                          # Uses TEST_ENV + TEST_ROLE from .env
+  bun run api:login local                    # Force local env, role from .env
+  bun run api:login staging                  # Force staging env, role from .env
+  bun run api:login --role admin             # Force admin role, env from .env
+  bun run api:login staging --role admin     # staging-admin@... credentials
+  bun run api:login --role=member local      # local-member@... credentials
 
 \x1B[1mTOKEN STORAGE\x1B[0m
   .auth/api-state.json    Used by Playwright test fixtures
@@ -267,15 +322,23 @@ function showHelp(): void {
                           RESTART your terminal after login so MCPs pick it up.
 
 \x1B[1mREQUIRED .env VARIABLES\x1B[0m
-  For local:    LOCAL_USER_EMAIL, LOCAL_USER_PASSWORD
-  For staging:  STAGING_USER_EMAIL, STAGING_USER_PASSWORD
+  Legacy single-user mode (TEST_ROLE empty):
+    For local:    LOCAL_USER_EMAIL, LOCAL_USER_PASSWORD
+    For staging:  STAGING_USER_EMAIL, STAGING_USER_PASSWORD
+
+  Role-scoped mode (TEST_ROLE=<role>):
+    For local:    LOCAL_<ROLE>_EMAIL, LOCAL_<ROLE>_PASSWORD
+    For staging:  STAGING_<ROLE>_EMAIL, STAGING_<ROLE>_PASSWORD
+    e.g. TEST_ROLE=admin + TEST_ENV=staging → STAGING_ADMIN_EMAIL / _PASSWORD
 
 \x1B[1mCONFIGURATION\x1B[0m
   Environment URLs:   config/variables.ts (envDataMap)
   Auth format:        scripts/api-login.ts (PROJECT-SPECIFIC section)
+  Role list:          config/variables.ts (KNOWN_ROLES) + validateTestEnv.ts
 
 \x1B[1mOPTIONS\x1B[0m
-  -h, --help    Show this help
+  -h, --help          Show this help
+  --role <role>       Authenticate as <role> for this run only
 `);
 }
 
@@ -283,7 +346,7 @@ function showHelp(): void {
 // Main Execution
 // ============================================
 
-console.log(`\n\x1B[1mAPI Login\x1B[0m — ${env.current}\n`);
+console.log(`\n\x1B[1mAPI Login\x1B[0m — ${env.current}${env.role ? ` / ${env.role}` : ''}\n`);
 
 log(`User: ${config.testUser.email}`);
 

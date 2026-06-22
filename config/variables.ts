@@ -25,6 +25,16 @@ catch {
 
 export type Environment = 'local' | 'staging'; // Add more when needed (e.g., 'production')
 
+/**
+ * Role identifiers for role-scoped test users.
+ * Active when `TEST_ROLE` is non-empty. Matches the `<ENV>_<ROLE>_EMAIL` /
+ * `<ENV>_<ROLE>_PASSWORD` env var pattern (e.g. `STAGING_ADMIN_EMAIL`).
+ * Keep in sync with the manifest in `cli/lib/variables-manifest.ts` and the
+ * validator in `config/validateTestEnv.ts`.
+ */
+export type Role = 'admin' | 'owner' | 'member' | 'viewer';
+const KNOWN_ROLES: readonly Role[] = ['admin', 'owner', 'member', 'viewer'];
+
 // ============================================
 // Destructure Environment Variables (Single Access)
 // ============================================
@@ -32,6 +42,7 @@ export type Environment = 'local' | 'staging'; // Add more when needed (e.g., 'p
 const {
   // === Environment Detection ===
   TEST_ENV = 'local', // Used: env.current, selects URLs and credentials
+  TEST_ROLE = '', // Used: env.role, selects which role-scoped user is active (empty = legacy single user)
   CI, // Used: env.isCI (global.setup, KataReporter)
   BUILD_ID, // Used: env.buildId (jiraSync)
 
@@ -74,8 +85,21 @@ const {
 // Environment Detection
 // ============================================
 
+/**
+ * Resolve the active TEST_ROLE. We do NOT throw at module load — an invalid
+ * role falls back to `null` (legacy single-user mode) and the validator in
+ * `config/validateTestEnv.ts` surfaces a clear error. This keeps tooling that
+ * imports `env` without needing credentials working even with a typo'd role.
+ */
+const TEST_ROLE_RAW = (TEST_ROLE || '').trim().toLowerCase();
+const activeRole: Role | null
+  = TEST_ROLE_RAW && KNOWN_ROLES.includes(TEST_ROLE_RAW as Role)
+    ? (TEST_ROLE_RAW as Role)
+    : null;
+
 export const env = {
   current: TEST_ENV as Environment,
+  role: activeRole,
   isLocal: TEST_ENV === 'local' || TEST_ENV === undefined,
   isStaging: TEST_ENV === 'staging',
   isCI: CI === 'true',
@@ -98,26 +122,50 @@ const userCredentialsMap: Record<Environment, { email: string, password: string 
   },
 };
 
+/**
+ * Resolve the active test user for the current environment + role.
+ *
+ * Resolution priority:
+ *   1. `TEST_ROLE` is set AND non-empty → look up `<ENV>_<ROLE>_EMAIL` and
+ *      `<ENV>_<ROLE>_PASSWORD` in `process.env` (e.g. `STAGING_ADMIN_EMAIL`).
+ *      These vars are NOT destructured at module top (there are 16 of them and
+ *      they are dynamic), so we read them via `process.env[...]` at call time.
+ *   2. `TEST_ROLE` is empty (default — 100% backwards compatible) → return the
+ *      legacy `LOCAL_USER_*` / `STAGING_USER_*` user from `userCredentialsMap`.
+ *
+ * Empty strings here are NOT a failure — `validateTestEnv.ts` is the gate that
+ * errors when a required credential is missing, with a clear var name.
+ */
+function resolveTestUser(envName: Environment, role: Role | null): { email: string, password: string } {
+  if (role) {
+    const prefix = `${envName.toUpperCase()}_${role.toUpperCase()}`;
+    return {
+      email: process.env[`${prefix}_EMAIL`] ?? '',
+      password: process.env[`${prefix}_PASSWORD`] ?? '',
+    };
+  }
+  return userCredentialsMap[envName];
+}
+
 // ============================================
 // ENV DATA Mapping (hardcoded - not secrets because these are not sensitive data like credentials)
 // ============================================
 
 const envDataMap: Record<
   Environment,
-  { base: string, api: string, user: { email: string, password: string } }
+  { base: string, api: string }
 > = {
   local: {
     base: 'http://localhost:3000',
     api: 'http://localhost:3000/api',
-    user: userCredentialsMap.local,
   },
   staging: {
     base: 'https://dojo.upexgalaxy.com',
     api: 'https://dojo.upexgalaxy.com/api',
-    user: userCredentialsMap.staging,
   },
 };
 const envData = envDataMap[env.current];
+const activeTestUser = resolveTestUser(env.current, activeRole);
 
 // ============================================
 // Main Configuration Object
@@ -140,7 +188,7 @@ export const config = {
   },
 
   // Test User (configure in .env)
-  testUser: envData.user,
+  testUser: activeTestUser,
 
   // TMS
   tms: {
