@@ -115,6 +115,7 @@ Example: ❌ "Added `waitForResponse('**/api/auth/login')` before toast assertio
 | Onboard target project | "onboard this repo", "set up project" | `/project-discovery` | target repo code, `.context/` if exists | Read + Grep |
 | Adapt KATA to stack | "adapt framework", "wire fixtures" | `/adapt-framework` | `.context/business/*` | Code edit |
 | Shift-Left batch grooming | "shift-left these stories", "groom the backlog", "pre-sprint QA", "refine these N stories" | `/shift-left-testing` | `.context/business/*`, `.context/master-test-plan.md`, `.context/PBI/{module}/{TICKET}-*/` | `[ISSUE_TRACKER_TOOL]` |
+| Pre-flight before sprint testing | "pre-flight check", "reconcile ATP", "QA intake", "before sprint-testing" | `/sprint-testing-refinement` | `pre-flight-check.md`, shift-left artifacts | Read + verify |
 | Sprint testing ticket | "test this", "QA this story", "verify bug" | `/sprint-testing` | `.context/PBI/{module}/{TICKET}-*/` | `[AUTOMATION_TOOL]` + `[ISSUE_TRACKER_TOOL]` |
 | TMS documentation / ROI | "document tests", "ROI", "automate priority" | `/test-documentation` | `.context/test-management-system.md` | `[TMS_TOOL]` |
 | Write automated test | "automate", "E2E test", "API test" | `/test-automation` | `kata-manifest.json`, `tests/components/`, `.context/PBI/.../implementation-plan.md`, skill `references/` | Code edit |
@@ -166,6 +167,7 @@ Full contract: `.claude/skills/agentic-qa-core/references/skill-composition-stra
 | `tickets-board-statuses` | `tickets-board-statuses`, `jira-board-status` | Lean PM/QA Jira board status report: backlog Stories ordered by shift-left viability, QA intake risk, and user delivery footprint. Analysis-only; no Jira mutations. |
 | `shift-left-refinement` | `shift-left-refinement`, `shift-left-workflow-pattern` | Pattern-quality skill for refining a single Story into BK-34-style shift-left content: scope, Gherkin ACs, business rules, expert recommendations, open confirmations, and publication checklist. |
 | `shift-left-testing` | `/shift-left-testing` | Stage 0 — pre-sprint Shift-Left QA on a batch of backlog Stories. Refines ACs, surfaces gaps/ambiguities, produces ATP DRAFT + per-story `shift-left-refinement.md`, transitions `backlog → shift_left_qa → estimation`. Adds label `shift-left-reviewed` so `/sprint-testing` Stage 1 can short-circuit Phases 1-3 later. |
+| `sprint-testing-refinement` | `/sprint-testing-refinement` | Pre-flight intake layer. Reconciles shift-left ATP vs sprint reality before `/sprint-testing` Stage 1. Produces `pre-flight-check.md` (GO/CONDITIONAL-GO/NO-GO/DEFER). Session Start §0.7 consumes it conditionally. Skip if no shift-left artifacts. |
 | `sprint-testing` | `/sprint-testing` | Stages 1-3: manual QA per ticket (Planning, Execution, Reporting). Produces PBI folder, ATP, ATR, bug reports. |
 | `test-documentation` | `/test-documentation` | Stage 4: TMS docs + ROI scoring. Produces Candidate / Manual / Deferred verdicts. |
 | `test-automation` | `/test-automation` | Stage 5: Plan → Code → Review on KATA + Playwright + TypeScript. |
