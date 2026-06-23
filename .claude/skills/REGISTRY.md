@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-06-22T20:30:08.964Z`
+> Generated: `2026-06-23T18:07:14.711Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 24
+Skills indexed: 25
 
 ---
 ## Skill: acli
@@ -515,6 +515,34 @@ Skills indexed: 24
 **Read full SKILL.md when**: starting a sprint cold, resuming a session, or handling a bug-triage / batch-sprint flow not covered by the rules above.
 
 > Source: `.claude/skills/sprint-testing/SKILL.md` · phase: `unknown` · extraction strategy: A
+
+---
+
+## Skill: sprint-testing-refinement
+
+**Purpose**: Pre-sprint reconciliation layer between shift-left refinement and sprint-testing execution.
+
+**Compact Rules**:
+- **Over-planning**: ATP authored against a stale assumption → wasted Planning effort on TCs that don't reflect current state.
+- **Under-execution**: ATP claims 25 TCs, only 19 get executed, quality posture is unclear (root cause: BK-27 ATP desync).
+- A Story transitions to `Ready For QA` (or equivalent sprint-ready status).
+- The Story has `shift-left-reviewed` label (dated <30 days) OR an `acceptance-test-plan.md` on disk.
+- The user says "refine this for sprint", "pre-flight check", "QA intake", "before sprint-testing".
+- `shift-left-refinement/SKILL.md` — shift-left output structure (this skill consumes its artifacts).
+- `sprint-testing/SKILL.md` — ATP structure expected by Stage 1.
+- Story via `bun run jira:sync-issues get <KEY> --include-comments` → `story.md`, `acceptance-criteria.md`, `acceptance-test-plan.md`, `comments.md`. Also scan `comments.md` for existing `QA Testing Complete`, `TEST RESULTS`, or prior ATR comments that must be preserved in the Stage 3 reporting handoff.
+- `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/shift-left-refinement.md` — if it exists.
+- `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` — ATP from shift-left or prior attempt.
+- `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — session notes from prior work.
+- `.context/business/business-data-map.md`, `business-feature-map.md`, `business-api-map.md` — domain context.
+- `.agents/project.yaml` — project identity, `{{PROJECT_KEY}}`, active environment.
+- `.agents/jira-required.yaml` — Jira field slugs.
+- `.env` — test-user credentials.
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/sprint-testing-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
