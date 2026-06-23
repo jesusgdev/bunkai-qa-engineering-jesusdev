@@ -621,33 +621,45 @@ QA approves BK-32 for the sprint scope as PASSED. No blocking defect was found. 
 
 ### jesusgpythondev - 6/23/2026, 10:50:39 AM
 
-QA Testing Complete - BK-32
+# QA Testing Complete - BK-32
 
-Environment: Staging (https://staging-upexbunkai.vercel.app)
-Result: PASSED (9/9 TCs; ATC-05 dropped per Dev decision §3.1)
+Environment: Staging
+Result: PASSED WITH SCOPE NOTE (9/9 executed checks passed; ATC-05 dropped per Dev decision Section 3.1)
 
-TEST DATA USED:
-- 4-ATC Test: BK-32 4-ATC Test (ID: e72c88da-4cd3-4726-8bc2-1ffb02c3327b)
-- 7-ATC Test: BK-32 Perf 7-ATC Test (ID: d926d94d-0521-436e-a030-cc8ed371ce15)
-- Long-content Test: BK-32 Long Content Test (ID: ac7a3b82-6b20-4b81-96cb-f39ad5492e8e)
-- Workspace: d8aec050-72cc-4229-9d3e-56c120b2fafa (owner role)
+## Test Data Used
 
-VERIFIED BEHAVIORS:
-- AC-1: Expanded view with ATCs inline in execution order - VERIFIED
-- AC-2: Positions match saved execution order - VERIFIED
-- AC-3: Edited ATC content appears (live, not snapshot) - VERIFIED
-- AC-4: ATC with 0 assertions renders clear section state - VERIFIED
-- AC-5: Cross-workspace access denied without leakage (404) - VERIFIED
-- AC-6: Missing Test shows safe not-found state (404) - VERIFIED
-- AC-7: No edit/add/remove/reorder controls (read-only, 405) - VERIFIED
-- AC-8: 7-ATC expanded read meets p95 target (271ms < 500ms) - VERIFIED
-- AC-9: Long steps/assertions remain readable (500 chars) - VERIFIED
+- Workspace: BK-32 Sprint QA (`d8aec050-72cc-4229-9d3e-56c120b2fafa`, owner role)
+- 4-ATC Test: BK-32 4-ATC Test (`e72c88da-4cd3-4726-8bc2-1ffb02c3327b`)
+- 7-ATC Test: BK-32 Perf 7-ATC Test (`d926d94d-0521-436e-a030-cc8ed371ce15`)
+- Long-content Test: BK-32 Long Content Test (`ac7a3b82-6b20-4b81-96cb-f39ad5492e8e`)
+- Cross-workspace Test: old workspace `a222895a`; read returns 404 without existence leak
+- Backup execution user: `openapi_testing@xenievzoau.resend.app`
 
-NOTE: ATC-05 (zero-ATC empty state) DROPPED per Dev decision §3.1 — BK-27 requires >=1 ATC.
+## Verified Behaviors
 
-Defects: None
-ATR: See "BK-32 TEST RESULTS" comment above for full execution report.
+- AC1: Expanded Test view returns ATCs inline in saved execution order - VERIFIED
+- AC2: Position labels match the persisted ATC chain order - VERIFIED
+- AC3: Edited ATC content appears live in expanded reads, not as a stale snapshot - VERIFIED
+- AC4: ATC with zero assertions renders a clear empty assertions state - VERIFIED
+- AC5: Cross-workspace Test access is denied without information leakage using 404 `not_found` - VERIFIED
+- AC6: Missing Test shows a safe not-found state using 404 `not_found` - VERIFIED
+- AC7: Edit, add, remove, and reorder controls are not available through the read-only endpoint; mutation methods return 405 - VERIFIED
+- AC8: 7-ATC expanded read meets the p95 target with a 271ms warm response under the 500ms target - VERIFIED
+- AC9: Long steps and assertions remain readable with 500-character content preserved - VERIFIED
 
+## Open Non-Blocking Risks
+
+- ATC-05 zero-ATC empty state remains intentionally dropped because BK-27 requires at least one ATC; PO/Dev should remove or reconcile the stale zero-ATC requirement text.
+- The `expand` parameter is accepted but ignored in MVP because the endpoint always returns the full expanded payload.
+- Expanded-read payload, cross-workspace 404, 7-ATC performance, and long-content readability should be promoted to Stage 4 ROI/regression documentation.
+
+## Evidence
+
+- ATR evidence: `.context/PBI/epics/EPIC-BK-24-tests-chains-of-atcs/stories/STORY-BK-32-tms-test-view-view-a-test-with-all-chained-atcs-ex/acceptance-test-results.md`
+- Session memory: `.context/PBI/epics/EPIC-BK-24-tests-chains-of-atcs/stories/STORY-BK-32-tms-test-view-view-a-test-with-all-chained-atcs-ex/test-session-memory.md`
+- Jira fallback ATR comment: BK-32 comment `11728`
+
+QA sign-off: approved with non-blocking follow-up risks.
 
 ---
 

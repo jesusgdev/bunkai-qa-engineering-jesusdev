@@ -519,35 +519,49 @@ QA approves BK-33 for the sprint scope as PASSED. No blocking defect was found. 
 
 ### jesusgpythondev - 6/22/2026, 7:06:07 PM
 
-QA Testing Complete - BK-33
+# QA Testing Complete - BK-33
 
-Environment: Staging (https://staging-upexbunkai.vercel.app)
-Result: PASSED (14/14 TCs)
+Environment: Staging
+Result: PASSED (14/14 executed checks passed)
 
-TEST DATA USED:
-- Test: BK-34 Seed Manual Run Test (ID: 09d28d3c-ad29-45d9-a014-dbb7ba6ccbb2)
-- Workspace: a222895a-a22a-4193-9c7f-70c43e78bede (owner role)
+## Test Data Used
 
-VERIFIED BEHAVIORS:
-- AC-1: Assign reserved tags (smoke, regression) - VERIFIED
-- AC-2: Assign custom tags alongside reserved tags - VERIFIED
-- AC-3: Replace full tag set (replacement semantics) - VERIFIED
-- AC-4: Remove all tags (empty set valid) - VERIFIED
-- AC-5: Reject tag >50 chars - VERIFIED
-- AC-6: Reject tag with comma - VERIFIED
-- AC-7: Reject >20 tags - VERIFIED
-- AC-8: Reject stale concurrent update (409 conflict) - VERIFIED
-- AC-9: Reject unauthenticated (401) + cross-workspace (403) - VERIFIED
-- AC-10: Normalize reserved tag casing - VERIFIED
-- AC-11: Trim whitespace + deduplicate - VERIFIED
-- AC-12: Preserve custom tag casing after trim - VERIFIED
-- AC-13: Tag filtering workspace-scoped, case-insensitive - VERIFIED
-- AC-14: Tag replacement refreshes filter results - VERIFIED
+- Workspace: BK-34 Sprint QA (`a222895a-a22a-4193-9c7f-70c43e78bede`, owner role)
+- Test: BK-34 Seed Manual Run Test (`09d28d3c-ad29-45d9-a014-dbb7ba6ccbb2`)
+- Reserved tags verified: `smoke`, `sanity`, `regression`
+- Custom tags verified: `checkout`, `mobile`, `billing`, `Mobile-P1`
+- Final restored state: `tags=[]`; test data restored to original state after execution
 
-Defects: None
-Test data restored to original state after execution.
-ATR: See "BK-33 TEST RESULTS" comment above for full execution report.
+## Verified Behaviors
 
+- AC1: Reserved tags `smoke` and `regression` can be assigned to a Test - VERIFIED
+- AC2: Custom tags can be assigned alongside reserved tags - VERIFIED
+- AC3: Saving a new tag set replaces the full previous tag set - VERIFIED
+- AC4: Saving an empty tag set removes all tags and is valid - VERIFIED
+- AC5: Custom tag longer than 50 characters is rejected without mutating existing tags - VERIFIED
+- AC6: Tag containing a comma is rejected without mutating existing tags - VERIFIED
+- AC7: More than 20 tags are rejected without mutating existing tags - VERIFIED
+- AC8: Stale concurrent tag update is rejected with 409 conflict and recoverable current state - VERIFIED
+- AC9: Unauthenticated update is rejected with 401 and cross-workspace update is rejected with 403 `not-a-member` - VERIFIED
+- AC10: Reserved tag casing normalizes to lowercase - VERIFIED
+- AC11: Whitespace is trimmed and duplicate tags are deduplicated - VERIFIED
+- AC12: Valid custom tag casing is preserved after trimming - VERIFIED
+- AC13: Tag filtering is workspace-scoped and case-insensitive - VERIFIED
+- AC14: Replacing tags refreshes filtered results and suite grouping - VERIFIED
+
+## Open Non-Blocking Risks
+
+- Canonical Gherkin currently exists in fallback comments and should be moved into the Acceptance Criteria field when Jira custom-field update access is available.
+- ATP draft currently exists in fallback comments and should be moved into the ATP field when Jira custom-field update access is available.
+- Optimistic locking, workspace-scoped filtering, and reserved-tag normalization should be promoted to Stage 4 ROI/regression documentation.
+
+## Evidence
+
+- ATR evidence: `.context/PBI/epics/EPIC-BK-24-tests-chains-of-atcs/stories/STORY-BK-33-tms-test-tags-assign-reserved-and-custom-tags-to-a/acceptance-test-results.md`
+- Session memory: `.context/PBI/epics/EPIC-BK-24-tests-chains-of-atcs/stories/STORY-BK-33-tms-test-tags-assign-reserved-and-custom-tags-to-a/test-session-memory.md`
+- Jira fallback ATR comment: BK-33 comment `11710`
+
+QA sign-off: approved with non-blocking follow-up risks.
 
 ---
 

@@ -228,33 +228,99 @@ QA approves BK-28 for the sprint scope as PASSED. No blocking defect was found. 
 
 ### jesusgpythondev - 6/23/2026, 10:50:30 AM
 
-QA Testing Complete - BK-28
+# QA Testing Complete - BK-28
 
-Environment: Staging (https://staging-upexbunkai.vercel.app)
-Result: PASSED (12/12 TCs)
+Environment: Staging
+Result: PASSED (12/12 executed checks passed)
 
-TEST DATA USED:
-- Test: BK-28 Reorder Seed Test (ID: 7b14c384-c4f9-403f-8cae-0b85a1cfcfe5, 4 ATCs [A,B,C,D])
-- Single-ATC Test: BK-34 Seed (ID: 09d28d3c-ad29-45d9-a014-dbb7ba6ccbb2, version 11)
-- Seed ATCs created: ATC-B (613e6ba3), ATC-C (5906ed43), ATC-D (df210c22)
+## Test Data Used
 
-VERIFIED BEHAVIORS:
-- AC-1: Successful reorder [A,B,C,D] to [A,D,B,C] with version bump - VERIFIED
-- AC-2: Reorder persists across reads (GET reflects new order) - VERIFIED
-- AC-3: No-op when same order submitted (no version bump, no event) - VERIFIED
-- AC-4: Single-ATC Test reorder is no-op - VERIFIED
-- AC-5: Unauthenticated request rejected (401) - VERIFIED
-- AC-6: Cross-workspace forbidden (404, no information leak) - VERIFIED
-- AC-7: Version conflict on concurrent reorder (409 with current_chain) - VERIFIED
-- AC-8: Chain mismatch returns validation error (422 chain_mismatch) - VERIFIED
-- AC-9: Duplicate ATC ids rejected (422 chain_invalid) - VERIFIED
-- AC-10: Empty chain rejected (422 chain_invalid) - VERIFIED
-- AC-11: Activity log captures reorder event (test.reordered) - VERIFIED
-- AC-12: Retry-safe double-click returns no-op - VERIFIED
+- Workspace: BK-34 Sprint QA (`a222895a-a22a-4193-9c7f-70c43e78bede`)
+- Test: BK-28 Reorder Seed Test (`7b14c384-c4f9-403f-8cae-0b85a1cfcfe5`)
+- Initial chain: 4 ATCs `[A,B,C,D]`
+- Verified chain: `[A,D,B,C]`
+- Single-ATC Test: BK-34 Seed Manual Run Test (`09d28d3c-ad29-45d9-a014-dbb7ba6ccbb2`, version 11)
+- Seed ATCs created: ATC-B (`613e6ba3`), ATC-C (`5906ed43`), ATC-D (`df210c22`)
 
-Defects: None
-ATR: See "BK-28 TEST RESULTS" comment above for full execution report.
+## Verified Behaviors
 
+- AC1: Successful reorder from `[A,B,C,D]` to `[A,D,B,C]` with version bump - VERIFIED
+- AC2: Reorder persists across reads; GET reflects the saved order - VERIFIED
+- AC3: Same-order reorder is a no-op with no version bump and no duplicate event - VERIFIED
+- AC4: Single-ATC Test reorder is a safe no-op - VERIFIED
+- AC5: Unauthenticated reorder request is rejected with 401 - VERIFIED
+- AC6: Cross-workspace access fails safely with 404 `not_found` and no information leak - VERIFIED
+- AC7: Stale concurrent reorder is rejected with 409 and returns `current_chain` - VERIFIED
+- AC8: Chain mismatch is rejected with 422 `chain_mismatch` - VERIFIED
+- AC9: Duplicate ATC IDs are rejected with 422 `chain_invalid` - VERIFIED
+- AC10: Empty chain is rejected with 422 `chain_invalid` - VERIFIED
+- AC11: Activity log captures the real reorder event as `test.reordered` - VERIFIED
+- AC12: Retry-safe double-click behavior returns no-op and does not duplicate events - VERIFIED
+
+## Open Non-Blocking Risks
+
+- Documentation alignment remains needed because the old AC expected a 403-like forbidden result for cross-workspace access, while the implementation returns 404 `not_found` to avoid leaking resource existence.
+- Viewer-role 403 behavior should remain a follow-up regression candidate with a dedicated viewer or insufficient-scope PAT fixture.
+- High-value reorder, conflict, invalid-chain, and activity-log scenarios should be promoted to Stage 4 ROI/regression documentation.
+
+## Evidence
+
+- ATR evidence: `.context/PBI/epics/EPIC-BK-24-tests-chains-of-atcs/stories/STORY-BK-28-as-a-qa-engineer-i-want-to-reorder-the-atcs-inside/acceptance-test-results.md`
+- Session memory: `.context/PBI/epics/EPIC-BK-24-tests-chains-of-atcs/stories/STORY-BK-28-as-a-qa-engineer-i-want-to-reorder-the-atcs-inside/test-session-memory.md`
+- Jira fallback ATR comment: BK-28 comment `11712`
+
+QA sign-off: approved with non-blocking follow-up risks.
+
+---
+
+### jesusgpythondev - 6/23/2026, 4:42:41 PM
+
+# Expert Panel Review - Sprint Testing Audit BK-28
+
+VALIDATED
+
+Sprint-testing package accepted. No execution rerun needed.
+
+## Executive Summary
+
+The expert panel reviewed BK-28 after the Jira report formatting correction and BK-34-style QA completion update. The sprint-testing outcome is valid: 12 scenarios passed, 0 failed, 0 deferred, and 0 bugs. The current Jira reporting shape is acceptable because the detailed ATR, compact QA verdict, and expert audit closure are separated and readable.
+
+## Evidence Used
+
+- Jira: BK-28 story is QA Approved and contains the final BK-28 TEST RESULTS comment plus separate QA Testing Complete - BK-28 verdict comment.
+- Jira: The final report records staging execution, test data, DB state validation, activity-log validation, observations, recommendations, and no defects.
+- Repo/local cache: `acceptance-test-results.md` confirms 12 passed scenarios, DB cross-validation for version/order/positions/reorder events, and 0 bugs.
+- Repo/local cache: `test-session-memory.md` confirms staging workspace, API contract, active owner-role workspace, and reorder test data used during execution.
+- Engram: Prior reporting learnings confirmed that final QA comments should preserve BK-34-style headings and ADF bullets, while detailed ATR tables remain in the ATR comment.
+
+## Expert Findings
+
+- QA Lead: Coverage is complete for the sprint scope. It covers successful reorder, persistence, no-op behavior, single-ATC no-op, unauthenticated access, cross-workspace isolation, optimistic locking, invalid payloads, activity logging, and retry safety.
+- Technical Architect: The reorder contract is correctly validated through stable Test Step IDs instead of ATC IDs, which protects chains that can reuse the same ATC and preserves deterministic ordering.
+- Security/AppSec: Cross-workspace access returning 404 `not_found` is acceptable for this read/write boundary because it avoids resource existence disclosure. This should be treated as a security improvement over visible forbidden responses.
+- Senior Developer: Version conflict and validation responses provide useful recovery context without partial writes. The 409 `current_chain` and 422 validation details are strong candidates for regression automation.
+- Workflow/Jira: Report format is now aligned with the BK-34 pattern. The ATR carries detailed execution tables, the QA verdict gives a quick scan, and this expert audit records acceptance and residual follow-up separately.
+- Skeptical Reviewer: The main residual risk is documentation drift, not execution quality. The old AC wording implies a 403-like expectation, while the implementation uses non-disclosing 404 behavior for cross-workspace access.
+
+## Report Improvements Added
+
+- Added this expert audit note as the review closure layer, without duplicating the full ATR.
+- Explicitly records that corrected report format is accepted.
+- Explicitly records that no rerun is needed.
+- Separates cross-workspace non-disclosure behavior from viewer-role insufficient-permission behavior so the ticket is not judged by the wrong error-code contract.
+- Preserves the recommendation that Stage 4/test-documentation should prioritize high-value regression candidates instead of converting every sprint outline into a persistent test.
+
+## Residual Follow-Up
+
+- Documentation cleanup recommended, not a QA blocker for this sprint-testing result.
+- PO/QA should reconcile AC wording for cross-workspace behavior: current implementation returns 404 `not_found` to avoid information leakage.
+- Stage 4/test-documentation should prioritize regression candidates for reorder persistence, optimistic locking, chain mismatch, duplicate/empty chain validation, activity-log traceability, and retry-safe no-op behavior.
+
+## Panel Verdict
+
+VERDICT: ACCEPTED
+
+BK-28 sprint-testing is well developed and report quality is now sufficient for audit/read-back. Remaining action is documentation alignment, not additional execution.
 
 ---
 

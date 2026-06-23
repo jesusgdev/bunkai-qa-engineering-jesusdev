@@ -229,5 +229,55 @@ QA sign-off: approved with non-blocking follow-up risks.
 
 ---
 
+### jesusgpythondev - 6/23/2026, 4:42:42 PM
+
+# Expert Panel Review - Sprint Testing Audit BK-34
+
+> ***SUCCESS:***  Sprint-testing package accepted. No execution rerun needed.
+
+## Executive Summary
+
+The expert panel reviewed BK-34 after the Jira report formatting correction and BK-34-style QA completion publication. The sprint-testing outcome is valid: 10 executed checks passed, 0 blocking defects were found, and the story is appropriately marked PASSED WITH ISSUES because remaining work is non-blocking follow-up coverage. The current Jira reporting shape is acceptable because the detailed ATR and compact QA verdict are separated and readable.
+
+## Evidence Used
+
+- Jira: BK-34 story is QA Approved and contains the final BK-34 TEST RESULTS comment plus separate QA Testing Complete - BK-34 verdict comment.
+- Jira: The final report records staging execution, workspace/project/environment/test/run IDs, API/DB validation, UI smoke evidence, deferred follow-up coverage, and no confirmed defects.
+- Repo/local cache: `comments.md` confirms 10 passed executed checks, the `PASSED WITH ISSUES` result, and the approved fallback ATR because `customfield_10284` is not settable for this Story.
+- Repo/local cache: `test-session-memory.md` confirms Stage 1, Stage 2, and Stage 3 completed, including API/DB smoke, UI smoke, final reporting, and transition to QA Approved.
+- Jira/local evidence references: API/DB evidence, UI evidence JSON, and UI screenshot paths are recorded in the QA Testing Complete comment and final ATR.
+
+## Expert Findings
+
+- QA Lead: Coverage is acceptable for the sprint scope. It validates successful Run start, pending checklist snapshot, invalid environment rejection, same-token replay, different-token Run creation, executor modes, UI visibility, HTTP idempotency, invalid executor/missing key failures, and safe random Run read behavior.
+- Technical Architect: The Run-start architecture is validated across API, DB, and UI smoke. The tested behavior proves Run creation, Run ATC/step snapshotting, environment binding, executor mode storage, and idempotency boundaries for the implemented scope.
+- Security/AppSec: Workspace-bound PAT execution and safe non-visible Run reads were covered. Missing idempotency key, invalid executor mode, and random/non-visible Run reads fail safely without confirming unauthorized resource details.
+- Senior Developer: Idempotency behavior is well evidenced because same-key/same-payload replay returns the existing Run, while same-key/different-payload returns conflict and creates no extra Run.
+- Workflow/Jira: Report format is acceptable for audit/read-back. The ATR field configuration issue is documented as process debt, and fallback comments are used consistently for the approved ATR and QA verdict.
+- Skeptical Reviewer: The main residual risk is planned depth coverage, not execution validity. Zero executable steps, insufficient-scope PAT, after-24h start-token behavior, and snapshot immutability need disposable fixtures or product confirmation and should not block this sprint result.
+
+## Report Improvements Added
+
+- Added this expert audit note as the review closure layer, without duplicating the full ATR.
+- Explicitly records that corrected report format is accepted.
+- Explicitly records that no rerun is needed.
+- Separates blocking defects from non-blocking follow-up risks so `PASSED WITH ISSUES` is not misread as a failed sprint result.
+- Preserves the recommendation that Stage 4/test-documentation should select regression-worthy Run-start and idempotency cases instead of converting every sprint outline into a persistent test.
+
+## Residual Follow-Up
+
+- Documentation/process cleanup recommended, not a QA blocker for this sprint-testing result.
+- PO/Dev confirmation remains needed for same `start_token` behavior after 24 hours; current implementation creates a new Run.
+- Stage 4/test-documentation should prioritize regression candidates for successful Run start, invalid environment rejection, same-token replay, different-token creation, idempotency replay/conflict, missing key validation, safe non-visible Run read, and UI Run detail visibility.
+- Jira configuration should be fixed so the Acceptance Test Results field (`customfield_10284`) can be set directly instead of relying on fallback comments.
+
+## Panel Verdict
+
+VERDICT: ACCEPTED
+
+BK-34 sprint-testing is well developed and report quality is now sufficient for audit/read-back. Remaining action is follow-up regression selection and Jira field configuration cleanup, not additional execution.
+
+---
+
 
 _Synced from Jira by sync-jira-issues_

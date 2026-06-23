@@ -1,6 +1,6 @@
 ---
 name: sprint-testing-refinement
-description: "Pre-sprint reconciliation layer between shift-left refinement and sprint-testing execution. Use when a Story moves to Ready For QA to reconcile the shift-left ATP against sprint reality before investing in full Stage 1 Planning. Produces a pre-flight check report: ATP sync status, test-data readiness, open questions, reporting handoff guard, and a GO/CONDITIONAL-GO/NO-GO verdict. This skill does NOT modify /sprint-testing — it feeds it. Triggers on: refine this for sprint, pre-flight check, reconcile shift-left ATP, before sprint-testing, QA intake review. Do NOT use for: writing ATPs (use /shift-left-testing or /sprint-testing Stage 1), running tests (use /sprint-testing), batch refinement (use /shift-left-testing)."
+description: "Pre-sprint reconciliation layer between shift-left refinement and sprint-testing execution. Use when a Story moves to Ready For QA to reconcile the shift-left ATP against sprint reality before investing in full Stage 1 Planning. Produces a pre-flight check report: ATP sync status, test-data readiness, open questions, reporting handoff guard, expert-audit closure requirement, and a GO/CONDITIONAL-GO/NO-GO verdict. This skill does NOT modify /sprint-testing — it feeds it. Triggers on: refine this for sprint, pre-flight check, reconcile shift-left ATP, before sprint-testing, QA intake review. Do NOT use for: writing ATPs (use /shift-left-testing or /sprint-testing Stage 1), running tests (use /sprint-testing), batch refinement (use /shift-left-testing)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [testing-e2e, issue-tracker]
@@ -239,14 +239,52 @@ Before handing off to `/sprint-testing`, record the final reporting requirement 
 | Environment + result + defects | Test execution summary | Include pass count and deferred/dropped scope notes. |
 | Test data used | Test data readiness table | Include IDs, workspace, role, and cleanup/restoration notes. |
 | AC verified behaviors | ATP reconciliation table | Include AC/behavior/status rows, not only TC IDs. |
+| `Expert Panel Review - Sprint Testing Audit <KEY>` | Expert panel closure | Required as a separate closure comment after ATR + QA verdict, for accepted and failed/rejected outcomes. |
 
 If `/sprint-testing` also posts a separate `QA Testing Complete - <KEY>` comment, keep it as a quick-scan verdict, but do not let it be the only place where environment, test data, verified behaviors, defects, or cleanup notes live. This guard prevents the BK-32/BK-33 failure mode where the main ATR was structured but the completion summary was stranded in a separate comment.
+
+Stage 3 must also create an `Expert Panel Review - Sprint Testing Audit <KEY>` closure comment using the same section contract seen in BK-32/BK-33/BK-28/BK-34:
+
+```markdown
+# Expert Panel Review - Sprint Testing Audit <KEY>
+
+> [!SUCCESS]
+> {status:green|VALIDATED} Sprint-testing package accepted. No execution rerun needed.
+
+## Executive Summary
+## Evidence Used
+## Expert Findings
+## Report Improvements Added
+## Residual Follow-Up
+## Panel Verdict
+VERDICT: ACCEPTED
+```
+
+If sprint-testing fails, is blocked, or the expert panel rejects the package, keep the same structure but switch the status panel to the correct negative state:
+
+```markdown
+# Expert Panel Review - Sprint Testing Audit <KEY>
+
+> [!CAUTION]
+> {status:red|FAILED} Sprint-testing package rejected. Rerun or remediation required.
+
+## Executive Summary
+## Evidence Used
+## Expert Findings
+## Report Improvements Added
+## Residual Follow-Up
+## Panel Verdict
+VERDICT: FAILED
+```
+
+Use `FAILED` when execution evidence proves failing behavior or blocking defects. Use `REJECTED` when the report package is not audit-ready even if some execution passed. Use `BLOCKED` when environment/data/tooling prevents a valid verdict. In all negative cases, the red panel must explain whether the next action is rerun, defect filing, data repair, or reporting remediation.
 
 Append to `context.md`:
 ```markdown
 ## Pre-Flight Check
 **Verdict**: {GO | CONDITIONAL-GO | NO-GO | DEFER} · **Date**: {date} · **Report**: pre-flight-check.md · **Deferred**: {TC IDs}
 **Reporting handoff**: final ATR must embed `QA Completion Summary` with environment, result, defects, test data, AC verified behaviors, and cleanup/restoration notes where applicable.
+**Expert audit handoff**: Stage 3 must publish `Expert Panel Review - Sprint Testing Audit <KEY>` with green `VALIDATED` success panel when accepted, or red `FAILED`/`REJECTED`/`BLOCKED` panel when not accepted.
 ```
 
 ---
@@ -266,6 +304,7 @@ Append to `context.md`:
 2. **Stale ≠ Invalidated**: STALE = AC changed but TC intent valid with update. INVALIDATED = entire TC obsolete.
 3. **DEFER ≠ FAIL**: DEFERRED TC = external constraint (data/env/permiso), not a defect. Story can PASS with DEFERRED TCs documented.
 4. **Separate verdict comment ≠ complete ATR**: a `QA Testing Complete` comment is useful for quick scan, but the main ATR must still embed `QA Completion Summary` with environment, result, test data, verified behaviors, defects, and cleanup/restoration notes.
+5. **Expert audit closure is mandatory**: every Stage 3 package needs an `Expert Panel Review - Sprint Testing Audit <KEY>` comment. Accepted packages use a green `VALIDATED` success panel. Failed, rejected, or blocked packages use a red status panel and preserve the same headings so failures remain audit-ready.
 
 ---
 
