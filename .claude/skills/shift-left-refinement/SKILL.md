@@ -1,6 +1,6 @@
 ---
 name: shift-left-refinement
-description: "Refine a single Jira Story before development into an Ely-style shift-left package: evidence, scope, decisions, refined ACs, risks, ATP draft, QA story-point recommendation, readiness gates, and Jira publication checklist. Use for one-Story pre-sprint refinement, Jira QA-field/comment preparation, or improving a weak AC package before estimation. Use /shift-left-testing for batch backlog grooming and workflow orchestration."
+description: "Refine a single Jira Story before development into an Ely-style shift-left package: evidence, scope, expert decisions, refined ACs, risks, ATP draft, QA story-point recommendation, readiness gates, Jira publication, and post-publication audit. Use for one-Story pre-sprint refinement, Jira QA-field/comment preparation, repairing incomplete shift-left work from another AI, or improving a weak AC package before estimation. Use /shift-left-testing for batch backlog grooming and workflow orchestration."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [testing-e2e, issue-tracker, tms]
@@ -30,7 +30,8 @@ Read only what adds signal for the current Story:
 3. Parent epic/module context when dependencies matter.
 4. `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
 5. Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-32`, `BK-34`, `BK-38`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`, `QA Handoff Mirror`, `story points`.
-6. Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
+6. When publishing or auditing existing publication, read live Jira evidence directly too: REST `GET /issue/<KEY>?fields=description,labels,status,<candidate fields>`, `/editmeta`, comments, and changelog. Synced Markdown is useful but not authoritative for rich-text custom fields when cached field catalogs drift.
+7. Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
 
 If labels include `shift-left-reviewed` plus a dated `shift-left-YYYY-MM-DD` from the last 30 days, surface it and ask whether to refresh or reuse. If the Story changed after that label, recommend refresh.
 
@@ -38,13 +39,13 @@ If labels include `shift-left-reviewed` plus a dated `shift-left-YYYY-MM-DD` fro
 
 Apply ATDD / Three Amigos, Given-When-Then, product trio, and Agile Testing Quadrants as analysis principles; do not copy citation prose into the output.
 
-Story points are advisory and use Fibonacci values `1, 2, 3, 5, 8, 13, 21`. Base the QA recommendation on effort, complexity, uncertainty, and risk. Jira estimation fields remain canonical unless the user explicitly requests an update.
+Story points are advisory and use Fibonacci values `1, 2, 3, 5, 8, 13, 21`. Base the QA recommendation on effort, complexity, uncertainty, risk, and at least one calibration anchor from Engram/Jira when available. Jira estimation fields remain canonical unless the user explicitly requests an update.
 
 Evidence labels: `Jira`, `Repo`, `Engram`, `External`, `Inference`.
 
 ## Expert Panel Decision Gate
 
-Run the former `expert-development-team-analysis` pattern through `/expert-panel-review` before final readiness. The panel must answer inferable PO/Dev/QA questions inside the ticket instead of leaving them all open.
+Run the former `expert-development-team-analysis` pattern through `/expert-panel-review` before final readiness. The panel must answer inferable PO/Dev/QA questions inside the ticket instead of leaving them all open. Assign every open question or decision to the expert role that owns it (PO for scope/user promise, Architect/Dev for implementation contract, QA for coverage, UX for user-flow/empty-state, AppSec for auth/data/security, Delivery for sequencing/status). The assigned expert either resolves it as an `Expert Decision` with evidence labels or explicitly marks why it cannot be resolved.
 
 Use `NEEDS PO/DEV CONFIRMATION` only when one of these is true:
 
@@ -53,7 +54,7 @@ Use `NEEDS PO/DEV CONFIRMATION` only when one of these is true:
 - The implementation has two materially different architectures and repo/Jira evidence does not favor one.
 - The user explicitly asks not to decide on behalf of PO/Dev.
 
-Otherwise, record an `Expert Decision` with evidence labels and move forward. Do not mark the Story blocked merely because the original ACs were under-specified if the expert panel can make a responsible, reversible MVP decision.
+Otherwise, record an `Expert Decision` with evidence labels and move forward. Do not mark the Story blocked merely because the original ACs were under-specified if the expert panel can make a responsible, reversible MVP decision. If the user explicitly delegates decisions to the expert team, let the assigned expert role resolve even normally PO/Dev-owned questions when the decision is reversible and evidence-labeled; record the user delegation in `Source & Evidence` and keep truly irreversible/conflicting decisions as `NEEDS PO/DEV CONFIRMATION`.
 
 ## Required Package Sections
 
@@ -87,6 +88,7 @@ Use these H2 sections unless the user requests another format. Keep empty sectio
 - ACs are the floor. Push beyond happy path into boundaries, exceptions, states, and anomalies.
 - 1:N is the default for non-trivial ACs. Derive scenarios through equivalence partitions, BVA, state transitions, decision tables, or pairwise. If an AC maps to one scenario, justify why it is trivially atomic.
 - Avoid padding. Every added AC, edge case, and ATP row must explore a distinct risk or contract.
+- Any `Expert Decision` that changes user-visible behavior, API/data contract, permission behavior, default filtering, validation, or error semantics must appear in the canonical refined ACs, not only in ATP, mirror, or description. If the decision is only in ATP/mirror, the package is incomplete.
 - Use exact marker `NEEDS PO/DEV CONFIRMATION` only for unresolved decisions that pass the Expert Panel Decision Gate above. Never paraphrase it.
 - Label every contract decision, AC change, and High risk with evidence.
 - Every High risk must map to at least one refined AC or ATP row.
@@ -96,6 +98,22 @@ Use these H2 sections unless the user requests another format. Keep empty sectio
 - Do not mark `Ready for estimation` unless PO contract, Dev feasibility, and QA testability gates pass or are explicitly accepted as non-blocking.
 - Do not invent PO/Dev questions for clean Stories. `No significant gaps found` is valid.
 - Do not ask a question already answered clearly by the ACs, description, source spec, or comments.
+
+## Expert Role Assignment Rules
+
+When the analysis surfaces a decision or unresolved question, assign it to one expert owner before finalizing:
+
+| Decision / Question Type | Owner | Expected output |
+|---|---|---|
+| Scope, user promise, default behavior, product wording | Senior Product Owner | Expert Decision or `NEEDS PO CONFIRMATION` |
+| API shape, schema, query semantics, dependency architecture | Technical Architect + Senior Developer | Contract decision, feasibility gate, or `NEEDS DEV CONFIRMATION` |
+| Empty state, discoverability, UX flow, visual hierarchy | UX/Design | UX contract and AC/ATP coverage |
+| Auth, RLS, PII, token scope, IDOR, permission errors | AppSec | Security contract and negative AC/ATP coverage |
+| Coverage model, AC split, ATP rows, testability | QA Lead | Refined AC/ATP structure and risk coverage |
+| Status, labels, dependencies, sequencing, estimation handoff | Delivery/Workflow | Readiness gates and Jira publication/status plan |
+| Estimate inflation/deflation or weak evidence | Skeptical Reviewer | Challenge, anchor check, and final confidence |
+
+Do not leave generic "PO/Dev to decide" notes when an expert can make a responsible, reversible decision from Jira/Repo evidence. Do not let expert decisions bypass evidence labels.
 
 ## ATP Draft Rules
 
@@ -115,6 +133,13 @@ Before publishing any Jira description, AC fallback comment, ATP fallback commen
 - QA Handoff Mirror should be compact but visually scannable: use tables for ATP/risk summaries, `[!SUCCESS]`/`[!INFO]`/`[!WARNING]`/`[!CAUTION]` panels for handoff status and risks, and status lozenges like `{status:green|READY}` for publication/readiness states.
 - Use BK-39 as the shift-left reference shape and BK-91 / `acli/references/adf-authoring-style.md` as the formatter capability reference when in doubt.
 - Verify converted ADF structurally before publishing: AC must contain a `codeBlock` whose language is `gherkin`; QA mirror should contain at least one `panel` or `status` node when it reports readiness/risk.
+
+Live field resolution:
+
+- Before writing rich-text custom fields on an existing Story, inspect live `/editmeta` and prefer editable field IDs from that response over cached `.agents/jira-fields.json` values. Cached catalogs can drift by issue type/screen.
+- If a cached custom-field write fails, do one `editmeta` lookup, retry once with the live editable field ID, and stop. Do not loop through guessed `customfield_*` IDs.
+- Treat REST read-back as source of truth for canonical custom fields after publication. Sync-script Markdown may omit live fields when its catalog is stale.
+- Do not clear or overwrite hidden/stale fields that are not present in live `editmeta` unless a Jira admin/PO explicitly confirms it is safe.
 
 ## QA Story Points Recommendation
 
@@ -143,6 +168,14 @@ Role inputs:
 
 Keep the recommendation advisory and under six lines in the QA mirror. If more justification is needed, point to `ATP Draft Matrix`, `Edge Cases & Risk Matrix`, and `Implementation Readiness Gates` instead of expanding the SP block.
 
+Calibration guidance:
+
+- `1 SP` fits only trivial read/write/display changes with no new contract, no subtree/aggregation/state-machine logic, no auth-boundary risk, and low uncertainty.
+- `2 SP` fits small-to-medium single endpoint/UI stories with one or two meaningful risks (e.g. aggregate consistency, subtree recursion, RLS/IDOR, or dependency sequencing) but no new multi-step workflow.
+- `3 SP` fits multi-surface work, missing schema/helpers, lifecycle/state transitions, or expanded data migration/integration scope.
+- `5+ SP` means the Story likely needs splitting unless the team accepts high complexity intentionally.
+- Always list re-estimation triggers and cite an anchor ticket or mark `unvalidated-estimate`.
+
 ## QA Handoff Mirror
 
 The QA mirror is for Jira comments or QA fields. It complements canonical US/Epic fields; it does not duplicate the full description.
@@ -166,13 +199,15 @@ Only publish when the user explicitly requests Jira writes. If the user requeste
 When publishing:
 
 1. Read current synced Story content first; append, never overwrite. If synced content is unavailable but `acli` can read the Story, use that read-back as the current Story content and record the sync failure in the publication checklist.
-2. Write refined ACs to `{{jira.acceptance_criteria}}`; fallback to a structured `## Acceptance Criteria` comment if the field is absent or the single verified custom-field write attempt is blocked.
-3. Append a condensed `QA Refinements (Shift-Left Analysis)` section to the Story description; keep refined ACs in the AC field.
-4. Write full ATP DRAFT to `{{jira.acceptance_test_plan}}`; fallback to `## Acceptance Test Plan (ATP)` comment if the field is absent or the single verified custom-field write attempt is blocked.
-5. Add one QA Handoff Mirror comment/field entry. If ATP field exists, comment is a compact notification and mirror, not the full ATP body.
-6. Add labels `shift-left-reviewed` and `shift-left-YYYY-MM-DD`; the dated label lets `/sprint-testing` judge freshness and skip redundant planning later.
-7. Never transition beyond `{{jira.status.story.estimation}}`; PO/Dev own estimation and Ready For Dev.
-8. Re-sync or visually verify rendered Jira content after writes.
+2. Inspect live `/editmeta` for editable Story AC/ATP fields and note their IDs in the publication checklist. Prefer live IDs over cached `{{jira.acceptance_criteria}}` / `{{jira.acceptance_test_plan}}` when they differ.
+3. Write refined ACs to the live Acceptance Criteria field; fallback to a structured `## Acceptance Criteria` comment if the field is absent or the single verified custom-field write attempt is blocked.
+4. Append a condensed `QA Refinements (Shift-Left Analysis)` section to the Story description; keep refined ACs in the AC field.
+5. Write full ATP DRAFT to the live ATP field; fallback to `## Acceptance Test Plan (ATP)` comment if the field is absent or the single verified custom-field write attempt is blocked.
+6. Add one QA Handoff Mirror comment/field entry. If ATP field exists, comment is a compact notification and mirror, not the full ATP body.
+7. Add labels `shift-left-reviewed` and `shift-left-YYYY-MM-DD`; the dated label lets `/sprint-testing` judge freshness and skip redundant planning later.
+8. Never transition beyond `{{jira.status.story.estimation}}`; PO/Dev own estimation and Ready For Dev. If status changes after the mirror is posted, update the mirror or explicitly state it reflects publication-time status.
+9. Re-sync and REST-read back rendered Jira content after writes.
+10. Run a post-publication audit before reporting success: AC has gherkin codeBlock, every behavior-changing Expert Decision appears in canonical ACs, ATP is present, mirror status matches current Jira status, labels exist, description summary counts match AC count, and comments are not duplicated.
 
 Existing Jira custom fields on work items may require REST `PUT` even when `acli` can edit description/comments. If one REST custom-field update attempt fails with auth/permission/not-found while `acli` can still mutate the issue, do not loop. Publish AC/ATP as fallback comments, state `AC field updated: no (fallback comment yes)` / `ATP field updated: no (fallback comment yes)`, and save the tool mismatch as a learning if new.
 
@@ -188,8 +223,28 @@ Publication checklist:
 - Labels applied: `shift-left-reviewed`, `shift-left-YYYY-MM-DD` yes/no/not requested
 - Transition status: no transition needed | ready for `/shift-left-testing` handoff | completed externally
 - Rendered/read-back verification: yes/no/not requested
+- Post-publication audit: yes/no/not requested
 - Ownership handback: PO | Dev | QA | not requested
 ```
+
+## Post-Publication Audit
+
+Run this check after any Jira write, and also when reviewing work left by another AI:
+
+| Check | Pass condition |
+|---|---|
+| Issue type | Story only; otherwise route to correct skill |
+| Status | Current status known; mirror does not report stale status |
+| Labels | `shift-left-reviewed` + dated freshness label present when published |
+| AC field | Live field contains one `gherkin` codeBlock and all behavior-changing decisions |
+| ATP field/comment | Outline-level ATP present; no formal TCs or test steps |
+| Description | Contains compact QA Refinements summary, not full duplicate |
+| QA mirror | One compact mirror; status/panels/tables readable; no duplicate full ATP |
+| Field drift | Live `editmeta` IDs noted; hidden/stale fields not cleared without approval |
+| Local artifact | If user wants audit durability, create `.context/PBI/.../shift-left-refinement.md` with the full package |
+| Engram | Save new field drift, audit gaps, or role learnings |
+
+If the audit finds a gap, fix the smallest canonical artifact first: behavior gaps go to AC; coverage gaps go to ATP; status/publication gaps go to mirror; traceability gaps go to description/local artifact.
 
 ## Boundaries
 
@@ -200,6 +255,7 @@ Publication checklist:
 - No git branch, commit, or PR. Jira is canonical for this workflow.
 - No raw Markdown to Jira rich-text fields; convert to ADF first.
 - No full duplication in comments when canonical fields already hold the body.
+- No deletion or cleanup of hidden/stale Jira custom fields unless live `editmeta` proves the field is editable and the user or Jira admin confirms cleanup.
 
 ## Output Contract
 
@@ -235,3 +291,4 @@ Return:
 - Pull full observations only for the top 1-3 relevant memories.
 - Apply at most 3-5 learnings; label each as validated, candidate, or conflicting.
 - Save only validated decisions, user-approved conventions, repeated patterns, bugfixes, or gotchas per global Engram protocol.
+- After a successful expert-panel review, save one role-specific learning for each activated domain expert when the user requested role learning or when the review produced reusable role-specific guidance.

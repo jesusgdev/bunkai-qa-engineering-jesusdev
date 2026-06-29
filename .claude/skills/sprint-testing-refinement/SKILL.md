@@ -52,6 +52,7 @@ If NO shift-left artifacts AND NO prior ATP → skip this skill, go directly to 
 Requires `agentic-qa-core`. Reads on demand:
 - `shift-left-refinement/SKILL.md` — shift-left output structure (this skill consumes its artifacts).
 - `sprint-testing/SKILL.md` — ATP structure expected by Stage 1.
+- `acli/SKILL.md` + `acli/references/adf-authoring-style.md` — Jira Bug field publishing, ADF panels/status lozenges, and live `editmeta` verification when a follow-up defect must be filed.
 
 ---
 
@@ -177,6 +178,55 @@ If bugs found during reconciliation (AC discrepancy, stale assumption), classify
 | **BLOCKING** | Core AC fails or cannot be verified. | Yes |
 | **CRITICAL** | Data integrity, security, or core flow broken. | Yes — escalate |
 
+### 3.2.1 Bug-report handoff guard (BK-182 rule)
+
+When pre-flight detects a likely defect, or predicts that `/sprint-testing` may need to file a follow-up bug, record the reporting contract that Stage 3 must satisfy. A Jira Bug is not complete if the repro exists only in a comment.
+
+| Required surface | Rule | Verification |
+|---|---|---|
+| Jira Bug description | Use a rich ADF description with concise sections: Summary, Triage Snapshot, Repro Steps, Expected Result, Actual Result, Evidence, Workaround, Developer Notes, Related. Use `acli/references/adf-authoring-style.md`: red/error panel for the bug, yellow/warning panel for impact, green/success panel only for a valid workaround, tables for step/evidence matrices. | Round-trip with `[ISSUE_TRACKER_TOOL] view <BUG_KEY> description` and confirm ADF nodes render as panels/tables/statuses. |
+| Native Bug fields | Fill the configured Bug fields, not only the description/comment: Actual Result, Expected Result, Repro Steps when available, Severity, Error Type, Test Environment, Evidence, Workaround, Frequency, Root Cause/Fix if known, Priority, Component, Labels. | Query live `editmeta` for the specific Bug before mutation; project field catalogs can drift from the active Jira screen. |
+| Evidence source | Store evidence in the `Evidence` field and attach/screenshot where applicable. Comments can supplement but must not be the source of truth. | Synced bug mirror must not show `_No description provided_` after publication. |
+| Story traceability | Link the Bug to the source Story using the required link type (`Problem/Incident` or `Blocks` when blocking; fallback `Relates` only if necessary). | Verify links with `[ISSUE_TRACKER_TOOL]` from both Story and Bug when direction matters. |
+| Duplicate cleanup | Remove obsolete comment-only bug reports after the Bug fields are populated and user confirms deletion. | `[ISSUE_TRACKER_TOOL] list comments <BUG_KEY>` shows no redundant `Bug Report - <KEY>` comment. |
+
+Recommended Bug description shell:
+
+```markdown
+# <BUG_KEY> Bug Report
+
+> [!ERROR]
+> {status:red|BUG} <one-line failure>
+
+> [!WARNING]
+> {status:yellow|IMPACT} <who/what is affected and why it matters>
+
+## Summary
+## Triage Snapshot
+| Field | Value |
+|---|---|
+| Severity | ... |
+| Priority | ... |
+| Error Type | ... |
+| Environment | ... |
+
+## Repro Steps
+| # | Action | Expected |
+|---|---|---|
+
+## Expected Result
+## Actual Result
+## Evidence
+## Workaround
+> [!SUCCESS]
+> {status:green|PARTIAL WORKAROUND} <only if real>
+
+## Developer Notes
+## Related
+```
+
+Use existing board examples as calibration anchors before publishing: Ely/Nahuel-style reports favor concise `Repro`, `Expected`, `Actual`, `Root Cause`, `Impact`, `Fix`, `Related` sections. External best-practice anchors: Atlassian bug report templates and QA guidance agree on environment, severity/priority, reproducible steps, expected vs actual, impact, and evidence.
+
 ### 3.3 Pre-flight report template
 
 Write to `pre-flight-check.md`. **Keep lean** — TL;DR verdict line first (consumer reads 1 line in GO case), 4 small tables, no prose padding. Target ≤25 lines.
@@ -240,6 +290,7 @@ Before handing off to `/sprint-testing`, record the final reporting requirement 
 | Test data used | Test data readiness table | Include IDs, workspace, role, and cleanup/restoration notes. |
 | AC verified behaviors | ATP reconciliation table | Include AC/behavior/status rows, not only TC IDs. |
 | `Expert Panel Review - Sprint Testing Audit <KEY>` | Expert panel closure | Required as a separate closure comment after ATR + QA verdict, for accepted and failed/rejected outcomes. |
+| Bug-field completion for every new defect | Bug-report handoff guard §3.2.1 | Every filed Bug must use native Bug fields + rich ADF description. Comment-only bug reports are rejected as not audit-ready. |
 
 If `/sprint-testing` also posts a separate `QA Testing Complete - <KEY>` comment, keep it as a quick-scan verdict, but do not let it be the only place where environment, test data, verified behaviors, defects, or cleanup notes live. This guard prevents the BK-32/BK-33 failure mode where the main ATR was structured but the completion summary was stranded in a separate comment.
 
@@ -284,6 +335,7 @@ Append to `context.md`:
 ## Pre-Flight Check
 **Verdict**: {GO | CONDITIONAL-GO | NO-GO | DEFER} · **Date**: {date} · **Report**: pre-flight-check.md · **Deferred**: {TC IDs}
 **Reporting handoff**: final ATR must embed `QA Completion Summary` with environment, result, defects, test data, AC verified behaviors, and cleanup/restoration notes where applicable.
+**Bug reporting handoff**: if a follow-up defect is filed, Stage 3 must populate Jira-native Bug fields and rich ADF description; comments are supplemental only and redundant comment-only reports must be removed after confirmation.
 **Expert audit handoff**: Stage 3 must publish `Expert Panel Review - Sprint Testing Audit <KEY>` with green `VALIDATED` success panel when accepted, or red `FAILED`/`REJECTED`/`BLOCKED` panel when not accepted.
 ```
 
@@ -305,6 +357,8 @@ Append to `context.md`:
 3. **DEFER ≠ FAIL**: DEFERRED TC = external constraint (data/env/permiso), not a defect. Story can PASS with DEFERRED TCs documented.
 4. **Separate verdict comment ≠ complete ATR**: a `QA Testing Complete` comment is useful for quick scan, but the main ATR must still embed `QA Completion Summary` with environment, result, test data, verified behaviors, defects, and cleanup/restoration notes.
 5. **Expert audit closure is mandatory**: every Stage 3 package needs an `Expert Panel Review - Sprint Testing Audit <KEY>` comment. Accepted packages use a green `VALIDATED` success panel. Failed, rejected, or blocked packages use a red status panel and preserve the same headings so failures remain audit-ready.
+6. **Comment-only bug report ≠ complete Bug**: a Jira Bug must carry the report in native fields + description. A comment can preserve chronology, but it cannot replace `Actual Result`, `Expected Result`, `Evidence`, severity, environment, component, labels, and traceability.
+7. **Live `editmeta` beats cached field catalogs**: before mutating Bug custom fields, inspect the specific issue's `editmeta`; Jira screens can expose different field IDs than `.agents/jira-fields.json`. Rich text fields may require full ADF docs, not plain strings.
 
 ---
 
