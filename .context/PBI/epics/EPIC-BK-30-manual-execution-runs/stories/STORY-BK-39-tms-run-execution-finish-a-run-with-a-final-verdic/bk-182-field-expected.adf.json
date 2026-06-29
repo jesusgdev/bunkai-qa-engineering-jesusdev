@@ -1,0 +1,28 @@
+{
+  "type": "doc",
+  "version": 1,
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Bearer callers with valid workspace membership and "
+        },
+        {
+          "type": "text",
+          "text": "run:execute",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " should resolve active workspace context and create a Run, while still enforcing membership and scope checks."
+        }
+      ]
+    }
+  ]
+}

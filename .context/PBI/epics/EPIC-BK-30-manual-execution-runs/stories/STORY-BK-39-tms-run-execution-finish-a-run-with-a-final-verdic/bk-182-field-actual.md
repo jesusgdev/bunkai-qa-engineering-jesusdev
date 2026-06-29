@@ -1,0 +1,1 @@
+`POST /api/v1/runs` with a valid Bearer PAT returns `No active workspace could be resolved for this request.` This happens even after `/api/v1/me` confirms an active workspace, role, and `run:execute` scope for the same token.

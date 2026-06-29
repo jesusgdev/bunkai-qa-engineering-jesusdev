@@ -1,0 +1,63 @@
+{
+  "type": "doc",
+  "version": 1,
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "POST /api/v1/runs",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " with a valid Bearer PAT returns "
+        },
+        {
+          "type": "text",
+          "text": "No active workspace could be resolved for this request.",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " This happens even after "
+        },
+        {
+          "type": "text",
+          "text": "/api/v1/me",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " confirms an active workspace, role, and "
+        },
+        {
+          "type": "text",
+          "text": "run:execute",
+          "marks": [
+            {
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": " scope for the same token."
+        }
+      ]
+    }
+  ]
+}
