@@ -3,13 +3,13 @@
   "templateRepo": "upex-galaxy/agentic-qa-boilerplate",
   "templateCommit": "",
   "perComponentCommit": {
-    "skills": "1ea2f055afee2518ef5e771d6a872752be73011c",
+    "skills": "0a8a7a55e58958f639149887be3d1b0281831dee",
     "commands": "fdc7af826b833b2aa6c607b311a8aeef7fd80cc0",
-    "scripts": "6e3e33bf874838b049406728ab1ff3bec351149f",
-    "docs": "1441165aa14c13b998ae38265d67b0b55cf24f60",
+    "scripts": "194c5be6bb2d9fbf04eb865688f60839a0dc849d",
+    "docs": "360de0496c740c3190e920a7d134f8f08d6883c3",
     "cli": "462ff09c0eace4ead0d6bbe6e716eb67ce65f885",
     "vscode": "c7605d0eec5ba9cd53d8960f130a879524e58ea1",
-    "husky": "12f869d346cc4bc05df88f61a12e18c75e9c9b43",
+    "husky": "194c5be6bb2d9fbf04eb865688f60839a0dc849d",
     "agents-docs": "6e3e33bf874838b049406728ab1ff3bec351149f",
     "claude-config": "01c0a2f669c592a2bb26b5abc8d112b6eda5da40",
     "tooling": "e4454b5efc107b2c13f5462d429279eb1efb0aed",
@@ -50,6 +50,6 @@
     }
   },
   "cliVersion": "7.0",
-  "lastSyncedAt": "2026-06-23T18:07:14.524Z",
+  "lastSyncedAt": "2026-06-29T01:27:18.665Z",
   "variableSystemVersion": 1
 }
