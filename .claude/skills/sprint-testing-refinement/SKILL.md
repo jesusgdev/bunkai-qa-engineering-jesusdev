@@ -182,11 +182,15 @@ If bugs found during reconciliation (AC discrepancy, stale assumption), classify
 
 When pre-flight detects a likely defect, or predicts that `/sprint-testing` may need to file a follow-up bug, record the reporting contract that Stage 3 must satisfy. A Jira Bug is not complete if the repro exists only in a comment.
 
+**Bug vs defect naming.** Use `defect` as the QA-formal classification when observed behavior is a product flaw that can cause the system to fail its required function. Use the Jira issue type actually configured in the workspace for operational tracking; in Bunkai that is `Bug` under the `UPEX BUG/DEFECT LIFE CYCLE`. Do not rename or migrate an existing issue to `Defect` unless live Jira exposes a distinct `Defect` issue type and the user approves the workflow change.
+
 | Required surface | Rule | Verification |
 |---|---|---|
 | Jira Bug description | Use a rich ADF description with concise sections: Summary, Triage Snapshot, Repro Steps, Expected Result, Actual Result, Evidence, Workaround, Developer Notes, Related. Use `acli/references/adf-authoring-style.md`: red/error panel for the bug, yellow/warning panel for impact, green/success panel only for a valid workaround, tables for step/evidence matrices. | Round-trip with `[ISSUE_TRACKER_TOOL] view <BUG_KEY> description` and confirm ADF nodes render as panels/tables/statuses. |
-| Native Bug fields | Fill the configured Bug fields, not only the description/comment: Actual Result, Expected Result, Repro Steps when available, Severity, Error Type, Test Environment, Evidence, Workaround, Frequency, Root Cause/Fix if known, Priority, Component, Labels. | Query live `editmeta` for the specific Bug before mutation; project field catalogs can drift from the active Jira screen. |
-| Evidence source | Store evidence in the `Evidence` field and attach/screenshot where applicable. Comments can supplement but must not be the source of truth. | Synced bug mirror must not show `_No description provided_` after publication. |
+| Native Bug fields | Fill the configured Bug fields, not only the description/comment: Actual Result, Expected Result, Repro Steps when available, Severity, Error Type, Test Environment, Evidence, Workaround, Frequency, Root Cause/Fix if known, Priority, Component, Labels. | Query live `editmeta` for the specific Bug before mutation; project field catalogs can drift from the active Jira screen. If a cached `customfield_*` is rejected or names a different field, query live `/rest/api/3/field` by exact field name and use the live id only after confirming the field's schema. |
+| Evidence source | Store the evidence index in the native `Evidence` field and attach screenshots/logs where applicable. Comments are supplemental and should embed the most useful evidence inline so reviewers do not have to hunt through the Attachments panel. | Live Jira readback shows `Evidence` populated, attachment count > 0 when screenshots/logs exist, and the evidence comment contains one heading per evidence item. |
+| Evidence attachments | Use 1-2 high-signal files named `{BUG_KEY}-step{NN}-{action}.{ext}`. For images, use `acli/scripts/jira-attach-media.ts` or the equivalent upload-to-media-node helper so each title is followed by its inline image in the comment. | Round-trip the comment and verify `media_count` equals the number of embedded images; verify Attachments lists the same filenames. |
+| Evidence authenticity | Do not invent historical screenshots. If original evidence is missing, either request the original captures or reproduce the behavior now, sanitize secrets, and label it as fresh reproduction evidence with date/context. | Evidence title/comment states whether it is original execution evidence or fresh reproduction evidence; token/password values are absent. |
 | Story traceability | Link the Bug to the source Story using the required link type (`Problem/Incident` or `Blocks` when blocking; fallback `Relates` only if necessary). | Verify links with `[ISSUE_TRACKER_TOOL]` from both Story and Bug when direction matters. |
 | Duplicate cleanup | Remove obsolete comment-only bug reports after the Bug fields are populated and user confirms deletion. | `[ISSUE_TRACKER_TOOL] list comments <BUG_KEY>` shows no redundant `Bug Report - <KEY>` comment. |
 
@@ -217,6 +221,19 @@ Recommended Bug description shell:
 ## Expected Result
 ## Actual Result
 ## Evidence
+
+Use a compact matrix in the description or native Evidence field, then attach/embed the actual files in a separate evidence comment:
+
+| Evidence | Attachment | Result |
+|---|---|---|
+| <endpoint/UI state> | `<BUG_KEY>-stepNN-<action>.png` | <observed result> |
+
+In the evidence comment, use:
+- `## Evidence attachments - <BUG_KEY>`
+- one `### Evidence NN - <title>` heading per file
+- one short paragraph explaining what the image/log proves
+- the inline media node immediately after that paragraph
+
 ## Workaround
 > [!SUCCESS]
 > {status:green|PARTIAL WORKAROUND} <only if real>
@@ -359,6 +376,8 @@ Append to `context.md`:
 5. **Expert audit closure is mandatory**: every Stage 3 package needs an `Expert Panel Review - Sprint Testing Audit <KEY>` comment. Accepted packages use a green `VALIDATED` success panel. Failed, rejected, or blocked packages use a red status panel and preserve the same headings so failures remain audit-ready.
 6. **Comment-only bug report ≠ complete Bug**: a Jira Bug must carry the report in native fields + description. A comment can preserve chronology, but it cannot replace `Actual Result`, `Expected Result`, `Evidence`, severity, environment, component, labels, and traceability.
 7. **Live `editmeta` beats cached field catalogs**: before mutating Bug custom fields, inspect the specific issue's `editmeta`; Jira screens can expose different field IDs than `.agents/jira-fields.json`. Rich text fields may require full ADF docs, not plain strings.
+8. **Bug vs defect is two-layered**: classify the behavior as a formal QA `defect` when it is a product flaw, but use the configured Jira work type (`Bug` in Bunkai) unless live Jira exposes a separate `Defect` type and the user approves the change.
+9. **Evidence must be visible, not merely listed**: an `Evidence` field with filenames but no attachments, or attachments without an indexed inline comment, is incomplete. High-signal evidence should have a title, a short explanation, and its associated image/log attachment.
 
 ---
 
