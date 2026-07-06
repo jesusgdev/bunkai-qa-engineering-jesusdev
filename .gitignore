@@ -139,14 +139,5 @@ dbhub.local.toml
 # ----- 2026-05-28 (sync) -----
 **/evidence/
 
-# ===== Local screenshots (presentation/working notes, never committed) =====
-playwright-typescript-guide-home.png
-playwright-typescript-guide-mobile.png
-playwright-typescript-guide-mobile-fixed.png
-qa-guide-3200x1800.png
-qa-guide-mobile.png
-qa-owner-dashboard-check.png
-typescript-playwright-qa-guide.png
-
 # ----- 2026-06-21 (sync) -----
 .template/claude-md.upstream.sha
