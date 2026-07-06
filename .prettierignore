@@ -92,3 +92,6 @@ api/.openapi-config.json
 # ----- 2026-06-22 (fix) -----
 # Runtime session artifacts - generated, gitignored (e.g. sprint-testing evidence)
 .session/
+
+# ----- 2026-07-06 (sync) -----
+packages/decks/
