@@ -38,6 +38,8 @@ export default antfu({
     // MCP reference templates — syntax-sensitive opt-in configs. Linting them
     // (e.g. toml/array-bracket-newline) corrupts the layout users copy from.
     'docs/mcp/**',
+    // JXA (macOS osascript) — uses ObjC/$ globals not known to ESLint
+    'cli/slack-clip.js',
   ],
 
   // Custom rules
