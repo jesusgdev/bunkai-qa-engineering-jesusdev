@@ -1,0 +1,132 @@
+/* theme: qa-neon — green + purple + neon dark mix */
+:root {
+  --bg: #050510;
+  --bg-soft: #0a0a1a;
+  --surface: #0f0f22;
+  --surface-2: #14142e;
+  --border: rgba(0, 255, 136, 0.2);
+  --border-strong: rgba(168, 85, 247, 0.5);
+  --text-1: #f0f0ff;
+  --text-2: #b0b0cc;
+  --text-3: #6a6a8a;
+  --accent: #a855f7;
+  --accent-2: #00ff88;
+  --accent-3: #00e5ff;
+  --good: #00ff88;
+  --warn: #facc15;
+  --bad: #ff3366;
+  --grad: linear-gradient(135deg, #00ff88, #a855f7 50%, #00e5ff);
+  --grad-soft: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(168, 85, 247, 0.15));
+  --radius: 6px;
+  --radius-sm: 3px;
+  --radius-lg: 10px;
+  --shadow:
+    0 0 0 1px rgba(0, 255, 136, 0.3), 0 0 24px rgba(0, 255, 136, 0.25),
+    0 0 48px rgba(168, 85, 247, 0.15);
+  --shadow-lg:
+    0 0 0 1px rgba(168, 85, 247, 0.4), 0 0 40px rgba(168, 85, 247, 0.35),
+    0 0 80px rgba(0, 255, 136, 0.2);
+  --font-sans: 'Inter', 'Noto Sans SC', sans-serif;
+  --font-display: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 15% 0%, rgba(0, 255, 136, 0.18), transparent 55%),
+    radial-gradient(ellipse at 85% 100%, rgba(168, 85, 247, 0.18), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 229, 255, 0.06), transparent 60%), #050510;
+}
+
+h1.title,
+h2.title,
+.h1,
+.h2 {
+  text-shadow:
+    0 0 12px rgba(0, 255, 136, 0.5),
+    0 0 30px rgba(168, 85, 247, 0.3);
+}
+
+.kicker {
+  color: var(--accent-2);
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+.card {
+  background: rgba(15, 15, 34, 0.72);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+}
+.card--green {
+  border-color: rgba(0, 255, 136, 0.35);
+}
+.card--purple {
+  border-color: rgba(168, 85, 247, 0.35);
+}
+.card--cyan {
+  border-color: rgba(0, 229, 255, 0.35);
+}
+
+.card-number {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent-2);
+  text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+  margin-bottom: 4px;
+}
+.card-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+.card-desc {
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.tag {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+.tag--green {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--good);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+.tag--purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+.tag--cyan {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--accent-3);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+}
+
+.divider-accent {
+  background: var(--grad);
+  box-shadow: 0 0 12px var(--accent);
+}
+
+code {
+  background: rgba(0, 255, 136, 0.1);
+  color: var(--accent-2);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-2);
+}
+
+.notes {
+  display: none;
+}

@@ -1,0 +1,680 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BK QA Workflow — Flujo Completo</title>
+    <link rel="stylesheet" href="/home/jesusgdev/.agents/skills/html-ppt/assets/base.css" />
+    <link rel="stylesheet" href="theme-qa.css" />
+    <script src="/home/jesusgdev/.agents/skills/html-ppt/assets/runtime.js"></script>
+  </head>
+  <body>
+    <div class="deck">
+      <!-- ==================== SLIDE 1: COVER ==================== -->
+      <section class="slide is-active" id="s1">
+        <div class="kicker">Bunkai QA Engineering</div>
+        <h1 class="title" style="font-size: 52px; margin-bottom: 16px">Flujo QA Completo</h1>
+        <p style="color: var(--text-2); font-size: 20px; max-width: 700px">
+          Desde un ticket en Backlog hasta el cierre — shift-left, sprint testing, defectos,
+          automatización y regresión.
+        </p>
+        <div style="margin-top: 40px; display: flex; gap: 12px; flex-wrap: wrap">
+          <span class="tag tag--green">Stage 0: Shift-Left</span>
+          <span class="tag tag--purple">Stage 1-3: Sprint QA</span>
+          <span class="tag tag--cyan">Stage 4-6: Auto + Regression</span>
+        </div>
+        <div class="notes">
+          Bienvenidos. Esta presentación cubre el flujo QA completo de Bunkai: cómo un ticket pasa
+          de Backlog a Closed, incluyendo shift-left testing, sprint testing, defectos,
+          automatización y regresión. Cada etapa incluye los comandos exactos de Jira y las
+          transiciones de estado.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 2: OVERVIEW ==================== -->
+      <section class="slide" id="s2">
+        <h2 class="title" style="font-size: 38px; margin-bottom: 24px">
+          Vista General del Pipeline
+        </h2>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center">
+          <div class="card card--green" style="flex: 1; min-width: 180px; text-align: center">
+            <div class="card-number">0</div>
+            <div class="card-label">Shift-Left</div>
+            <div class="card-desc">Pre-sprint refinement</div>
+          </div>
+          <div style="display: flex; align-items: center; color: var(--accent-2); font-size: 24px">
+            →
+          </div>
+          <div class="card card--purple" style="flex: 1; min-width: 180px; text-align: center">
+            <div class="card-number">1-3</div>
+            <div class="card-label">Sprint QA</div>
+            <div class="card-desc">Plan → Exec → Report</div>
+          </div>
+          <div style="display: flex; align-items: center; color: var(--accent-2); font-size: 24px">
+            →
+          </div>
+          <div class="card card--cyan" style="flex: 1; min-width: 180px; text-align: center">
+            <div class="card-number">4</div>
+            <div class="card-label">Documentación</div>
+            <div class="card-desc">TMS + ROI</div>
+          </div>
+          <div style="display: flex; align-items: center; color: var(--accent-2); font-size: 24px">
+            →
+          </div>
+          <div class="card card--green" style="flex: 1; min-width: 180px; text-align: center">
+            <div class="card-number">5</div>
+            <div class="card-label">Automatización</div>
+            <div class="card-desc">KATA + Playwright</div>
+          </div>
+          <div style="display: flex; align-items: center; color: var(--accent-2); font-size: 24px">
+            →
+          </div>
+          <div class="card card--purple" style="flex: 1; min-width: 180px; text-align: center">
+            <div class="card-number">6</div>
+            <div class="card-label">Regresión</div>
+            <div class="card-desc">CI + GO/NO-GO</div>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: 32px;
+            padding: 16px;
+            border-left: 3px solid var(--accent);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+          "
+        >
+          <p style="color: var(--text-2); margin: 0; font-size: 15px">
+            <strong style="color: var(--accent)">Flujo Jira:</strong> Backlog → Shift-Left QA →
+            Estimation → Ready For Dev → In Progress → In Review → Ready For QA → In Testing →
+            Tested → Closed
+          </p>
+        </div>
+        <div class="notes">
+          El pipeline QA tiene 7 etapas numeradas del 0 al 6. El Stage 0 es pre-sprint (shift-left),
+          los Stages 1-3 son el sprint testing por ticket, y los Stages 4-6 son post-QA
+          (documentación, automatización, regresión). El flujo Jira muestra todas las transiciones
+          de estado que un ticket puede recorrer.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 3: STAGE 0 — SHIFT-LEFT ==================== -->
+      <section class="slide" id="s3">
+        <div class="kicker">Stage 0 — Pre-Sprint</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Shift-Left Testing</h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Refinamiento AC en lote antes del sprint. Detecta gaps, ambigüedades y riesgos ANTES de
+          que Dev escriba código.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <div class="card card--green">
+            <h3 style="color: var(--good); font-size: 16px; margin-bottom: 8px">¿Qué hace?</h3>
+            <ul style="color: var(--text-2); font-size: 14px; margin: 0; padding-left: 20px">
+              <li>Refina ACs de Stories en Backlog</li>
+              <li>Spotting de gaps y ambigüedades</li>
+              <li>Draft de ATP (Acceptance Test Plan)</li>
+              <li>Transiciones: <code>backlog → shift_left_qa → estimation</code></li>
+              <li>Agrega label <code>shift-left-reviewed</code></li>
+            </ul>
+          </div>
+          <div class="card card--purple">
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 8px">Comandos Jira</h3>
+            <pre
+              style="
+                color: var(--good);
+                font-size: 13px;
+                background: var(--bg);
+                padding: 12px;
+                border-radius: var(--radius-sm);
+                overflow-x: auto;
+              "
+            ><code># Buscar Stories en Backlog
+acli workitem search --type Story --status Backlog --fields summary,status,labels --json
+
+# Transicionar a Shift-Left QA
+acli workitem transition BK-XXX "Shift-Left QA"
+
+# Agregar label
+acli workitem edit BK-XXX --add-label shift-left-reviewed</code></pre>
+          </div>
+        </div>
+        <div class="notes">
+          El Stage 0 es pre-sprint. Se ejecuta en lote sobre varias Stories del Backlog. El objetivo
+          es refinar los criterios de aceptación antes de que el equipo de desarrollo empiece a
+          trabajar. Se agregan labels para que sprint-testing pueda hacer short-circuit de las
+          primeras fases.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 4: STAGE 1 — PLANNING ==================== -->
+      <section class="slide" id="s4">
+        <div class="kicker">Stage 1 — Sprint QA</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">
+          Planning (Sprint Testing)
+        </h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Preparación del ticket: sync desde Jira, lectura de ACs, exploración de código, authoring
+          del ATP.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <div class="card card--purple">
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 8px">Pasos</h3>
+            <ol style="color: var(--text-2); font-size: 14px; margin: 0; padding-left: 20px">
+              <li>Sync ticket: <code>bun run jira:sync-issues get BK-XXX</code></li>
+              <li>Leer ACs y contexto de <code>.context/PBI/</code></li>
+              <li>Explorar código relevante</li>
+              <li>Author ATP → escribir en Jira (campo o comment)</li>
+              <li>Transicionar: <code>Ready For QA → In Testing</code></li>
+            </ol>
+          </div>
+          <div class="card card--cyan">
+            <h3 style="color: var(--accent-2); font-size: 16px; margin-bottom: 8px">
+              Short-Circuit
+            </h3>
+            <p style="color: var(--text-2); font-size: 14px; margin: 0">
+              Si el ticket tiene label <code>shift-left-reviewed</code> y tiene &lt;30 días, se
+              saltan las fases 1-3 de planning y se va directo a ejecución.
+            </p>
+            <pre
+              style="
+                color: var(--good);
+                font-size: 12px;
+                background: var(--bg);
+                padding: 10px;
+                border-radius: var(--radius-sm);
+                margin-top: 10px;
+              "
+            ><code># Comando para correr sprint-testing
+/sprint-testing BK-XXX</code></pre>
+          </div>
+        </div>
+        <div class="notes">
+          Stage 1 es planning. Se sincroniza el ticket desde Jira, se leen los criterios de
+          aceptación, se explora el código relevante y se escribe el ATP. Si el ticket ya fue
+          shift-lefted hace menos de 30 días, se puede hacer short-circuit.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 5: STAGE 2 — EXECUTION ==================== -->
+      <section class="slide" id="s5">
+        <div class="kicker">Stage 2 — Sprint QA</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Execution (Trifuerza)</h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Ejecución exploratoria: smoke test + trifuerza (UI / API / DB) + filing de defectos.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px">
+          <div class="card card--green" style="text-align: center">
+            <div style="font-size: 32px; margin-bottom: 8px">🖥️</div>
+            <h3 style="color: var(--good); font-size: 16px; margin-bottom: 6px">UI</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0">
+              Playwright MCP o /playwright-cli para exploración visual y interacción con el browser.
+            </p>
+          </div>
+          <div class="card card--purple" style="text-align: center">
+            <div style="font-size: 32px; margin-bottom: 8px">🔌</div>
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 6px">API</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0">
+              OpenAPI MCP o curl para validar contratos, respuestas y errores de endpoints.
+            </p>
+          </div>
+          <div class="card card--cyan" style="text-align: center">
+            <div style="font-size: 32px; margin-bottom: 8px">🗄️</div>
+            <h3 style="color: var(--accent-2); font-size: 16px; margin-bottom: 6px">DB</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0">
+              DBHub MCP para validar estado de datos, transacciones y consistencia.
+            </p>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: 20px;
+            padding: 16px;
+            border-left: 3px solid var(--bad);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+          "
+        >
+          <p style="color: var(--text-2); margin: 0; font-size: 15px">
+            <strong style="color: var(--bad)">Si hay defecto:</strong> Crear Bug en Jira →
+            transicionar a <code>Open</code> → file evidence → linked al Story.
+          </p>
+        </div>
+        <div class="notes">
+          Stage 2 es ejecución. Se usa el trifuerza: UI (Playwright), API (OpenAPI/curl), y DB
+          (DBHub). Si se encuentra un defecto, se crea un Bug en Jira con evidence y se linkea al
+          Story original.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 6: STAGE 3 — REPORTING ==================== -->
+      <section class="slide" id="s6">
+        <div class="kicker">Stage 3 — Sprint QA</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Reporting (ATR + Bugs)</h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Resultados: ATR (Acceptance Test Results), bug reports, transiciones de estado, handoff a
+          Stage 4.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <div class="card card--green">
+            <h3 style="color: var(--good); font-size: 16px; margin-bottom: 8px">Sin Defectos ✅</h3>
+            <ol style="color: var(--text-2); font-size: 14px; margin: 0; padding-left: 20px">
+              <li>Escribir ATR en Jira</li>
+              <li>Transicionar: <code>In Testing → Tested</code></li>
+              <li>Handoff a <code>/test-documentation</code></li>
+              <li>Transición final: <code>Tested → Closed</code></li>
+            </ol>
+          </div>
+          <div class="card card--purple">
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 8px">
+              Con Defectos 🐛
+            </h3>
+            <ol style="color: var(--text-2); font-size: 14px; margin: 0; padding-left: 20px">
+              <li>Crear Bug en Jira con evidence</li>
+              <li>Link al Story: <code>blocks</code> o <code>is blocked by</code></li>
+              <li>Dev fixea → transición <code>Open → In Progress → Resolved</code></li>
+              <li>QA re-testea → <code>Resolved → Closed</code></li>
+              <li>Story continúa: <code>In Testing → Tested → Closed</code></li>
+            </ol>
+          </div>
+        </div>
+        <div class="notes">
+          Stage 3 es reporting. Si no hay defectos, se escribe el ATR y se cierra el ticket. Si hay
+          defectos, se crean Bugs con evidence, se linkean al Story, y se espera a que Dev los
+          resuelva antes de continuar.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 7: BUG SCENARIOS ==================== -->
+      <section class="slide" id="s7">
+        <div class="kicker">Escenarios de Defectos</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">
+          Bug vs No Bug — Todos los Caminos
+        </h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+          <div>
+            <h3 style="color: var(--good); font-size: 18px; margin-bottom: 12px">
+              Escenario A: Sin Bug
+            </h3>
+            <div
+              style="
+                background: var(--surface);
+                padding: 16px;
+                border-radius: var(--radius);
+                border: 1px solid var(--good);
+              "
+            >
+              <p style="color: var(--text-2); font-size: 14px; margin: 0 0 8px 0">
+                <code>Ready For QA</code> → <code>In Testing</code> → <code>Tested</code> →
+                <code>Closed</code>
+              </p>
+              <p style="color: var(--text-3); font-size: 13px; margin: 0">
+                Handoff a /test-documentation para TCs en TMS.
+              </p>
+            </div>
+          </div>
+          <div>
+            <h3 style="color: var(--bad); font-size: 18px; margin-bottom: 12px">
+              Escenario B: Bug Bloqueante
+            </h3>
+            <div
+              style="
+                background: var(--surface);
+                padding: 16px;
+                border-radius: var(--radius);
+                border: 1px solid var(--bad);
+              "
+            >
+              <p style="color: var(--text-2); font-size: 14px; margin: 0 0 8px 0">
+                Story bloqueado → Bug <code>Open</code> → Dev fix → <code>Resolved</code> → QA
+                re-test → <code>Closed</code>
+              </p>
+              <p style="color: var(--text-3); font-size: 13px; margin: 0">
+                Story queda en <code>In Testing</code> hasta que todos los Bugs estén
+                <code>Closed</code>.
+              </p>
+            </div>
+          </div>
+          <div>
+            <h3 style="color: var(--warn); font-size: 18px; margin-bottom: 12px">
+              Escenario C: Bug No-Bloqueante
+            </h3>
+            <div
+              style="
+                background: var(--surface);
+                padding: 16px;
+                border-radius: var(--radius);
+                border: 1px solid var(--warn);
+              "
+            >
+              <p style="color: var(--text-2); font-size: 14px; margin: 0 0 8px 0">
+                Story puede cerrarse con bug menor → Bug se deja como <code>Open</code> para
+                siguiente sprint.
+              </p>
+              <p style="color: var(--text-3); font-size: 13px; margin: 0">
+                Se documenta en ATR como known issue.
+              </p>
+            </div>
+          </div>
+          <div>
+            <h3 style="color: var(--accent); font-size: 18px; margin-bottom: 12px">
+              Escenario D: Re-test Post-Fix
+            </h3>
+            <div
+              style="
+                background: var(--surface);
+                padding: 16px;
+                border-radius: var(--radius);
+                border: 1px solid var(--accent);
+              "
+            >
+              <p style="color: var(--text-2); font-size: 14px; margin: 0 0 8px 0">
+                <code>Resolved</code> → QA re-testea → Pass: <code>Closed</code> / Fail: re-open
+                <code>Open</code>
+              </p>
+              <p style="color: var(--text-3); font-size: 13px; margin: 0">
+                Cada re-test se documenta con evidence nueva.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          Cuatro escenarios principales: sin bug (flujo limpio), bug bloqueante (story espera), bug
+          no-bloqueante (se documenta y pasa), y re-test post-fix (ciclo de verificación).
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 8: STAGE 4 — TEST DOCUMENTATION ==================== -->
+      <section class="slide" id="s8">
+        <div class="kicker">Stage 4 — Post-Sprint</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Test Documentation & ROI</h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Documentar TCs en TMS (Jira/Xray), calcular ROI, decidir Candidate / Manual / Deferred.
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px">
+          <div class="card card--green" style="text-align: center">
+            <h3 style="color: var(--good); font-size: 16px; margin-bottom: 6px">Candidate</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0">
+              Alimenta /test-automation. ROI alto — se automatiza.
+            </p>
+          </div>
+          <div class="card card--purple" style="text-align: center">
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 6px">Manual</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0">
+              Terminal. Requiere intervención humana cada vez.
+            </p>
+          </div>
+          <div class="card card--cyan" style="text-align: center">
+            <h3 style="color: var(--accent-2); font-size: 16px; margin-bottom: 6px">Deferred</h3>
+            <p style="color: var(--text-2); font-size: 13px; margin: 0">
+              Terminal. No se automatiza por bajo ROI o complejidad.
+            </p>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: 20px;
+            padding: 16px;
+            border-left: 3px solid var(--accent);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+          "
+        >
+          <pre
+            style="color: var(--good); font-size: 13px; margin: 0"
+          ><code># Ejecutar documentación de tests
+/test-documentation BK-XXX</code></pre>
+        </div>
+        <div class="notes">
+          Stage 4 es documentación. Se crean Test Cases en TMS (Xray), se calcula ROI, y se decide
+          si cada TC es Candidate (automatizable), Manual (terminal) o Deferred (no se hace).
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 9: STAGE 5 — TEST AUTOMATION ==================== -->
+      <section class="slide" id="s9">
+        <div class="kicker">Stage 5 — Post-Sprint</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Test Automation (KATA)</h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Escribir tests E2E + API con Playwright + TypeScript siguiendo la arquitectura KATA.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <div class="card card--green">
+            <h3 style="color: var(--good); font-size: 16px; margin-bottom: 8px">Pipeline</h3>
+            <ol style="color: var(--text-2); font-size: 14px; margin: 0; padding-left: 20px">
+              <li>Plan: diseño del ATC (Acceptance Test Case)</li>
+              <li>Code: escribir en <code>tests/components/</code></li>
+              <li>Review: KATA compliance check</li>
+              <li>Registrar fixture en test file</li>
+            </ol>
+          </div>
+          <div class="card card--purple">
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 8px">
+              Arquitectura KATA
+            </h3>
+            <div style="color: var(--text-2); font-size: 13px">
+              <p style="margin: 0 0 4px 0">
+                <code style="color: var(--good)">TestContext</code> → config, faker, utils
+              </p>
+              <p style="margin: 0 0 4px 0">
+                <code style="color: var(--accent)">ApiBase / UiBase</code> → HTTP / Playwright
+              </p>
+              <p style="margin: 0 0 4px 0">
+                <code style="color: var(--accent-2)">YourApi / YourPage</code> → ATCs live here
+              </p>
+              <p style="margin: 0">
+                <code style="color: var(--warn)">TestFixture</code> → dependency injection
+              </p>
+            </div>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: 20px;
+            padding: 16px;
+            border-left: 3px solid var(--accent-2);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+          "
+        >
+          <pre
+            style="color: var(--good); font-size: 13px; margin: 0"
+          ><code># Ejecutar automatización
+/test-automation BK-XXX
+
+# KATA compliance check
+bun run kata:manifest:check</code></pre>
+        </div>
+        <div class="notes">
+          Stage 5 es automatización. Se escriben tests E2E y API usando la arquitectura KATA
+          (TestContext → Base → Domain → Fixture). Cada ATC es un mini-flow completo y atómico.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 10: STAGE 6 — REGRESSION ==================== -->
+      <section class="slide" id="s10">
+        <div class="kicker">Stage 6 — Pre-Release</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Regression & GO/NO-GO</h2>
+        <p style="color: var(--text-2); font-size: 16px; margin-bottom: 20px">
+          Ejecutar suite de regression via CI, clasificar failures, decidir release readiness.
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <div class="card card--green">
+            <h3 style="color: var(--good); font-size: 16px; margin-bottom: 8px">
+              Clasificación de Failures
+            </h3>
+            <ul style="color: var(--text-2); font-size: 14px; margin: 0; padding-left: 20px">
+              <li><strong style="color: var(--bad)">REGRESSION</strong> — Break real, nuevo</li>
+              <li><strong style="color: var(--warn)">FLAKY</strong> — Falla intermitente</li>
+              <li><strong style="color: var(--text-3)">KNOWN</strong> — Bug documentado</li>
+              <li><strong style="color: var(--accent)">ENVIRONMENT</strong> — Infra no test</li>
+              <li><strong style="color: var(--accent-2)">NEW TEST</strong> — TC nuevo fallando</li>
+            </ul>
+          </div>
+          <div class="card card--purple">
+            <h3 style="color: var(--accent); font-size: 16px; margin-bottom: 8px">Veredicto</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div
+                style="
+                  background: var(--good);
+                  color: #000;
+                  padding: 8px 12px;
+                  border-radius: var(--radius-sm);
+                  text-align: center;
+                  font-weight: 700;
+                "
+              >
+                GO — 0 regressions, pass rate ≥ threshold
+              </div>
+              <div
+                style="
+                  background: var(--warn);
+                  color: #000;
+                  padding: 8px 12px;
+                  border-radius: var(--radius-sm);
+                  text-align: center;
+                  font-weight: 700;
+                "
+              >
+                CAUTION — regressions menores, workarounds
+              </div>
+              <div
+                style="
+                  background: var(--bad);
+                  color: #fff;
+                  padding: 8px 12px;
+                  border-radius: var(--radius-sm);
+                  text-align: center;
+                  font-weight: 700;
+                "
+              >
+                NO-GO — regressions críticas sin fix
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: 20px;
+            padding: 16px;
+            border-left: 3px solid var(--accent-2);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+          "
+        >
+          <pre style="color: var(--good); font-size: 13px; margin: 0"><code># Ejecutar regresión
+/regression-testing
+
+# Resultados en Allure
+bunx allure open ./allure-results</code></pre>
+        </div>
+        <div class="notes">
+          Stage 6 es regresión. Se ejecuta la suite de regression via CI, se clasifican los
+          failures, y se emite un veredicto GO/CAUTION/NO-GO antes del release.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 11: JIRA COMMANDS QUICK REF ==================== -->
+      <section class="slide" id="s11">
+        <div class="kicker">Quick Reference</div>
+        <h2 class="title" style="font-size: 36px; margin-bottom: 20px">Comandos Jira por Etapa</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 13px">
+          <div class="card card--green">
+            <h3 style="color: var(--good); font-size: 14px; margin-bottom: 8px">
+              Stage 0: Shift-Left
+            </h3>
+            <pre style="color: var(--text-2); margin: 0"><code># Buscar Stories en Backlog
+acli workitem search --type Story \
+  --status Backlog \
+  --fields summary,status,labels --json
+
+# Transicionar
+acli workitem transition BK-XXX "Shift-Left QA"
+acli workitem transition BK-XXX "Estimation"
+
+# Label
+acli workitem edit BK-XXX \
+  --add-label shift-left-reviewed</code></pre>
+          </div>
+          <div class="card card--purple">
+            <h3 style="color: var(--accent); font-size: 14px; margin-bottom: 8px">
+              Stage 1-3: Sprint QA
+            </h3>
+            <pre style="color: var(--text-2); margin: 0"><code># Sync ticket
+bun run jira:sync-issues get BK-XXX \
+  --include-comments
+
+# Transiciones QA
+acli workitem transition BK-XXX "In Testing"
+acli workitem transition BK-XXX "Tested"
+acli workitem transition BK-XXX "Closed"
+
+# Crear Bug
+acli workitem create --type Bug \
+  --summary "Defecto en X" \
+  --parent BK-XXX</code></pre>
+          </div>
+          <div class="card card--cyan">
+            <h3 style="color: var(--accent-2); font-size: 14px; margin-bottom: 8px">
+              Stage 4: Documentation
+            </h3>
+            <pre style="color: var(--text-2); margin: 0"><code># Documentar tests
+/test-documentation BK-XXX
+
+# ROI scoring
+bun run tms:roi BK-XXX
+
+# Xray CLI
+bun xray test create \
+  --project BK \
+  --type Automated</code></pre>
+          </div>
+          <div class="card card--green">
+            <h3 style="color: var(--good); font-size: 14px; margin-bottom: 8px">
+              Stage 5-6: Auto + Regression
+            </h3>
+            <pre style="color: var(--text-2); margin: 0"><code># Automatizar
+/test-automation BK-XXX
+
+# Regression
+/regression-testing
+
+# Allure report
+bunx allure open ./allure-results
+
+# KATA check
+bun run kata:manifest:check</code></pre>
+          </div>
+        </div>
+        <div class="notes">
+          Referencia rápida de comandos para cada etapa del pipeline QA. Incluye comandos acli para
+          Jira, comandos del proyecto, y herramientas de TMS.
+        </div>
+      </section>
+
+      <!-- ==================== SLIDE 12: THANKS ==================== -->
+      <section class="slide" id="s12">
+        <div style="text-align: center">
+          <h1 class="title" style="font-size: 48px; margin-bottom: 16px">¿Preguntas?</h1>
+          <p style="color: var(--text-2); font-size: 18px; margin-bottom: 32px">
+            Flujo QA completo: Backlog → Shift-Left → Sprint → Docs → Auto → Regression → Closed
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap">
+            <span class="tag tag--green">/shift-left-testing</span>
+            <span class="tag tag--purple">/sprint-testing</span>
+            <span class="tag tag--cyan">/test-documentation</span>
+            <span class="tag tag--green">/test-automation</span>
+            <span class="tag tag--purple">/regression-testing</span>
+          </div>
+          <div style="margin-top: 40px; color: var(--text-3); font-size: 14px">
+            Bunkai QA Engineering — Agentic QA Boilerplate
+          </div>
+        </div>
+        <div class="notes">
+          Cierre de la presentación. Resumen visual de las 5 skills principales del pipeline QA y
+          sus triggers.
+        </div>
+      </section>
+    </div>
+    <script src="/home/jesusgdev/.agents/skills/html-ppt/assets/runtime.js"></script>
+  </body>
+</html>
