@@ -3,12 +3,12 @@
   "templateRepo": "upex-galaxy/agentic-qa-boilerplate",
   "templateCommit": "",
   "perComponentCommit": {
-    "skills": "afd97f38ec5ba102bc97478fd4b04dda33c80521",
+    "skills": "78597763963061453470eebd872be393157f2adc",
     "commands": "afd97f38ec5ba102bc97478fd4b04dda33c80521",
     "scripts": "afd97f38ec5ba102bc97478fd4b04dda33c80521",
     "docs": "afd97f38ec5ba102bc97478fd4b04dda33c80521",
     "cli": "462ff09c0eace4ead0d6bbe6e716eb67ce65f885",
-    "vscode": "f5b80d0dbb82038440ae5349488321db30d78952",
+    "vscode": "78597763963061453470eebd872be393157f2adc",
     "husky": "194c5be6bb2d9fbf04eb865688f60839a0dc849d",
     "agents-docs": "6e3e33bf874838b049406728ab1ff3bec351149f",
     "claude-config": "01c0a2f669c592a2bb26b5abc8d112b6eda5da40",
@@ -59,6 +59,6 @@
     }
   },
   "cliVersion": "7.0",
-  "lastSyncedAt": "2026-08-02T19:37:20.016Z",
+  "lastSyncedAt": "2026-08-03T21:04:15.258Z",
   "variableSystemVersion": 1
 }
