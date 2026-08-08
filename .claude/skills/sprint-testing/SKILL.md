@@ -264,6 +264,11 @@ Every invocation starts by initializing the session, even in batch mode. Session
    - On hard failure: **STOP and surface to the user before Stage 1.** Do NOT dispatch the Session Start subagent and do NOT author an ATP against a dead env — that is the single highest-cost waste in a run. Offer the user a session env override (see Gotcha 15) if they have a working alternate URL.
    - **Inbox receive-check** (only when the ticket is email / magic-link / auth-token dependent — inferred from the invocation, ticket type, labels, or title): confirm the configured mailbox/provider can actually *receive*, not just send. A send-only provider (e.g. a domain configured for outbound only) cannot complete a magic-link flow. If it cannot receive, STOP and surface before Stage 1.
    - This is a *reachability* gate (is the env even up? can we get the email?), distinct from the Stage 2 smoke test (does the *feature* work?). Both run; they answer different questions — keep anti-pattern S7 and the smoke pass as-is.
+0.7. **Pre-flight intake (optional, fast)** — if `pre-flight-check.md` exists under the ticket's PBI folder (produced by `/sprint-testing-refinement`), read it before dispatching Stage 1:
+   - **GO**: bind the resolved `Modality`, and in jira-xray the `ATP (Test Plan)` / `ATR (Test Execution)` entity keys + pinned `Test Environment` into `test-session-memory.md`. Do NOT re-discover modality or re-resolve keys — the pre-flight already pinned them.
+   - **CONDITIONAL-GO / NO-GO / DEFER**: read the full file and surface blockers/deferred TCs to the user before Stage 1.
+   - **Missing file**: set `preflight=none` in `test-session-memory.md` and continue via Step 0 resolution.
+   This is the consumption contract for `/sprint-testing-refinement` §3.4/§3.5 — skip cleanly when the file is absent.
 1. Fetches the ticket via `bun run jira:sync-issues get <KEY> --include-comments` (title, ACs, priority, comments), then reads the synced `.md` files under the STORY folder. NEVER `acli workitem view` for custom fields.
 2. Extracts Team Discussion from the synced `comments.md` (decisions, tech notes, edge cases, blockers). Non-blocking.
 3. Loads the project-wide context files: `.context/business/business-data-map.md`, `.context/business/business-feature-map.md`, `.context/business/business-api-map.md`, `.context/master-test-plan.md`.

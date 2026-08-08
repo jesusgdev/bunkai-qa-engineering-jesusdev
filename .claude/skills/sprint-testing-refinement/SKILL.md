@@ -1,6 +1,6 @@
 ---
 name: sprint-testing-refinement
-description: "Pre-sprint reconciliation layer between shift-left refinement and sprint-testing execution. Use when a Story moves to Ready For QA to reconcile the shift-left ATP against sprint reality before investing in full Stage 1 Planning. Produces a pre-flight check report: ATP sync status, test-data readiness, open questions, reporting handoff guard, expert-audit closure requirement, and a GO/CONDITIONAL-GO/NO-GO verdict. This skill does NOT modify /sprint-testing — it feeds it. Triggers on: refine this for sprint, pre-flight check, reconcile shift-left ATP, before sprint-testing, QA intake review. Do NOT use for: writing ATPs (use /shift-left-testing or /sprint-testing Stage 1), running tests (use /sprint-testing), batch refinement (use /shift-left-testing)."
+description: "Pre-sprint reconciliation layer between shift-left refinement and sprint-testing execution. Use when a Story moves to Ready For QA to reconcile the shift-left ATP against sprint reality before investing in full Stage 1 Planning. Produces a pre-flight check report: ATP sync status, test-data readiness, open questions, reporting handoff guard, expert-audit closure requirement, and a GO/CONDITIONAL-GO/NO-GO verdict. TMS modality-aware: resolves jira-native vs jira-xray and records ATP/ATR Xray entity keys when applicable. This skill does NOT modify /sprint-testing — it feeds it. Triggers on: refine this for sprint, pre-flight check, reconcile shift-left ATP, before sprint-testing, QA intake review. Do NOT use for: writing ATPs (use /shift-left-testing or /sprint-testing Stage 1), running tests (use /sprint-testing), batch refinement (use /shift-left-testing)."
 license: MIT
 compatibility: [claude-code, copilot, cursor, codex, opencode]
 complementary_categories: [testing-e2e, issue-tracker]
@@ -9,6 +9,8 @@ complementary_categories: [testing-e2e, issue-tracker]
 # Sprint Testing Refinement — Pre-Flight Intake Layer
 
 Reconciles shift-left outputs with sprint-ready reality before `/sprint-testing` Stage 1. Feeds `/sprint-testing` with a verified ATP and a GO/CONDITIONAL-GO/NO-GO verdict. Does NOT replace `/sprint-testing` — it optimizes the investment in it.
+
+TMS modality-aware: resolves **jira-native** (`/acli`) vs **jira-xray** (`bun xray`) per Story before Phase 0, and when Xray is active the pre-flight record carries ATP/ATR **Xray entity keys** so Stage 1 binds the correct Test Plan and Test Execution.
 
 Industry lineage: this skill is an Agile Test Readiness Review (TRR) — a formal gate before entering the testing phase, with entry/exit criteria. Sources: DoD TRR (AcqNotes), ISTQB Test Management, Agile lightweight-test-artifacts doctrine (Tricentis, qasphere).
 
@@ -22,6 +24,8 @@ Bridge the desync gap between shift-left (pre-sprint AC refinement + ATP draft) 
 2. **Under-execution**: ATP claims 25 TCs, only 19 get executed, quality posture is unclear (root cause: BK-27 ATP desync).
 
 This skill detects both before time is invested.
+
+**Modality is one-shot per Story** (D5 rule, mirrored from `test-documentation`): never mix jira-native and jira-xray inside the same Story's ATP. Phase -0.5 resolves the effective TMS modality before any ATP reading or writing.
 
 ---
 
@@ -51,8 +55,10 @@ If NO shift-left artifacts AND NO prior ATP → skip this skill, go directly to 
 
 Requires `agentic-qa-core`. Reads on demand:
 - `shift-left-refinement/SKILL.md` — shift-left output structure (this skill consumes its artifacts).
-- `sprint-testing/SKILL.md` — ATP structure expected by Stage 1.
-- `acli/SKILL.md` + `acli/references/adf-authoring-style.md` — Jira Bug field publishing, ADF panels/status lozenges, and live `editmeta` verification when a follow-up defect must be filed.
+- `sprint-testing/SKILL.md` — ATP structure expected by Stage 1 (includes its modality-aware TC-creation timing section).
+- `test-documentation/SKILL.md` — the Phase 0 TMS-modality-resolution gate (jira-native vs jira-xray) that this skill's Phase -0.5 mirrors. It must be resolved before any ATP read: `jira-native` → ATP lives in the Story's `{{jira.acceptance_test_plan}}` field; `jira-xray` → ATP/ATR are Xray Test Plan + Test artifacts, read/written via `[TMS_TOOL]`.
+- `xray-cli/SKILL.md` — `bun xray` command syntax for ATP/ATR entity resolution, environment pinning, and bug ↔ run defect linking when modality is **jira-xray**.
+- `acli/SKILL.md` + `acli/references/adf-authoring-style.md` — Jira Bug field publishing, ADF panels/status lozenges, and live `editmeta` verification when a follow-up defect must be filed (either modality files the Bug via `[ISSUE_TRACKER_TOOL]`).
 
 ---
 
@@ -62,12 +68,12 @@ Read in this order:
 
 1. Story via `bun run jira:sync-issues get <KEY> --include-comments` → `story.md`, `acceptance-criteria.md`, `acceptance-test-plan.md`, `comments.md`. Also scan `comments.md` for existing `QA Testing Complete`, `TEST RESULTS`, or prior ATR comments that must be preserved in the Stage 3 reporting handoff.
 2. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/shift-left-refinement.md` — if it exists.
-3. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` — ATP from shift-left or prior attempt.
+3. ATP source — **modality-aware** (see Phase -0.5): **jira-native** → `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` (synced from Story field). **jira-xray** → Xray Test Plan issue `description` (and any synced `test-plans/TESTPLAN-<KEY>-<slug>.md`) via `[TMS_TOOL]`; Test artifacts are the actual TCs.
 4. `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — session notes from prior work.
 5. `.context/business/business-data-map.md`, `business-feature-map.md`, `business-api-map.md` — domain context.
-6. `.agents/project.yaml` — project identity, `{{PROJECT_KEY}}`, active environment.
+6. `.agents/project.yaml` — project identity, `{{PROJECT_KEY}}`, `testing.tms_cli`/`testing.default_env` (resolves Phase -0.5).
 7. `.agents/jira-required.yaml` — Jira field slugs.
-8. `.env` — test-user credentials.
+8. `.env` — test-user credentials. In **jira-xray** modality, confirm Xray credentials availability via `[TMS_TOOL]` (auth status check).
 
 ---
 
@@ -79,6 +85,39 @@ Read in this order:
 ```
 
 The `pre-flight-check.md` is the canonical pre-flight artifact. `/sprint-testing` Session Start §0.7 reads it conditionally (verdict line first; full read only on CONDITIONAL-GO/NO-GO). Also appends a pre-flight summary to `context.md`.
+
+In **jira-xray** modality, the pre-flight record also carries the **ATP/ATR Xray entity keys** and the **pinned test environment** so `/sprint-testing` Stage 1 binds the correct Test Plan and Test Execution (see Phase -0.5 and §3.3).
+
+---
+
+## Phase -0.5 — TMS Modality Resolution
+
+Resolve the effective TMS modality BEFORE reading or writing any ATP/ATR. Mirror the `test-documentation` Phase 0 gate. Modality is one-shot per Story; never mix modalities.
+
+Probe sequence (auto, in order):
+
+1. **Check `CLAUDE.md` for `{{TMS_CLI}}`.** Value `bun xray` (or any Xray CLI) → **Modality jira-xray**. Value unset, `acli`-only, or equal to `{{ISSUE_TRACKER_CLI}}` → **Modality jira-native**.
+2. **Check `.agents/project.yaml` `testing.tms_cli` / `testing.default_env`** — mirror the project's declared modality/config. `testing.tms_cli` == `bun xray` (any Xray CLI) → **Modality jira-xray**; otherwise → jira-native.
+3. If still ambiguous, list existing issue types via `[ISSUE_TRACKER_TOOL] List issue types`. If the project exposes `Test Plan` / `Test Execution` / `Test Set` / `Pre-Condition` → **Modality jira-xray**. Otherwise → **Modality jira-native**.
+
+Only ask the user if ALL auto-checks fail to disambiguate.
+
+Persist the result to `progress.md` and `plan.md`:
+
+| Phase -0.5 Out | Modality jira-native | Modality jira-xray |
+|---|---|---|
+| Resolved modality | jira-native | jira-xray |
+| TMS tool bound | `[TMS_TOOL]` falls through to `[ISSUE_TRACKER_TOOL]` (`/acli`) | `[TMS_TOOL]` = `/xray-cli` (`bun xray`) |
+| ATP source | Story field `{{jira.acceptance_test_plan}}` → synced `acceptance-test-plan.md` | Xray Test Plan (`Test Plan` issue) — read via `[TMS_TOOL]` + Jira layer |
+| ATR source | Story field `{{jira.acceptance_test_results}}` | Xray Test artifact / Test Execution — read via `[TMS_TOOL]` |
+| Pre-flight output | `pre-flight-check.md` without Xray keys | `pre-flight-check.md` + **ATP/ATR entity keys** + pinned test environment |
+
+**jira-xray only — resolve the Xray entity keys, do NOT create them, before Phase 3.** Read/confirm `ATP Key` (Test Plan) and `ATR Key` (Test Execution) using `[TMS_TOOL]` read commands (`plan list` / `exec list`). If the Test Plan or Test Execution does not already exist, record it as a **GAP** in the pre-flight report plus the identifying parameters to create it (`plan create` / `exec create --environment <ENV>`), and delegate creation to Stage 1 under a GO verdict. Never create Xray entities during a read-only refinement pass — a NO-GO verdict would orphan them. Record resolved keys in the pre-flight report.
+
+Gotchas (mirror `test-documentation`):
+- **Never mix modalities** inside one Story's ATP (D5); Phase -0.5 is one-shot.
+- `bun xray` requires `ATLASSIAN_URL`/`.xray-cli/config.json` ready; if `/xray-cli` auth fails, that is a hard **NO-GO** with pointer to `.env` keys — do not silently fall back to jira-native.
+- The ATP (Test Plan) is a **Jira issue of type `Test Plan`** — a Test Content absent the Story-field model; stage 1 binds test cases to it via `plan add-tests`.
 
 ---
 
@@ -106,6 +145,8 @@ Mark each TC group: **SYNCED** / **STALE** / **INVALIDATED** / **NEEDS UPDATE** 
 | Executable TCs after reconcile | M | After removing invalidated/stale/blocked |
 | Missing TCs (in story but not in ATP) | K | New ACs added after shift-left |
 | Coverage delta | N - M | Discrepancy to explain |
+
+**jira-xray count source**: in Modality jira-xray derive N from the Test Plan's linked `Test` artifacts (`[TMS_TOOL] plan list` / `trace`), not from the Story field. M = linked Tests still executable; K = plus any new ACs without a synced Test. Same semantics, different container — never count from the Story-field mirror in Xray mode.
 
 **Critical finding**: if `M < N × 0.8` (≥20% TCs invalidated/blocked) → HIGH RISK. If `K > 0` → NEW ACs detected.
 
@@ -167,6 +208,7 @@ Common patterns: test-data creation path unclear → blocks DATA BLOCKED TCs; AC
 | ≥1 TC INVALIDATED/STALE OR hard data block | **CONDITIONAL-GO** | Surface blockers; execute available TCs; DEFER blocked |
 | ≥50% TCs invalidated OR critical open question unresolved | **NO-GO** | Return to `/shift-left-testing` or Story refinement |
 | Any TC DATA BLOCKED | **DEFER** those TCs | Mark DEFERRED in report; continue with available |
+| TMS infra down (jira-xray: `[TMS_TOOL]` auth/CLI failure) | **GATE — not a content verdict** | Fix files `.env`/`.xray-cli/config.json`, verify via `[TMS_TOOL]` auth status, re-run Phase -0.5 probe. This is an infrastructure rendezvous, not a story-refinement blocker — do not conflate it with a content NO-GO. |
 
 ### 3.2 Defect classification (pre-execution)
 
@@ -246,7 +288,7 @@ Use existing board examples as calibration anchors before publishing: Ely/Nahuel
 
 ### 3.3 Pre-flight report template
 
-Write to `pre-flight-check.md`. **Keep lean** — TL;DR verdict line first (consumer reads 1 line in GO case), 4 small tables, no prose padding. Target ≤25 lines.
+Write to `pre-flight-check.md`. **Keep lean** — TL;DR verdict line first (consumer reads 1 line in GO case), small tables, no prose padding. Target ≤25 lines (≤30 with the Modality + Xray Entity Keys sections in jira-xray modality).
 
 ```markdown
 # Pre-Flight Check — {{PROJECT_KEY}}-{number}
@@ -263,6 +305,20 @@ Write to `pre-flight-check.md`. **Keep lean** — TL;DR verdict line first (cons
 | TC-2 | Group A | STALE | AC changed after shift-left |
 
 **Summary**: {N} claimed → {M} executable → {K} new ACs → {D} deferred
+
+## Modality
+
+**Modality**: {jira-native | jira-xray}
+
+<!-- only in jira-xray modality -->
+## Xray Entity Keys
+
+| Key | Value |
+|---|---|
+| ATP (Test Plan) | {{PROJECT_KEY}}-<planKey> |
+| ATR (Test Execution) | {{PROJECT_KEY}}-<execKey> |
+| Test Environment | {staging / prod / dev} |
+<!-- /only -->
 
 ## Test-Data Readiness
 
@@ -291,7 +347,7 @@ Write to `pre-flight-check.md`. **Keep lean** — TL;DR verdict line first (cons
 
 | Verdict | Action |
 |---|---|
-| **GO** | Inform user story is ready. Proceed to `/sprint-testing` Stage 1. `pre-flight-check.md` read as input in Session Start §0.7. |
+| **GO** | Inform user story is ready. Proceed to `/sprint-testing` Stage 1. `pre-flight-check.md` read as input in Session Start §0.7. In jira-xray modality, the Xray entity keys + pinned environment from the pre-flight record must be passed to Stage 1 (no re-discovery). |
 | **CONDITIONAL-GO** | Present blockers + recommended TC subset. Ask user: proceed with available + defer blocked, OR resolve blockers first (which owner)? |
 | **NO-GO** | Surface critical finding. Recommend returning to `/shift-left-testing` or Story refinement. |
 | **DEFER** | Mark blocked TCs DEFERRED. Proceed with available TCs; DEFERRED noted for next sprint. |
@@ -308,6 +364,7 @@ Before handing off to `/sprint-testing`, record the final reporting requirement 
 | AC verified behaviors | ATP reconciliation table | Include AC/behavior/status rows, not only TC IDs. |
 | `Expert Panel Review - Sprint Testing Audit <KEY>` | Expert panel closure | Required as a separate closure comment after ATR + QA verdict, for accepted and failed/rejected outcomes. |
 | Bug-field completion for every new defect | Bug-report handoff guard §3.2.1 | Every filed Bug must use native Bug fields + rich ADF description. Comment-only bug reports are rejected as not audit-ready. |
+| Xray run status + Test evidence (jira-xray) | Xray Test Execution | Stage 3 must update Test Execution runs (`run status --id <runId> --status <status>` where status ∈ PASSED/FAILED/TODO/EXECUTING), pin `Test Environment`, and link bugs to executions (`run defect`) when applicable. Pre-flight pins the environment so Stage 3 has no drift. |
 
 If `/sprint-testing` also posts a separate `QA Testing Complete - <KEY>` comment, keep it as a quick-scan verdict, but do not let it be the only place where environment, test data, verified behaviors, defects, or cleanup notes live. This guard prevents the BK-32/BK-33 failure mode where the main ATR was structured but the completion summary was stranded in a separate comment.
 
@@ -351,6 +408,7 @@ Append to `context.md`:
 ```markdown
 ## Pre-Flight Check
 **Verdict**: {GO | CONDITIONAL-GO | NO-GO | DEFER} · **Date**: {date} · **Report**: pre-flight-check.md · **Deferred**: {TC IDs}
+**TMS Modality**: {jira-native | jira-xray} · **ATP Key**: {jira-xray: <ATP Key>, else n/a} · **ATR Key**: {jira-xray: <ATR Key>, else n/a} · **Env**: {staging/dev/prod}
 **Reporting handoff**: final ATR must embed `QA Completion Summary` with environment, result, defects, test data, AC verified behaviors, and cleanup/restoration notes where applicable.
 **Bug reporting handoff**: if a follow-up defect is filed, Stage 3 must populate Jira-native Bug fields and rich ADF description; comments are supplemental only and redundant comment-only reports must be removed after confirmation.
 **Expert audit handoff**: Stage 3 must publish `Expert Panel Review - Sprint Testing Audit <KEY>` with green `VALIDATED` success panel when accepted, or red `FAILED`/`REJECTED`/`BLOCKED` panel when not accepted.
@@ -378,6 +436,7 @@ Append to `context.md`:
 7. **Live `editmeta` beats cached field catalogs**: before mutating Bug custom fields, inspect the specific issue's `editmeta`; Jira screens can expose different field IDs than `.agents/jira-fields.json`. Rich text fields may require full ADF docs, not plain strings.
 8. **Bug vs defect is two-layered**: classify the behavior as a formal QA `defect` when it is a product flaw, but use the configured Jira work type (`Bug` in Bunkai) unless live Jira exposes a separate `Defect` type and the user approves the change.
 9. **Evidence must be visible, not merely listed**: an `Evidence` field with filenames but no attachments, or attachments without an indexed inline comment, is incomplete. High-signal evidence should have a title, a short explanation, and its associated image/log attachment.
+10. **Modality gates everything downstream**: once Phase -0.5 resolves jira-xray, every ATP/ATR reference must go through `[TMS_TOOL]` (`bun xray`) — the Story's `{{jira.acceptance_test_plan}}` field is not the source of truth. Do not fall back to jira-native reads or writes mid-Story; that is the D5 mixing violation.
 
 ---
 

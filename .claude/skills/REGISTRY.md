@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-08-03T21:04:15.446Z`
+> Generated: `2026-08-08T19:23:32.744Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -592,15 +592,15 @@ Skills indexed: 27
 - The Story has `shift-left-reviewed` label (dated <30 days) OR an `acceptance-test-plan.md` on disk.
 - The user says "refine this for sprint", "pre-flight check", "QA intake", "before sprint-testing".
 - `shift-left-refinement/SKILL.md` — shift-left output structure (this skill consumes its artifacts).
-- `sprint-testing/SKILL.md` — ATP structure expected by Stage 1.
-- `acli/SKILL.md` + `acli/references/adf-authoring-style.md` — Jira Bug field publishing, ADF panels/status lozenges, and live `editmeta` verification when a follow-up defect must be filed.
+- `sprint-testing/SKILL.md` — ATP structure expected by Stage 1 (includes its modality-aware TC-creation timing section).
+- `test-documentation/SKILL.md` — the Phase 0 TMS-modality-resolution gate (jira-native vs jira-xray) that this skill's Phase -0.5 mirrors. It must be resolved before any ATP read: `jira-native` → ATP lives in the Story's `{{jira.acceptance_test_plan}}` field; `jira-xray` → ATP/ATR are Xray Test Plan + Test artifacts, read/written via `[TMS_TOOL]`.
+- `xray-cli/SKILL.md` — `bun xray` command syntax for ATP/ATR entity resolution, environment pinning, and bug ↔ run defect linking when modality is **jira-xray**.
+- `acli/SKILL.md` + `acli/references/adf-authoring-style.md` — Jira Bug field publishing, ADF panels/status lozenges, and live `editmeta` verification when a follow-up defect must be filed (either modality files the Bug via `[ISSUE_TRACKER_TOOL]`).
 - Story via `bun run jira:sync-issues get <KEY> --include-comments` → `story.md`, `acceptance-criteria.md`, `acceptance-test-plan.md`, `comments.md`. Also scan `comments.md` for existing `QA Testing Complete`, `TEST RESULTS`, or prior ATR comments that must be preserved in the Stage 3 reporting handoff.
 - `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/shift-left-refinement.md` — if it exists.
-- `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` — ATP from shift-left or prior attempt.
+- ATP source — **modality-aware** (see Phase -0.5): **jira-native** → `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/acceptance-test-plan.md` (synced from Story field). **jira-xray** → Xray Test Plan issue `description` (and any synced `test-plans/TESTPLAN-<KEY>-<slug>.md`) via `[TMS_TOOL]`; Test artifacts are the actual TCs.
 - `.context/PBI/epics/EPIC-<KEY>-<slug>/stories/STORY-<KEY>-<slug>/context.md` — session notes from prior work.
 - `.context/business/business-data-map.md`, `business-feature-map.md`, `business-api-map.md` — domain context.
-- `.agents/project.yaml` — project identity, `{{PROJECT_KEY}}`, active environment.
-- `.agents/jira-required.yaml` — Jira field slugs.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
