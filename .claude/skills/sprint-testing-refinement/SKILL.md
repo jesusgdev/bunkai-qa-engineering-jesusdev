@@ -362,8 +362,8 @@ Before handing off to `/sprint-testing`, record the final reporting requirement 
 | Environment + result + defects | Test execution summary | Include pass count and deferred/dropped scope notes. |
 | Test data used | Test data readiness table | Include IDs, workspace, role, and cleanup/restoration notes. |
 | AC verified behaviors | ATP reconciliation table | Include AC/behavior/status rows, not only TC IDs. |
-| `Expert Panel Review - Sprint Testing Audit <KEY>` | Expert panel closure | Required as a separate closure comment after ATR + QA verdict, for accepted and failed/rejected outcomes. |
-| Bug-field completion for every new defect | Bug-report handoff guard §3.2.1 | Every filed Bug must use native Bug fields + rich ADF description. Comment-only bug reports are rejected as not audit-ready. |
+| `Expert Panel Review - Sprint Testing Audit <KEY>` | Expert panel. Required as a separate closure comment after ATR + QA verdict, for accepted and failed/rejected outcomes. | Hallmark nits re-check: evidence uniqueness (EVID-DUP), evidence-count consistency (DOC-COUNT), replayable payloads (REPLAY). A package with those three patterns trips a **CONDITIONAL audit** even when all ATCs pass. |
+| Bug-field completion for every new defect | Bug-report handoff guard §3.2.1 | Every filed Bug must use native Bug fields + rich ADF description. Comment-only bug reports are deemed not audit-ready. |
 | Xray run status + Test evidence (jira-xray) | Xray Test Execution | Stage 3 must update Test Execution runs (`run status --id <runId> --status <status>` where status ∈ PASSED/FAILED/TODO/EXECUTING), pin `Test Environment`, and link bugs to executions (`run defect`) when applicable. Pre-flight pins the environment so Stage 3 has no drift. |
 
 If `/sprint-testing` also posts a separate `QA Testing Complete - <KEY>` comment, keep it as a quick-scan verdict, but do not let it be the only place where environment, test data, verified behaviors, defects, or cleanup notes live. This guard prevents the BK-32/BK-33 failure mode where the main ATR was structured but the completion summary was stranded in a separate comment.
@@ -404,6 +404,38 @@ VERDICT: FAILED
 
 Use `FAILED` when execution evidence proves failing behavior or blocking defects. Use `REJECTED` when the report package is not audit-ready even if some execution passed. Use `BLOCKED` when environment/data/tooling prevents a valid verdict. In all negative cases, the red panel must explain whether the next action is rerun, defect filing, data repair, or reporting remediation.
 
+**Canonical accepted layout (BK-38, published as a normal Jira comment)**: accepted-but-nits audits use the following structure — keep the green `VALIDATED` verdict but still flag procedural gaps as acceptable findings:
+
+```markdown
+### Expert Panel Review - Sprint Testing Audit <KEY>
+
+**Verdict**: 🟢 **VALIDATED** — {1-line acceptance statement; nits flagged as non-blocking}
+
+---
+
+### Executive Summary
+### Evidence Used
+
+| Source | Evidence | Confidence |
+|---|---|---|
+
+### Expert Findings
+
+| Role | Finding | Recommendation | Evidence label |
+|---|---|---|---|
+
+### Verdict
+{code block with verdict lines}
+
+**Release recommendation**: {Proceed / Blocked}
+
+---
+
+### Learning Candidates
+```
+
+The enumerated findings use **evidence labels** (e.g. `EVID-DUP-001`, `DOC-COUNT-002`, `REPLAY-003`) so recurring procedural patterns are machine-searchable across runs. Operators should carry an `evidence labels` list (`EVID-DUP-*`, `DOC-COUNT-*`, `REPLAY-*`, plus others) across runs; re-tripping a known label makes the audit blocking pre-flight (see §3.5 evidence-contract row).
+
 Append to `context.md`:
 ```markdown
 ## Pre-Flight Check
@@ -437,6 +469,9 @@ Append to `context.md`:
 8. **Bug vs defect is two-layered**: classify the behavior as a formal QA `defect` when it is a product flaw, but use the configured Jira work type (`Bug` in Bunkai) unless live Jira exposes a separate `Defect` type and the user approves the change.
 9. **Evidence must be visible, not merely listed**: an `Evidence` field with filenames but no attachments, or attachments without an indexed inline comment, is incomplete. High-signal evidence should have a title, a short explanation, and its associated image/log attachment.
 10. **Modality gates everything downstream**: once Phase -0.5 resolves jira-xray, every ATP/ATR reference must go through `[TMS_TOOL]` (`bun xray`) — the Story's `{{jira.acceptance_test_plan}}` field is not the source of truth. Do not fall back to jira-native reads or writes mid-Story; that is the D5 mixing violation.
+11. **Byte-identical screenshots are not separate evidence**: before shipping evidence, md5-compare every capture in the run. Two PNGs sharing an md5 (e.g. an "isolation" shot re-using the "empty state" capture) trips `EVID-DUP-*` and degrades the audit even when all ATCs pass — regenerate, don't duplicate a file.
+12. **Reconcile evidence counts before publishing**: the ATR/report screenshot count must equal the actual files inside `evidence/`. A 7-vs-8 mismatch trips `DOC-COUNT-002`; derive the count from the directory or update it explicitly.
+13. **Subagent over-diagnosis of tooling blocks progress**: a subagent asked to "finish stage 5 + verdict" can burn the whole session troubleshooting unrelated framework health and report Stage 3/5 blocked — while the actual run is complete and the verdict publishable. Brief the subagent to proceed with execution using the canonical CLI and to surface tooling issues as a side note, NOT as a stop condition.
 
 ---
 
