@@ -3,7 +3,7 @@
 **Jira Key:** [BK-40](https://jira.upexgalaxy.com/browse/BK-40)
 **Epic:** [BK-31](https://jira.upexgalaxy.com/browse/BK-31) (Bugs & Defect Heatmap)
 **Type:** Story
-**Status:** Ready For QA
+**Status:** QA Approved
 **Priority:** Medium
 **Story Points:** -
 
@@ -73,6 +73,10 @@ Ready for estimation after expert-panel refinement. QA recommends 5 SP with conf
 
 ## Traceability
 
+### Test Execution (1)
+
+- [BK-348](https://jira.upexgalaxy.com/browse/BK-348): [ATR] BK-40 — TMS-Defect Filing | File a defect from a failing run step _(Close)_
+
 ### Storys (5)
 
 - [BK-42](https://jira.upexgalaxy.com/browse/BK-42): TMS-Defect Heatmap | View count and week-over-week trend per module _(Ready For QA)_
@@ -81,12 +85,16 @@ Ready for estimation after expert-panel refinement. QA recommends 5 SP with conf
 - [BK-35](https://jira.upexgalaxy.com/browse/BK-35): TMS-Run Execution | Mark each step pass, fail, or block _(QA Approved)_
 - [BK-43](https://jira.upexgalaxy.com/browse/BK-43): TMS-Defect Sync | Sync defects one-way to the external tracker _(Ready For Dev)_
 
+### Test Plan (1)
+
+- [BK-347](https://jira.upexgalaxy.com/browse/BK-347): [ATP] BK-40 — TMS-Defect Filing | File a defect from a failing run step _(Planning)_
+
 ---
 
 ## Metadata
 
 - **Created:** 5/28/2026
-- **Updated:** 8/8/2026
+- **Updated:** 8/10/2026
 - **Reporter:** Ely
 - **Assignee:** jesusgpythondev
 - **Labels:** shift-left-2026-06-17, shift-left-reviewed
