@@ -431,6 +431,28 @@ work_types:
       recover: { from: deprecated, to: draft, description: Restore a deprecated TC back to draft }
     used_by: [test-documentation, test-automation]
 
+  test_plan:
+    jira_issue_type: Test Plan
+    description: Xray Test Plan — canonical ATP store (Modality A), synced standalone
+    role: atp
+    sync: default
+    coverable: false
+    container: false
+    content: description
+    local_dir: test-plans
+    used_by: [sprint-testing, test-documentation]
+
+  test_execution:
+    jira_issue_type: Test Execution
+    description: Xray Test Execution — canonical ATR store (Modality A), synced standalone
+    role: atr
+    sync: default
+    coverable: false
+    container: false
+    content: description
+    local_dir: test-executions
+    used_by: [sprint-testing, test-documentation]
+
 # Issue link types the methodology requires for QA traceability. Validated by
 # `bun run jira:check` against the catalog at `.agents/jira-link-types.json`.
 # Each entry's KEY is the canonical slug — resolved at runtime via
