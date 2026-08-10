@@ -27,10 +27,21 @@
 ## Xray Entity Keys
 
 | Key | Value |
-|---|---|
-| ATP (Test Plan) | PENDING — created in this pass (plan B) |
-| ATR (Test Execution) | PENDING — created in this pass (plan B) |
+|---|---|---|
+| ATP (Test Plan) | BK-347 |
+| ATR (Test Execution) | BK-348 |
 | Test Environment | staging |
+| Tests (Cucumber) | BK-338 (ATP-P1), BK-339 (ATP-P2), BK-340 (ATP-P3), BK-341 (ATP-N1), BK-342 (ATP-N2), BK-343 (ATP-N3), BK-344 (ATP-N4), BK-345 (ATP-B1), BK-346 (ATP-I1) |
+
+## Jira Issue Links (created in plan B)
+
+20 links, replicating BK-38 topology (ATP/ATR outward):
+
+| Link type | From → To | Count |
+|---|---|---|
+| Test | BK-347 → BK-40, BK-348 → BK-40 | 2 |
+| Test Design | BK-347 → BK-338…BK-346 | 9 |
+| Test Execute | BK-348 → BK-338…BK-346 | 9 |
 
 ## Test-Data Readiness
 
@@ -55,4 +66,4 @@ CONDITIONAL-GO — 9/9 TCs SYNCED; API contract verified live on staging. Condit
 2. Stage 1 must cover the UI layer of `BugFormDialog` (run-linked prefill + hidden report action on non-failed steps).
 3. Clean up the 6 seed bugs after execution.
 
-**Next step**: Create Xray ATP/ATR + 9 Cucumber Tests (plan B) → then proceed to `/sprint-testing` Stage 1.
+**Next step**: Plan B complete — Xray ATP/ATR/Tests created + Jira links done. Proceed to `/sprint-testing` Stage 1 (execution).

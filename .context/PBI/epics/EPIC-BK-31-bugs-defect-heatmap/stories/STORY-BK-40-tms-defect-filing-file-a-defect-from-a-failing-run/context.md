@@ -9,7 +9,7 @@
 
 ## Pre-Flight Check
 **Verdict**: CONDITIONAL-GO · **Date**: 2026-08-10 · **Report**: pre-flight-check.md · **Deferred**: none
-**Xray Keys**: ATP=PENDING (plan B) · ATR=PENDING (plan B) · Env=staging
+**Xray Keys**: ATP=BK-347 · ATR=BK-348 · Env=staging · Tests=BK-338…BK-346
 **Reporting handoff**: final ATR must embed `QA Completion Summary` with environment, result, defects, test data, AC verified behaviors, and cleanup/restoration notes where applicable.
 **Bug reporting handoff**: if a follow-up defect is filed, Stage 3 must populate Jira-native Bug fields and rich ADF description; comments are supplemental only and redundant comment-only reports must be removed after confirmation.
 **Expert audit handoff**: Stage 3 must publish `Expert Panel Review - Sprint Testing Audit BK-40` with green `VALIDATED` success panel when accepted, or red `FAILED`/`REJECTED`/`BLOCKED` panel when not accepted.
@@ -20,3 +20,5 @@
 - Run-linked preconditions: run `866e6f5c` (running) has failed step `30fd6410`.
 - Expert-panel review verdict: GO (CONDITIONAL-GO operative, non-blocking). 3 conditions: reconcile Jira status, cover BugFormDialog UI layer in Stage 1, clean up seed bugs.
 - Pre-flight report written; plan approved by user: A (pre-flight-check.md + context.md, commit/push) → B (create Xray ATP/ATR + 9 Tests).
+- 2026-08-10: Plan B complete. Xray entities created: Tests BK-338…BK-346 (Cucumber, META-01..09, part of ATP BK-347), ATP BK-347 (Test Plan, +9 tests), ATR BK-348 (Test Execution, env staging, 9 runs TO DO: 6a7a2f44…50).
+- 2026-08-10: Jira layer complete — 20 issue links created replicating BK-38 topology (ATP/ATR outward): 2×Test (BK-347→BK-40, BK-348→BK-40), 9×Test Design (BK-347→tests), 9×Test Execute (BK-348→tests). Gotcha: acli `--out X` is the OUTWARD party directly (doc claim of inversion does NOT apply to this acli version) — first 3 links were created inverted, deleted and recreated.
