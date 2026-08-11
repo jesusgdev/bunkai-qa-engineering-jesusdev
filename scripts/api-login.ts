@@ -140,8 +140,11 @@ function extractTokenFromResponse(body: Record<string, unknown>): {
   expiresIn: number
   refreshToken: string | null
 } {
+  // Bunkai auth returns a PAT: { pat: { token }, session, user }.
+  const pat = body.pat as { token?: string } | undefined;
+  const token = pat?.token ?? body.access_token ?? '';
   return {
-    accessToken: String(body.access_token ?? ''),
+    accessToken: String(token),
     tokenType: String(body.token_type ?? 'Bearer'),
     expiresIn: Number(body.expires_in ?? 86400),
     refreshToken: body.refresh_token ? String(body.refresh_token) : null,
