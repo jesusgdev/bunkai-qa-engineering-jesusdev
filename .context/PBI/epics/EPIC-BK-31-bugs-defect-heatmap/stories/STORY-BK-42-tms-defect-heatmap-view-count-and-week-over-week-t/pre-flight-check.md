@@ -1,7 +1,7 @@
 # Pre-Flight Check — BK-42
 
-**Verdict**: CONDITIONAL-GO
-**Date**: 2026-08-10
+**Verdict**: GO (all 3 conditions resolved)
+**Date**: 2026-08-10 (updated 2026-08-11)
 **Story**: TMS-Defect Heatmap | View count and week-over-week trend per module
 
 ## ATP Reconciliation
@@ -26,10 +26,10 @@
 | ATP-16 | Integration — Freshness | SYNCED | Live RPC, no MV (ratified) — new bug visible on next read, beats 5s SLA |
 | ATP-17 | Integration — Freshness | SYNCED | `generated_at` returned and rendered ("as of" stamp) |
 | ATP-18 | Security | SYNCED | Unauthenticated → 401 (`auth: 'required'`) |
-| ATP-19 | Security | STALE | AC-11 ratified 2026-08-01: literal 403 rejected → non-disclosure collapses to 404 `not_found`; update expected result before Stage 1 |
+| ATP-19 | Security | SYNCED | AC-11 ratified 2026-08-01: 404 `not_found` (P0002). Confirmed at TC level — BK-369 already asserts `Then 404 not_found is returned` (created post-ratification). |
 | ATP-20 | Negative | SYNCED | Unsupported window (`365d`) → 400 `bad_request` |
 
-**Summary**: 20 claimed → 20 executable → 0 new ACs → 1 STALE (ATP-19, expected result update only) → 0 deferred
+**Summary**: 20 claimed → 20 executable → 0 new ACs → 0 STALE → 0 deferred
 
 ## Modality
 
@@ -50,12 +50,12 @@
 
 Rich seed data live in staging DB (DBHub): **98 bugs** (all with project), **329 active modules**, **78 projects**.
 
-| Project | Workspace | Data |
-|---|---|---|
-| Prueba QA (e207917d) | open-source | 11 modules, 82 bugs filed 2026-08-07 — windows 7d/30d/90d + trend |
-| BK-34 QA Seed (d75e73ac) | BK-34 Sprint QA | 9 bugs, latest today — freshness/integration |
+| Project | Workspace | Data | Stage-2 use |
+|---|---|---|---|
+| BK-34 QA Seed (d75e73ac) | BK-34 Sprint QA | 9 bugs in 7d/30d/90d windows, owner role, 200 OK | **Positives** ATP-1..17, 20 (window/count/trend/rollup/freshness) |
+| Prueba QA (e207917d) | open-source | 82 bugs, 11 modules | **Negative** ATP-19 — staging user NOT member of workspace → 404 `not_found` (verified 200 OK only for members) |
 
-Soft block: `.env` staging API credentials rejected (401 Invalid credentials vs dojo.upexgalaxy.com) — refresh before live UI/API verification at Stage 2.
+Credentials: staging login OK via legacy user `STAGING_USER_EMAIL` (role-scoped accounts 401). Live token minted: `bk_pat_kFPFJ0aqvYYF...` → user `5441e8c1...` (API token id `60f9425c...`).
 
 ## Smoke Subset
 
@@ -65,16 +65,16 @@ Soft block: `.env` staging API credentials rejected (401 Invalid credentials vs 
 
 ## Open Questions
 
-| # | Question | Owner | Priority |
+| # | Question | Owner | Status |
 |---|---|---|---|
-| 1 | Staging API credentials in `.env` return 401 (Invalid credentials) — refresh before Stage 2 live verification? | QA | HIGH |
-| 2 | ATP-19 expected result must move 403 → 404 per ratification — accept update in Stage 1 plan? | QA | MEDIUM |
+| 1 | Staging API credentials 401 (vs dojo.upexgalaxy.com) | QA | RESOLVED 2026-08-11 — legacy user login OK; token minted |
+| 2 | ATP-19 expected result 403 → 404 | QA | RESOLVED — already in TC BK-369 (post-ratification); no update needed |
 
 ## Verdict Rationale
 
-CONDITIONAL-GO — 20/20 TCs executable; contract fully implemented (route + RPC 0052 + UI). Conditions (non-blocking):
-1. Update ATP-19 expected result to 404 (AC-11 ratified 2026-08-01).
-2. Refresh staging API credentials before Stage 2 live UI/API checks.
+GO — 20/20 TCs executable; contract fully implemented (route + RPC 0052 + UI). All 3 conditions resolved:
+1. ATP-19 expected result = 404 — **DONE at TC level** (BK-369, post-ratification).
+2. Staging credentials — **DONE 2026-08-11** (legacy user + token).
 3. ~~Create Xray ATP/ATR + 20 Tests (GAP) in Plan B, replicating BK-40/BK-38 topology.~~ **DONE 2026-08-10**: ATP=BK-349, ATR=BK-350, Tests=BK-351…370, 42 Jira links created.
 
-**Next step**: proceed to `/sprint-testing` Stage 1. Refresh staging credentials first (Open Question 1).
+**Next step**: `/sprint-testing` Stage 1 complete (BK-42 → In Test). Proceed to Stage 2 smoke.

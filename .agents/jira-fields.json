@@ -277,6 +277,11 @@
     "type": "atlas-project",
     "name": "Project"
   },
+  "qa_assignee": {
+    "id": "customfield_10070",
+    "type": "user",
+    "name": "QA Assignee"
+  },
   "qa_framework": {
     "id": "customfield_10124",
     "type": "option",
