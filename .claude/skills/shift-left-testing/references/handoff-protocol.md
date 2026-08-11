@@ -80,8 +80,6 @@ Description section template:
 
 The Handoff subagent must read the current description FIRST (from the synced `.md`), then append. Never overwrite.
 
-> **Rich-publish the appended section (not a flat paragraph).** Jira rich-text surfaces (Story description, comments) render structure only when published as ADF. Author the "QA Refinements" block per `acli/references/adf-authoring-style.md` §3 — status lozenge header, `[!SUCCESS]`/`[!WARNING]` summary panel, tables instead of parallel bullets, real issue-keys as Markdown links (never bare keys). For a story that exits shift-left ready to estimate, the section opens with `{status:green|READY FOR ESTIMATION}` (colors: neutral/purple/blue/red/yellow/green). The canonical path validated live on BK-38: `bun .claude/skills/acli/scripts/md-to-adf.ts` → publish via `--description-file` → round-trip verify the nodes (status/panel/table/link) per `acli/references/gotchas.md` §20. The shift-left refinement already produces the source facts; the rich shape is the "how".
-
 ### Step 2 — Populate ATP DRAFT
 
 > **Items over fields (excellence default)** — by excellence the ATP DRAFT is a real **Test Plan** issue titled `ATP: {STORY-KEY}: {story title} (Shift-Left DRAFT)`, parented to the **QA Master Test Plan** epic and linked to the Story. The Story custom field (`{{jira.acceptance_test_plan}}`) is a **fallback ONLY** when the Test Plan work type is unavailable in the instance.

@@ -324,47 +324,6 @@ RECOMMENDATIONS
 
 "Result" values: `PASSED` (all TCs pass), `FAILED` (one or more fail), `PASSED WITH ISSUES` (all pass but with notable observations). The per-TC statuses come from the Execution Status field (Run), not the Test Status workflow — see `test-documentation/references/tms-conventions.md` §IQL.
 
-#### Published shape — rich ADF (excellence default)
-
-The §2.2 body is the **content skeleton**; the plain-text list is a portable fallback (Story custom field that strips ADF, scripts, pasted artifacts). For Jira rich-text surfaces (Test Execution description, comment, Story custom field) publish the same content as a **rich ADF report** — a status lozenge header, a `[!SUCCESS]` / `[!WARNING]` / `[!ERROR]` summary panel, and a **table (test case → status)** per `adf-authoring-style.md` §3/§6 (a table out-scans flat `TC-x … PASSED` bullets; blockers read best as a panel, not a list row). Verified live on BK-38 → ATR BK-319 (all 8 rows kept in the table; round-trip GET held the nodes):
-
-```
-# {STORY-KEY} ATR — Test Results
-
-{status:green|PASSED} **{passed}/{total} Test Cases** — tested {date} · environment {staging}
-
-> [!SUCCESS]
-> {one-line: what was tested + outcome}
-
-## Summary
-| | |
-|---|---|
-| Tested | {date} |
-| Environment | {staging} |
-| Tester | {name/email} |
-| Result | :white_check_mark: PASSED ({passed}/{total}) |
-
-## Test Cases
-| # | Test Case | Result |
-|---|-----------|--------|
-| [KEY: title](browse-url) | {TC name} | :white_check_mark: PASSED |
-
-## Test Data
-| Entity | Name | ID |
-|--------|------|----|
-
-## Bugs Found
-:white_check_mark: None _(or real-link each {BUG-KEY} per §3 real-link rule)_
-
-## Observations
-- {bullets}
-
-## Recommendations
-{prose}
-```
-
-Rules: keep every §2.2 fact (name, per-TC status, IDs) exactly; a FAILED / PASSED-WITH-ISSUES run uses the `[!WARNING]`/`[!ERROR]` panel and `:x:`/`:warning:` per row instead of `[!SUCCESS]`. Real TC/Bug keys are **links** (`[KEY: title](browse-url)`), never bare text — bare keys do not auto-link in ADF (§3 real-link rule). Author Markdown → convert+validate with `bun .claude/skills/acli/scripts/md-to-adf.ts` → publish via `--description-file` (ADF auto-detected) → round-trip `GET` to confirm the nodes held. If `md-to-adf` is unavailable, fall back to the §2.2 plain body — never hand-write ADF JSON.
-
 ### 2.3 Upload by modality
 
 Apply the branch that matches the resolved modality (do not mix).

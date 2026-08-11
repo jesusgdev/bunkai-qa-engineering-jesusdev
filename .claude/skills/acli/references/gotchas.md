@@ -23,7 +23,6 @@ Everything the official docs do not make obvious. Every item here is something t
 17. [CI install `latest/` risk](#ci-install)
 18. [Naming convention: kebab-case is universal](#naming)
 19. [REST fallback checklist](#rest-fallback)
-20. [Verify rich ADF post-publish via REST, not acli](#verify-adf)
 
 ## <a id="pagination"></a>1. Silent pagination truncation
 
@@ -338,26 +337,6 @@ AUTH=$(printf '%s:%s' "$ATLASSIAN_EMAIL" "$ATLASSIAN_API_TOKEN" | base64)
 curl -s -H "Authorization: Basic $AUTH" -H "Content-Type: application/json" \
   "$ATLASSIAN_URL/rest/api/3/issue/{{PROJECT_KEY}}-123"
 ```
-
-## <a id="verify-adf"></a>20. Verify rich ADF post-publish via REST, not acli
-
-**The problem.** `comment update --body-adf` and `--description-file` accept ADF, but verifying the round-trip through acli is misleading: `comment list` returns `.body` as **plain text with ADF stripped**, and neither `comment view` nor `workitem view` exposes the raw ADF (the Jira REST envelope returns `body` as a text representation in the acli list shape, not as the `document` object).
-
-**Why it matters.** You published a lozenge + panel + tables and want proof the nodes held. If you verify via `comment list`, you see text and cannot distinguish a dropped panel from a preserved one. Dropped/coerced nodes are the failure mode BK-38 hit (flat paragraph-flattened ADF).
-
-**Fix.** Round-trip-verify comment ADF via the Jira REST comment endpoint, counting nodes with the same parser you used on the pre-publish `.adf.json`:
-
-```bash
-curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
-  "$ATLASSIAN_URL/rest/api/3/issue/{{PROJECT_KEY}}-123/comment/<ID>" \
-  | jq -r '[.. | .type? | select(. != null)] | group_by(.) | map("\(.[0]):\(length)") | join(" | ")'
-```
-
-Expected: a rich comment round-trips with `status:1` (the panel panelType lozenge is the `status` node) and `panel:1` with `panelType:"success"`, plus the tables/links/emojis you authored. Compare node counts to the pre-publish `comment.md.adf.json` — exact match is the acceptance bar (this is what BK-38 12244/12246/12252 validation used).
-
-For the **description**, `workitem edit --description-file` + `workitem view --json` does expose the ADF document — same node-count check applies. A publish that comes back without the `status` node means the lozenge syntax (`{status:green|LABEL}`) didn't convert; re-author and republish rather than shipping a flat paragraph.
-
-**Also:** `comment update` does NOT accept `--yes` — only `edit` does. A `--yes` appended to `comment update` errors ("unknown flag"); omit it (the mutation is immediate).
 
 ## Meta-gotcha: documentation dates
 
