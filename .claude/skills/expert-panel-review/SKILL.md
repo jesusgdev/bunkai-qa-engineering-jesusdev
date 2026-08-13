@@ -215,3 +215,67 @@ For complex reviews, launch expert subagents in parallel. Each subagent brief sh
 7. Rules and boundaries.
 
 Do not let subagents mutate Jira or files unless the user explicitly approved implementation.
+
+---
+
+## Post-Automation Review (NEW)
+
+> **Use for**: After batch automation completion — quality gate review.
+> **Trigger**: After `/test-automation` batch processing completes.
+
+### Review Scope
+
+| Area | Check | Criteria |
+|------|-------|----------|
+| Test Coverage | All Candidate TCs automated | 100% coverage |
+| KATA Compliance | All tests follow KATA architecture | No violations |
+| Rate Limiting | Batch processing compliant | No 429 errors |
+| ADF Format | All TCs have enriched descriptions | 12 sections present |
+| Parent Field | All TCs have correct parent | BK-70 set |
+| Title Format | All TCs follow naming convention | Regex compliant |
+
+### Quality Gate Checklist
+
+- [ ] All Candidate TCs have automated tests
+- [ ] All tests follow KATA architecture
+- [ ] All batch operations used rate-limiting
+- [ ] All TCs have 12-section ADF descriptions
+- [ ] All TCs have parent BK-70
+- [ ] All TCs follow title format `BK-XX: TCYY: ...`
+- [ ] No lint errors
+- [ ] No type errors
+- [ ] All tests passing
+
+### Expert Panel Activation
+
+For post-automation review, activate:
+- **Senior QA Lead**: Test coverage and quality
+- **Senior Technical Architect**: KATA compliance
+- **Senior Developer**: Code quality and patterns
+- **Delivery Lead**: Process compliance
+
+### Review Output
+
+```markdown
+## Post-Automation Review - <Batch>
+
+### Executive Summary
+<quality status, coverage, issues found>
+
+### Quality Metrics
+- Test coverage: <count> / <total>
+- KATA compliance: <percentage>
+- Rate-limiting compliance: <yes/no>
+- ADF enrichment: <count> / <total>
+- Parent field set: <count> / <total>
+- Title format compliant: <count> / <total>
+
+### Issues Found
+<list of issues>
+
+### Recommendations
+<improvements for next batch>
+
+### Verdict
+{APPROVED | APPROVED_WITH_NOTES | REJECTED}
+```

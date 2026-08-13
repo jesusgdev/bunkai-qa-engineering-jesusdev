@@ -8,15 +8,15 @@ complementary_categories: [issue-tracker, tms]
 
 # Tickets Board Statuses
 
-Produce a lean PM/QA board view that answers: what can be shift-lefted next, which user-worked Stories now need `/sprint-testing`, where the user already applied shift-left, and which dependencies drive priority.
+Produce a lean PM/QA board view that answers: what can be shift-lefted next, which user-worked Stories now need `/sprint-testing`, where the user already applied shift-left or sprint-testing (QA footprint), and which dependencies drive priority.
 
 Optimize for low token/process cost: query small fields, derive related views from the same result set, and avoid duplicate comment checks.
 
 ## Use This Skill For
 
 - Finding unassigned Backlog Stories the user can take for `/shift-left-testing`.
-- Finding user-worked `shift-left-reviewed` Stories that are Ready For QA for `/sprint-testing`.
-- Listing the user's shift-left continuity without comment counts.
+- Finding Stories the user worked (any status) that are Ready For QA for `/sprint-testing`.
+- Listing the user's QA footprint — every project Story with at least one exact-author comment by the current user, no comment counts — to plan `/test-documentation` coverage.
 - Mapping formal or inferred dependencies that change next-work priority.
 
 ## Do Not Use This Skill For
@@ -30,7 +30,7 @@ Optimize for low token/process cost: query small fields, derive related views fr
 - Jira project key, board scope, or explicit JQL.
 - Exact user comment author string, e.g. `jesusgpythondev`.
 - Status names for Backlog and Ready For QA.
-- Shift-left completion label, default `shift-left-reviewed`.
+- Shift-left completion label, default `shift-left-reviewed` (provenance only — NOT required for the QA footprint).
 - Optional epic/product scope for dependency analysis.
 
 ## Jira Quirks And Cost Rules
@@ -63,13 +63,11 @@ ORDER BY priority DESC, created ASC
 
 Use fields: `key,parent,summary,priority,status,labels,created`.
 
-3. Query user-worked shift-left seed once:
+3. Query the QA-footprint seed once (ALL Stories — any status, including Done — because the footprint is comment-driven, not label-driven):
 
 ```jql
 project = <PROJECT_KEY>
 AND issuetype = Story
-AND labels in (shift-left-reviewed)
-AND statusCategory != Done
 ORDER BY updated DESC
 ```
 
@@ -77,11 +75,11 @@ Use fields: `key,parent,summary,status,assignee,priority,updated`.
 
 4. Filter the seed by exact user comments. De-duplicate keys first; run `workitem comment list --key <KEY> --json` once per unique key; keep rows where `.comments[].author == <EXACT_USER_AUTHOR>`.
 
-5. Derive both continuity views from the filtered seed:
+5. Derive both footprint views from the filtered seed:
 - `Ready for my sprint-testing` count/keys = filtered rows where status is exactly Ready For QA.
-- `My Shift-Left Continuity` table = all filtered rows, with `Next Action = sprint-test-now` for Ready For QA rows.
+- `My QA Footprint` table = all filtered rows, with `Next Action = sprint-test-now` for Ready For QA rows and `closed-context` for Done rows.
 
-6. Build dependency scope from Table 1 keys, filtered continuity keys, their parent/Epic keys, formal `issuelinks`, and only same-scope sibling Stories that change readiness or priority. Use the old broad active-Story query only as fallback when parent/link data is missing.
+6. Build dependency scope from Table 1 keys, filtered footprint keys, their parent/Epic keys, formal `issuelinks`, and only same-scope sibling Stories that change readiness or priority. Use the old broad active-Story query only as fallback when parent/link data is missing.
 
 Fallback dependency JQL:
 
@@ -97,7 +95,7 @@ ORDER BY priority DESC, created ASC
 | Table | Name | Question answered |
 |---|---|---|
 | 1 | Shift-Left Candidates | Which unworked Backlog Stories can the user take now? |
-| 2 | My Shift-Left Continuity | Which user-worked Stories need monitoring or sprint testing? |
+| 2 | My QA Footprint | Which user-worked Stories need monitoring or sprint testing? |
 | 3 | Dependency Priority Map | Which Stories drive near-term order? |
 
 ## Table Rules
@@ -110,9 +108,9 @@ Columns: `Key | Epic | Summary | Priority | Dependency Signal | Recommended Acti
 
 Recommended actions: `shift-left-now`, `needs-context`, `wait-for-parent`.
 
-### Table 2 - My Shift-Left Continuity
+### Table 2 - My QA Footprint
 
-Include only `shift-left-reviewed`, non-Done Stories with at least one exact-author comment by the current user. Do not show comment counts.
+Include ALL Story tickets with at least one exact-author comment by the current user — any status, including Done. The `shift-left-reviewed` label is provenance, not a gate: the user comments on every Story they apply sprint-testing to, so the comment author IS the footprint signal. Do not show comment counts.
 
 Columns: `Key | Epic | Status | Summary | Assignee | Next Action`.
 
@@ -142,14 +140,14 @@ Recommendations: `do-first`, `ready-after-parent`, `wait`, `reference-only`.
 ### Executive Summary
 - Shift-left candidates: <count + keys>
 - Ready for my sprint-testing: <count + keys derived from Table 2>
-- My shift-left footprint: <count + keys from Table 2>
+- My QA footprint: <count + keys from Table 2>
 - Dependency-driven priority: <top recommendation>
 
 ### Table 1 - Shift-Left Candidates
 | Key | Epic | Summary | Priority | Dependency Signal | Recommended Action |
 |---|---|---|---|---|---|
 
-### Table 2 - My Shift-Left Continuity
+### Table 2 - My QA Footprint
 | Key | Epic | Status | Summary | Assignee | Next Action |
 |---|---|---|---|---|---|
 
@@ -168,7 +166,7 @@ If a table is empty, show `No tickets found matching criteria`.
 - Search queries use `--paginate` and minimal `--fields`.
 - Parser handles root array and `.issues` wrapper.
 - Table 1 excludes `shift-left-reviewed` and all post-Backlog statuses.
-- Table 2 requires `shift-left-reviewed`, non-Done, and exact user comment author.
+- Table 2 requires Story issuetype, any status (including Done), and at least one exact user comment author. The `shift-left-reviewed` label is optional provenance only.
 - Ready For QA sprint-testing count is derived from Table 2, not from a separate comment-filter pass.
 - Dependency map separates formal Jira links from functional inference.
 - Broad active-board dependency query is fallback only; note when used.

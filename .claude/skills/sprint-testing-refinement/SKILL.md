@@ -475,6 +475,51 @@ Append to `context.md`:
 
 ---
 
+## Batch Handoff (NEW)
+
+> **Use for**: When N>5 stories need sprint testing — hand off to batch automation workflow.
+
+### Trigger Conditions
+
+| Condition | Action |
+|-----------|--------|
+| N <= 5 stories | Continue with single-story workflow |
+| N > 5 stories | Hand off to batch automation |
+
+### Batch Handoff Pattern
+
+```
+1. Complete pre-flight for all stories
+2. Group stories by module/dependency
+3. Hand off to /test-automation for batch processing:
+   a. Batch TC creation (10 per batch, 1s pause)
+   b. Batch parent field setting
+   c. Batch title standardization
+   d. Batch description enrichment
+4. Return to /sprint-testing for execution
+```
+
+### Sprint-to-Automation Pipeline
+
+```
+Shift-Left → Sprint Testing → Test Documentation → Test Automation
+    ↓              ↓                   ↓                  ↓
+  AC Refinement   Pre-flight        TC Creation      Batch Code
+  ATP Draft       GO/NO-GO          ADF Enrichment   ATCs Written
+  Risk Matrix     Blockers          Parent Setting    Tests Passing
+```
+
+### Handoff Checklist
+
+- [ ] All stories have pre-flight checks (GO/CONDITIONAL-GO)
+- [ ] Stories grouped by module
+- [ ] Batch size calculated (N stories x M TCs per story)
+- [ ] Rate-limiting configured (10 per batch, 1s pause)
+- [ ] /test-automation skill loaded
+- [ ] Batch processing plan documented
+
+---
+
 ## Language
 
 All artifacts in English. Conversation mirrors the user's language.

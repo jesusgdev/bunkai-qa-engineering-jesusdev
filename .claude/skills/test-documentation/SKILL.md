@@ -712,3 +712,162 @@ for each {TEST_KEY} in run:
   # later: {{jira.transition.test_case.approve_to_automate}}      # In Review -> Candidate
   # OR:    {{jira.transition.test_case.for_manual}}               # Ready -> Manual
 ```
+
+---
+
+## Batch TC Enrichment (NEW)
+
+> **Use for**: Enriching 10+ TCs with the 12-section ADF template.
+> **Rate limiting**: ~10 req/sec/user — batch in groups of 10 with 1s pause between batches.
+
+### Template Structure (12 Sections)
+
+1. Related Story
+2. Priority / ROI
+3. Prior bugs covered
+4. Test Design - Preconditions
+5. Test Design - Action
+6. Test Design - Expected Results
+7. Test Design - Gherkin
+8. Variables
+9. Implementation Code
+10. Architecture
+11. Available Test IDs
+12. Refinement Notes
+
+### Batch Processing Pattern
+
+```bash
+#!/bin/bash
+BATCH_SIZE=10
+PAUSE_BETWEEN_ISSUES=0.5
+PAUSE_BETWEEN_BATCHES=1
+
+# Process in batches
+TOTAL=${#ISSUES[@]}
+for ((i=0; i<TOTAL; i+=BATCH_SIZE)); do
+  BATCH=("${ISSUES[@]:$i:$BATCH_SIZE}")
+  
+  for ISSUE in "${BATCH[@]}"; do
+    # 1. GET issue info
+    # 2. Generate ADF content
+    # 3. PUT updated description
+    # 4. Verify HTTP 204
+    sleep $PAUSE_BETWEEN_ISSUES
+  done
+  
+  sleep $PAUSE_BETWEEN_BATCHES
+done
+```
+
+### ADF Conversion
+
+```bash
+# Convert Markdown to ADF
+bun .claude/skills/acli/scripts/md-to-adf.ts < input.md > output.adf.json
+
+# Apply to Jira issue
+curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+  -X PUT \
+  -H "Content-Type: application/json" \
+  -d "{\"fields\": {\"description\": $(cat output.adf.json)}}" \
+  "$ATLASSIAN_URL/rest/api/3/issue/{KEY}"
+```
+
+---
+
+## Parent Field Setting (NEW)
+
+> **Use for**: Setting parent field for TCs via REST API (acli limitation).
+> **Pattern**: `PUT /rest/api/3/issue/{key}` with `{"fields": {"parent": {"key": "BK-70"}}}`
+
+### REST API Pattern
+
+```bash
+# Set parent for single issue
+curl -s -w "%{http_code}" -o /tmp/response.txt \
+  -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+  -X PUT \
+  -H "Content-Type: application/json" \
+  -d '{"fields": {"parent": {"key": "BK-70"}}}' \
+  "$ATLASSIAN_URL/rest/api/3/issue/{ISSUE_KEY}"
+
+# Verify HTTP 204 = success
+```
+
+### Batch Parent Setting
+
+```bash
+#!/bin/bash
+PARENT_KEY="BK-70"
+BATCH_SIZE=10
+
+while IFS= read -r ISSUE; do
+  curl -s -w "%{http_code}" -o /tmp/response.txt \
+    -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+    -X PUT \
+    -H "Content-Type: application/json" \
+    -d "{\"fields\": {\"parent\": {\"key\": \"$PARENT_KEY\"}}}" \
+    "$ATLASSIAN_URL/rest/api/3/issue/$ISSUE"
+  sleep 0.5
+done < /tmp/issues.txt
+```
+
+---
+
+## Title Standardization (NEW)
+
+> **Use for**: Validating and correcting TC title format.
+> **Pattern**: `^BK-\d+: TC\d+: .+$`
+
+### Validation Regex
+
+```bash
+# Validate TC title format
+if echo "$TITLE" | grep -qE "^BK-[0-9]+: TC[0-9]+: .+$"; then
+  echo "Valid"
+else
+  echo "Invalid"
+fi
+```
+
+### Batch Title Correction
+
+```bash
+#!/bin/bash
+while IFS= read -r ISSUE; do
+  # Get current title
+  CURRENT=$(curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+    -X GET -H "Content-Type: application/json" \
+    "$ATLASSIAN_URL/rest/api/3/issue/$ISSUE" | jq -r '.fields.summary')
+  
+  # Generate corrected title
+  STORY_KEY=$(echo "$CURRENT" | grep -oE "BK-[0-9]+" | head -1)
+  TC_NUM=$(echo "$CURRENT" | grep -oE "TC[0-9]+" | head -1)
+  DESC=$(echo "$CURRENT" | sed -E "s/^BK-[0-9]+: TC[0-9]+: //")
+  CORRECTED="$STORY_KEY: $TC_NUM: $DESC"
+  
+  # Apply if different
+  if [ "$CURRENT" != "$CORRECTED" ]; then
+    curl -s -w "%{http_code}" -o /tmp/response.txt \
+      -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
+      -X PUT \
+      -H "Content-Type: application/json" \
+      -d "{\"fields\": {\"summary\": \"$CORRECTED\"}}" \
+      "$ATLASSIAN_URL/rest/api/3/issue/$ISSUE"
+  fi
+  sleep 0.5
+done < /tmp/issues.txt
+```
+
+---
+
+## Related Skills
+
+| Skill | Purpose | When to use |
+|-------|---------|-------------|
+| `/batch-jira-operations-refinement` | Batch Jira operations with rate-limiting | 50+ issues |
+| `/adf-conversion-refinement` | Markdown to ADF conversion | Rich text updates |
+| `/rate-limit-handler-refinement` | Rate limiting with batching | Any batch API |
+| `/parent-field-manager-refinement` | Parent field via REST API | acli limitation |
+| `/title-standardizer-refinement` | Title format validation | Batch title fixes

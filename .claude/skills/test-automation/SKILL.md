@@ -457,3 +457,75 @@ bun run kata:manifest:check         # confirm gate would pass (husky runs this o
 cp .env.example .env                # populate test credentials
 bun run api:sync                    # regenerate OpenAPI schema types
 ```
+
+---
+
+## Batch Module Automation (NEW)
+
+> **Use for**: Automating multiple modules in sequence (3+ modules).
+> **Rate limiting**: ~10 req/sec/user — batch api:sync calls with 2s pauses.
+
+### Batch Processing Pattern
+
+```
+1. Plan all modules (spec.md for each)
+2. Create Api components sequentially:
+   a. Module 1: Create {Module}Api.ts + types
+   b. Pause 2s
+   c. Module 2: Create {Module}Api.ts + types
+   d. Pause 2s
+   e. Module 3: Create {Module}Api.ts + types
+3. Create test files for each module
+4. Run kata:manifest to update registry
+5. Verify all tests pass
+```
+
+### Parallel Subagent Dispatch
+
+For independent modules, use parallel subagents:
+
+```
+Subagent 1: Module 1 (Heatmap/Defects)
+Subagent 2: Module 2 (Test Builder)
+Subagent 3: Module 3 (Run Execution)
+
+Each subagent:
+1. Reads shared types from api/schemas/
+2. Creates {Module}Api.ts
+3. Creates test files
+4. Reports completion
+```
+
+### Rate-Limiting for api:sync
+
+```bash
+# After each module's Api component creation
+bun run api:sync
+sleep 2  # Pause for rate limiting
+
+# Or batch all api:sync calls
+for module in heatmap test-builder run-execution; do
+  bun run api:sync --module $module
+  sleep 2
+done
+```
+
+### Kata Manifest Update
+
+```bash
+# After all modules created
+bun run kata:manifest
+git add kata-manifest.json
+bun run kata:manifest:check
+```
+
+---
+
+## Related Skills
+
+| Skill | Purpose | When to use |
+|-------|---------|-------------|
+| `/batch-jira-operations-refinement` | Batch Jira operations | 50+ issues |
+| `/rate-limit-handler-refinement` | Rate limiting with batching | Any batch API |
+| `/test-documentation` | TC documentation | Before automation |
+| `/sprint-testing` | Sprint testing workflow | In-sprint QA |

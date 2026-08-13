@@ -292,3 +292,70 @@ Return:
 - Apply at most 3-5 learnings; label each as validated, candidate, or conflicting.
 - Save only validated decisions, user-approved conventions, repeated patterns, bugfixes, or gotchas per global Engram protocol.
 - After a successful expert-panel review, save one role-specific learning for each activated domain expert when the user requested role learning or when the review produced reusable role-specific guidance.
+
+---
+
+## Automation Handoff (NEW)
+
+> **Use for**: When ATP DRAFT is ready — hand off to batch automation workflow.
+
+### Trigger Conditions
+
+| Condition | Action |
+|-----------|--------|
+| Single story | Continue with single-story workflow |
+| N > 5 stories with ATP DRAFT | Hand off to batch automation |
+
+### End-to-End Pipeline
+
+```
+Shift-Left → Sprint Testing → Test Documentation → Test Automation
+    ↓              ↓                   ↓                  ↓
+  AC Refinement   Pre-flight        TC Creation      Batch Code
+  ATP Draft       GO/NO-GO          ADF Enrichment   ATCs Written
+  Risk Matrix     Blockers          Parent Setting    Tests Passing
+```
+
+### Handoff Pattern
+
+```
+1. Complete shift-left refinement for all stories
+2. Ensure all stories have ATP DRAFT
+3. Hand off to /sprint-testing for pre-flight:
+   a. Pre-flight checks for all stories
+   b. GO/CONDITIONAL-GO verdicts
+   c. Blocker identification
+4. Hand off to /test-documentation for TC creation:
+   a. Batch TC creation (10 per batch, 1s pause)
+   b. Batch ADF enrichment
+   c. Batch parent field setting
+   d. Batch title standardization
+5. Hand off to /test-automation for batch code:
+   a. Batch Api component creation
+   b. Batch test file creation
+   c. Batch ATC writing
+   d. Batch test execution
+```
+
+### Handoff Checklist
+
+- [ ] All stories have refined ACs
+- [ ] All stories have ATP DRAFT
+- [ ] Expert panel review completed
+- [ ] Ready for estimation status set
+- [ ] /sprint-testing skill loaded
+- [ ] /test-documentation skill loaded
+- [ ] /test-automation skill loaded
+- [ ] Batch processing plan documented
+
+### Pipeline Metrics
+
+| Stage | Metric | Target |
+|-------|--------|--------|
+| Shift-Left | ACs refined | 100% |
+| Shift-Left | ATP DRAFT complete | 100% |
+| Sprint Testing | Pre-flight GO | 100% |
+| Test Documentation | TCs created | 100% |
+| Test Documentation | ADF enriched | 100% |
+| Test Automation | ATCs written | 100% |
+| Test Automation | Tests passing | 100%
