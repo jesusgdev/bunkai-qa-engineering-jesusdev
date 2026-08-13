@@ -3,13 +3,13 @@
   "templateRepo": "upex-galaxy/agentic-qa-boilerplate",
   "templateCommit": "",
   "perComponentCommit": {
-    "skills": "20f9c3ae3c640b0c0c3949f361845eca96811b08",
-    "commands": "afd97f38ec5ba102bc97478fd4b04dda33c80521",
-    "scripts": "afd97f38ec5ba102bc97478fd4b04dda33c80521",
+    "skills": "a31b6e1908ee69b224042d7e7a07c7f3efbebaa8",
+    "commands": "a31b6e1908ee69b224042d7e7a07c7f3efbebaa8",
+    "scripts": "a31b6e1908ee69b224042d7e7a07c7f3efbebaa8",
     "docs": "20f9c3ae3c640b0c0c3949f361845eca96811b08",
     "cli": "462ff09c0eace4ead0d6bbe6e716eb67ce65f885",
     "vscode": "20f9c3ae3c640b0c0c3949f361845eca96811b08",
-    "husky": "194c5be6bb2d9fbf04eb865688f60839a0dc849d",
+    "husky": "a31b6e1908ee69b224042d7e7a07c7f3efbebaa8",
     "agents-docs": "6e3e33bf874838b049406728ab1ff3bec351149f",
     "claude-config": "01c0a2f669c592a2bb26b5abc8d112b6eda5da40",
     "tooling": "e4454b5efc107b2c13f5462d429279eb1efb0aed",
@@ -44,29 +44,29 @@
   "packageJsonSync": {
     "package.json": {
       "scripts": {
-        "lastSyncedSha": "289cab539646230914e9c7296cda4ba2f0d6da41",
+        "lastSyncedSha": "cd5a302ce987aa16037b9337bc3a5f266298c292",
         "appliedKeys": [
           "vars:env:check",
           "env"
         ]
       },
       "devDependencies": {
-        "lastSyncedSha": "289cab539646230914e9c7296cda4ba2f0d6da41",
+        "lastSyncedSha": "cd5a302ce987aa16037b9337bc3a5f266298c292",
         "appliedKeys": [
           "allure-js-commons"
         ]
       },
       "dependencies": {
-        "lastSyncedSha": "289cab539646230914e9c7296cda4ba2f0d6da41",
+        "lastSyncedSha": "cd5a302ce987aa16037b9337bc3a5f266298c292",
         "appliedKeys": []
       },
       "lint-staged": {
-        "lastSyncedSha": "289cab539646230914e9c7296cda4ba2f0d6da41",
+        "lastSyncedSha": "cd5a302ce987aa16037b9337bc3a5f266298c292",
         "appliedKeys": []
       }
     }
   },
   "cliVersion": "7.0",
-  "lastSyncedAt": "2026-08-09T23:56:39.476Z",
+  "lastSyncedAt": "2026-08-13T18:25:20.589Z",
   "variableSystemVersion": 1
 }
