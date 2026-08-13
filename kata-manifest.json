@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generatedAt": "2026-05-21T08:28:54.468Z",
+  "generatedAt": "2026-08-13T02:16:34.039Z",
   "components": {
     "api": [
       {
@@ -16,7 +16,159 @@
           {
             "id": "PROJ-102",
             "method": "loginWithInvalidCredentials",
-            "line": 112
+            "line": 106
+          }
+        ]
+      },
+      {
+        "name": "DefectsApi",
+        "file": "DefectsApi.ts",
+        "relativePath": "tests/components/api/DefectsApi.ts",
+        "atcs": [
+          {
+            "id": "BK-338",
+            "method": "createRunLinkedDefect",
+            "line": 64
+          },
+          {
+            "id": "BK-339",
+            "method": "saveRunLinkedDefect",
+            "line": 81
+          },
+          {
+            "id": "BK-340",
+            "method": "saveStandaloneDefect",
+            "line": 98
+          },
+          {
+            "id": "BK-341",
+            "method": "rejectNonFailedStep",
+            "line": 111
+          },
+          {
+            "id": "BK-342",
+            "method": "rejectInvalidTitleLength",
+            "line": 133
+          },
+          {
+            "id": "BK-343",
+            "method": "rejectMissingModule",
+            "line": 145
+          },
+          {
+            "id": "BK-344",
+            "method": "rejectInvalidSeverity",
+            "line": 162
+          },
+          {
+            "id": "BK-345",
+            "method": "enforceEvidenceLimit",
+            "line": 178
+          },
+          {
+            "id": "BK-346",
+            "method": "verifyTmsNativeDefect",
+            "line": 193
+          },
+          {
+            "id": "BK-351",
+            "method": "getHeatmapDefaultWindow",
+            "line": 229
+          },
+          {
+            "id": "BK-352",
+            "method": "getHeatmapWindowSwitch",
+            "line": 240
+          },
+          {
+            "id": "BK-353",
+            "method": "hideArchivedModules",
+            "line": 251
+          },
+          {
+            "id": "BK-354",
+            "method": "verifyUtcHalfOpen",
+            "line": 263
+          },
+          {
+            "id": "BK-355",
+            "method": "verifyEndExcluded",
+            "line": 273
+          },
+          {
+            "id": "BK-356",
+            "method": "verifyRisingTrend",
+            "line": 284
+          },
+          {
+            "id": "BK-357",
+            "method": "verifyFallingTrend",
+            "line": 297
+          },
+          {
+            "id": "BK-358",
+            "method": "verifyPrevZeroTrend",
+            "line": 310
+          },
+          {
+            "id": "BK-359",
+            "method": "verifyBothZeroTrend",
+            "line": 323
+          },
+          {
+            "id": "BK-360",
+            "method": "verifyCurrZeroTrend",
+            "line": 336
+          },
+          {
+            "id": "BK-361",
+            "method": "verifyParentRollup",
+            "line": 349
+          },
+          {
+            "id": "BK-362",
+            "method": "verifyChildOwnCell",
+            "line": 359
+          },
+          {
+            "id": "BK-363",
+            "method": "verifyColorNotOnly",
+            "line": 372
+          },
+          {
+            "id": "BK-364",
+            "method": "verifyTrendWordDelta",
+            "line": 385
+          },
+          {
+            "id": "BK-365",
+            "method": "verifyFullPathDisambiguation",
+            "line": 397
+          },
+          {
+            "id": "BK-366",
+            "method": "verifyFreshnessLive",
+            "line": 410
+          },
+          {
+            "id": "BK-367",
+            "method": "verifyGeneratedAt",
+            "line": 422
+          },
+          {
+            "id": "BK-368",
+            "method": "rejectUnauthenticated",
+            "line": 434
+          },
+          {
+            "id": "BK-369",
+            "method": "rejectNonMemberAccess",
+            "line": 446
+          },
+          {
+            "id": "BK-370",
+            "method": "rejectUnsupportedWindow",
+            "line": 456
           }
         ]
       },
@@ -39,6 +191,330 @@
             "id": "PROJ-103",
             "method": "getResourceSuccessfully",
             "line": 113
+          }
+        ]
+      },
+      {
+        "name": "RunApi",
+        "file": "RunApi.ts",
+        "relativePath": "tests/components/api/RunApi.ts",
+        "atcs": [
+          {
+            "id": "BK-320",
+            "method": "listRunsHappyPath",
+            "line": 322
+          },
+          {
+            "id": "BK-321",
+            "method": "listRunsNewestFirst",
+            "line": 332
+          },
+          {
+            "id": "BK-322",
+            "method": "listRunsTerminalOnly",
+            "line": 346
+          },
+          {
+            "id": "BK-323",
+            "method": "listRunsTotals",
+            "line": 358
+          },
+          {
+            "id": "BK-324",
+            "method": "listRunsRejectsInvalidTest",
+            "line": 371
+          },
+          {
+            "id": "BK-325",
+            "method": "listRunsIntegration",
+            "line": 382
+          },
+          {
+            "id": "BK-326",
+            "method": "listRunsUnauthenticated",
+            "line": 392
+          },
+          {
+            "id": "BK-375",
+            "method": "startRunSuccessfully",
+            "line": 68
+          },
+          {
+            "id": "BK-376",
+            "method": "startRunWithEnvironment",
+            "line": 89
+          },
+          {
+            "id": "BK-377",
+            "method": "startRunWithExecutorType",
+            "line": 110
+          },
+          {
+            "id": "BK-379",
+            "method": "startRunIdempotent",
+            "line": 130
+          },
+          {
+            "id": "BK-380",
+            "method": "startRunRejectsInvalidTest",
+            "line": 151
+          },
+          {
+            "id": "BK-381",
+            "method": "startRunRejectsInvalidEnvironment",
+            "line": 169
+          },
+          {
+            "id": "BK-382",
+            "method": "startRunUnauthenticated",
+            "line": 187
+          },
+          {
+            "id": "BK-383",
+            "method": "startRunViewerForbidden",
+            "line": 202
+          },
+          {
+            "id": "BK-384",
+            "method": "startRunRejectsEmptyTestId",
+            "line": 217
+          },
+          {
+            "id": "BK-385",
+            "method": "startRunRejectsEmptyEnvironmentId",
+            "line": 235
+          },
+          {
+            "id": "BK-386",
+            "method": "startRunRejectsDuplicateIdempotencyKey",
+            "line": 253
+          },
+          {
+            "id": "BK-387",
+            "method": "startRunRejectsConflictIdempotencyKey",
+            "line": 285
+          },
+          {
+            "id": "BK-388",
+            "method": "finishRunSuccessfully",
+            "line": 408
+          },
+          {
+            "id": "BK-389",
+            "method": "finishRunSetsFinishedAt",
+            "line": 424
+          },
+          {
+            "id": "BK-390",
+            "method": "finishRunBumpsVersion",
+            "line": 440
+          },
+          {
+            "id": "BK-391",
+            "method": "finishRunMarksRemainingSkipped",
+            "line": 456
+          },
+          {
+            "id": "BK-392",
+            "method": "finishRunRejectsAlreadyClosed",
+            "line": 472
+          },
+          {
+            "id": "BK-393",
+            "method": "finishRunIntegration",
+            "line": 498
+          },
+          {
+            "id": "BK-394",
+            "method": "finishRunUnauthenticated",
+            "line": 514
+          },
+          {
+            "id": "BK-395",
+            "method": "finishRunCrossWorkspace",
+            "line": 530
+          },
+          {
+            "id": "BK-396",
+            "method": "finishRunBugDriven",
+            "line": 546
+          }
+        ]
+      },
+      {
+        "name": "TestBuilderApi",
+        "file": "TestBuilderApi.ts",
+        "relativePath": "tests/components/api/TestBuilderApi.ts",
+        "atcs": [
+          {
+            "id": "BK-404",
+            "method": "reorderAtcsSuccessfully",
+            "line": 193
+          },
+          {
+            "id": "BK-405",
+            "method": "reorderAtcsPersists",
+            "line": 208
+          },
+          {
+            "id": "BK-406",
+            "method": "reorderAtcsNoop",
+            "line": 225
+          },
+          {
+            "id": "BK-407",
+            "method": "reorderAtcsSingleAtcNoop",
+            "line": 238
+          },
+          {
+            "id": "BK-408",
+            "method": "reorderAtcsUnauthenticated",
+            "line": 251
+          },
+          {
+            "id": "BK-409",
+            "method": "reorderAtcsViewerForbidden",
+            "line": 267
+          },
+          {
+            "id": "BK-410",
+            "method": "reorderAtcsVersionConflict",
+            "line": 283
+          },
+          {
+            "id": "BK-411",
+            "method": "reorderAtcsChainMismatch",
+            "line": 302
+          },
+          {
+            "id": "BK-412",
+            "method": "reorderAtcsDuplicateIds",
+            "line": 315
+          },
+          {
+            "id": "BK-413",
+            "method": "reorderAtcsEmptyChain",
+            "line": 328
+          },
+          {
+            "id": "BK-414",
+            "method": "reorderAtcsActivityLog",
+            "line": 340
+          },
+          {
+            "id": "BK-415",
+            "method": "reorderAtcsRetrySafe",
+            "line": 353
+          },
+          {
+            "id": "BK-417",
+            "method": "viewTestWithAtcs",
+            "line": 370
+          },
+          {
+            "id": "BK-418",
+            "method": "viewTestAtcsExpanded",
+            "line": 381
+          },
+          {
+            "id": "BK-419",
+            "method": "viewTestAtcsInOrder",
+            "line": 393
+          },
+          {
+            "id": "BK-420",
+            "method": "viewTestAtcsLatestContent",
+            "line": 405
+          },
+          {
+            "id": "BK-421",
+            "method": "viewTestNotFound",
+            "line": 417
+          },
+          {
+            "id": "BK-422",
+            "method": "viewTestForeignWorkspace",
+            "line": 429
+          },
+          {
+            "id": "BK-423",
+            "method": "viewTestReadOnly",
+            "line": 441
+          },
+          {
+            "id": "BK-424",
+            "method": "viewTestPerformance",
+            "line": 450
+          },
+          {
+            "id": "BK-425",
+            "method": "assignReservedTags",
+            "line": 466
+          },
+          {
+            "id": "BK-426",
+            "method": "assignCustomTags",
+            "line": 481
+          },
+          {
+            "id": "BK-427",
+            "method": "replaceTags",
+            "line": 496
+          },
+          {
+            "id": "BK-428",
+            "method": "removeAllTags",
+            "line": 511
+          },
+          {
+            "id": "BK-429",
+            "method": "rejectInvalidTagFormat",
+            "line": 525
+          },
+          {
+            "id": "BK-430",
+            "method": "rejectTooManyTags",
+            "line": 538
+          },
+          {
+            "id": "BK-431",
+            "method": "rejectTagWithComma",
+            "line": 551
+          },
+          {
+            "id": "BK-432",
+            "method": "rejectDuplicateTags",
+            "line": 564
+          },
+          {
+            "id": "BK-433",
+            "method": "normalizeReservedTags",
+            "line": 581
+          },
+          {
+            "id": "BK-434",
+            "method": "trimCustomTags",
+            "line": 599
+          },
+          {
+            "id": "BK-435",
+            "method": "enforceMaxLength",
+            "line": 617
+          },
+          {
+            "id": "BK-436",
+            "method": "filterTestsByTag",
+            "line": 630
+          },
+          {
+            "id": "BK-437",
+            "method": "tagsOptimisticLock",
+            "line": 640
+          },
+          {
+            "id": "BK-438",
+            "method": "tagsActivityLog",
+            "line": 653
           }
         ]
       }
@@ -82,9 +558,9 @@
   },
   "preconditions": [],
   "summary": {
-    "totalComponents": 4,
-    "totalATCs": 9,
-    "apiComponents": 2,
+    "totalComponents": 7,
+    "totalATCs": 100,
+    "apiComponents": 5,
     "uiComponents": 2,
     "preconditionModules": 0
   }

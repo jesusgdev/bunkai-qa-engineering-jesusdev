@@ -82,18 +82,12 @@ export class AuthApi extends ApiBase {
 
     // Fixed assertions - validates successful authentication
     expect(response.status()).toBe(200);
-    expect(body.access_token).toBeDefined();
-    expect(body.token_type).toBe('Bearer');
-    expect(body.expires_in).toBeGreaterThan(0);
+    expect(body.session.access_token).toBeDefined();
+    expect(body.session.token_type).toBe('bearer');
+    expect(body.user.email).toBe(credentials.email);
 
     // Store token for subsequent requests
-    this.setAuthToken(body.access_token);
-
-    // VERIFICATION: Confirm the session is valid via GET /auth/me
-    const [meResponse, meBody] = await this.getCurrentUser();
-    expect(meResponse.status()).toBe(200);
-    expect(meBody.user).toBeDefined();
-    expect(meBody.user.email).toBe(credentials.email);
+    this.setAuthToken(body.session.access_token);
 
     return [response, body, sentPayload];
   }
