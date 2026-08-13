@@ -43,15 +43,16 @@ setup('API Setup: authenticate via API', async ({ api }) => {
   });
 
   console.log('[API Setup] Authentication successful');
-  console.log(`[API Setup] Token type: ${tokenData.token_type}`);
-  console.log(`[API Setup] Expires in: ${tokenData.expires_in} seconds`);
+  console.log(`[API Setup] Token type: ${tokenData.session.token_type}`);
+  console.log(`[API Setup] User: ${tokenData.user.email}`);
 
-  // Save token to file for use by integration tests
+  // Save PAT token for use by integration tests (PAT tokens don't expire)
+  const patToken = tokenData.pat?.token ?? tokenData.session.access_token;
   const apiState: ApiState = {
-    token: tokenData.access_token,
-    tokenType: tokenData.token_type,
-    expiresIn: tokenData.expires_in,
-    refreshToken: tokenData.refresh_token ?? null,
+    token: patToken,
+    tokenType: 'bearer',
+    expiresIn: tokenData.pat?.expires_at ? Math.floor((tokenData.pat.expires_at * 1000 - Date.now()) / 1000) : 86400,
+    refreshToken: tokenData.session.refresh_token ?? null,
     source: 'api-login',
     createdAt: new Date().toISOString(),
   };

@@ -73,8 +73,8 @@ setup('UI Setup: authenticate via UI', async ({ ui, page }) => {
   });
 
   // Verify token was obtained
-  if (!tokenData?.access_token) {
-    throw new Error('Token response missing access_token');
+  if (!tokenData?.session?.access_token) {
+    throw new Error('Token response missing session.access_token');
   }
 
   console.log('[UI Setup] Token intercepted successfully');
@@ -85,10 +85,10 @@ setup('UI Setup: authenticate via UI', async ({ ui, page }) => {
 
   // Save the token for API calls within E2E tests
   const apiState: ApiState = {
-    token: tokenData.access_token,
-    tokenType: tokenData.token_type,
-    expiresIn: tokenData.expires_in,
-    refreshToken: tokenData.refresh_token ?? null,
+    token: tokenData.session.access_token,
+    tokenType: tokenData.session.token_type,
+    expiresIn: Math.floor((tokenData.session.expires_at * 1000 - Date.now()) / 1000),
+    refreshToken: tokenData.session.refresh_token ?? null,
     source: 'ui-login',
     createdAt: new Date().toISOString(),
   };
