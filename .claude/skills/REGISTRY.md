@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-08-09T23:56:39.802Z`
+> Generated: `2026-08-13T02:13:35.819Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -8,7 +8,7 @@ This file is the per-session compact-rules cache for the Skill Resolver protocol
 The orchestrator copies one or more `## Skill: <slug>` blocks below into every subagent briefing under `## Project Standards (auto-resolved)`.
 Subagents trust those compact rules and only read the full SKILL.md when explicitly instructed.
 
-Skills indexed: 27
+Skills indexed: 32
 
 ---
 ## Skill: acli
@@ -36,6 +36,34 @@ Skills indexed: 27
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/acli/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
+## Skill: adf-conversion-refinement
+
+**Purpose**: Convert Markdown content to ADF (Atlassian Document Format) for Jira rich text fields.
+
+**Compact Rules**:
+- `acli/references/adf-authoring-style.md` — ADF formatting rules
+- `md-to-adf.ts` — Markdown to ADF converter script
+- `test-documentation/SKILL.md` — TC Description template (§7)
+- Priority: {Critical|High|Medium|Low}
+- ROI score: {number}
+- Outcome: {Candidate|Manual|Deferred}
+- {BUG-ID} — <one-line summary>
+- (none) if first time
+- <precondition 1>
+- <precondition 2>
+- <assertion 1>
+- <assertion 2>
+- `[data-testid="xxx"]`
+- Item 1
+- Item 2
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/adf-conversion-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -84,6 +112,34 @@ Skills indexed: 27
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/agentic-qa-onboard/SKILL.md` · phase: `bootstrap` · extraction strategy: B
+
+---
+
+## Skill: batch-jira-operations-refinement
+
+**Purpose**: Handle batch Jira operations with rate limiting, ADF conversion, parent field setting, and title standardization.
+
+**Compact Rules**:
+- `test-documentation/SKILL.md` — TC Description template (§7)
+- `acli/SKILL.md` — Jira CLI operations
+- `acli/references/adf-authoring-style.md` — ADF formatting rules
+- `md-to-adf.ts` — Markdown to ADF converter script
+- Load issue list (from file, JQL, or manual list)
+- Split into batches of 10
+- For each batch:
+- Verify all issues updated
+- Generate report
+- Related Story
+- Priority / ROI
+- Prior bugs covered
+- Test Design - Preconditions
+- Test Design - Action
+- Test Design - Expected Results
+- (truncated — read full SKILL.md for the rest)
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/batch-jira-operations-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -420,6 +476,26 @@ Skills indexed: 27
 
 ---
 
+## Skill: parent-field-manager-refinement
+
+**Purpose**: Set Jira parent field via REST API (workaround for acli limitation).
+
+**Compact Rules**:
+- `acli/SKILL.md` — Jira CLI operations (for verification)
+- `rate-limit-handler-refinement/SKILL.md` — Rate limiting for batch operations
+- Pattern: parent field REST API setting
+- Discovery: acli limitation for parent field
+- Pattern: batch parent field operations
+- **Orchestrator**: Manages batch progress
+- **Worker subagents**: Process individual batches
+- **Verifier subagent**: Validates all parents set
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/parent-field-manager-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
 ## Skill: pr-review-lead
 
 **Purpose**: Acts as a QA Lead / QA Architect reviewing a pull request's test-automation work against this repo's KATA doctrine (or the target repo's...
@@ -473,6 +549,31 @@ Skills indexed: 27
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/project-discovery/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
+## Skill: rate-limit-handler-refinement
+
+**Purpose**: Handle API rate limiting with batching, pauses, retry logic, and exponential backoff.
+
+**Compact Rules**:
+- Pause between issues: `1 / (10 * 0.8) = 0.125s` → use 0.5s for safety
+- Pause between batches: `0.5 * 10 = 5s` → use 1s minimum
+- Total items processed
+- Success/fail rate
+- Rate limit incidents
+- Average processing time
+- Total execution time
+- Pattern: rate limiting for Jira Cloud
+- Pattern: batch processing with pauses
+- Discovery: optimal batch sizes for different APIs
+- **Orchestrator**: Manages batch progress and pauses
+- **Worker subagents**: Process individual batches
+- **Monitor subagent**: Tracks rate limit metrics
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/rate-limit-handler-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
@@ -659,8 +760,8 @@ Skills indexed: 27
 
 **Compact Rules**:
 - Finding unassigned Backlog Stories the user can take for `/shift-left-testing`.
-- Finding user-worked `shift-left-reviewed` Stories that are Ready For QA for `/sprint-testing`.
-- Listing the user's shift-left continuity without comment counts.
+- Finding Stories the user worked (any status) that are Ready For QA for `/sprint-testing`.
+- Listing the user's QA footprint — every project Story with at least one exact-author comment by the current user, no comment counts — to plan `/test-documentation` coverage.
 - Mapping formal or inferred dependencies that change next-work priority.
 - Jira writes, assignments, transitions, labels, comments, or mutations.
 - Full `/shift-left-testing` or `/sprint-testing` execution.
@@ -668,7 +769,7 @@ Skills indexed: 27
 - Jira project key, board scope, or explicit JQL.
 - Exact user comment author string, e.g. `jesusgpythondev`.
 - Status names for Backlog and Ready For QA.
-- Shift-left completion label, default `shift-left-reviewed`.
+- Shift-left completion label, default `shift-left-reviewed` (provenance only — NOT required for the QA footprint).
 - Optional epic/product scope for dependency analysis.
 - Use `assignee is EMPTY`, not `assignee = unassigned`.
 - Use `--paginate` for every search that feeds decisions.
@@ -678,6 +779,26 @@ Skills indexed: 27
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
 
 > Source: `.claude/skills/tickets-board-statuses/SKILL.md` · phase: `unknown` · extraction strategy: B
+
+---
+
+## Skill: title-standardizer-refinement
+
+**Purpose**: Validate and correct TC title format in batch.
+
+**Compact Rules**:
+- `acli/SKILL.md` — Jira CLI operations
+- `rate-limit-handler-refinement/SKILL.md` — Rate limiting for batch operations
+- Pattern: TC title format validation
+- Pattern: batch title correction
+- Discovery: common title issues and fixes
+- **Validator subagent**: Validates all titles
+- **Corrector subagent**: Generates corrections
+- **Applier subagent**: Applies corrections
+
+**Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
+
+> Source: `.claude/skills/title-standardizer-refinement/SKILL.md` · phase: `unknown` · extraction strategy: B
 
 ---
 
