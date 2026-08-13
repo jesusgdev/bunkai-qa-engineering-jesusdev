@@ -60,11 +60,24 @@ export interface LoginPayload {
  * TODO: Replace with OpenAPI schema type after sync.
  */
 export interface TokenResponse {
-  access_token: string
-  token_type: string
-  expires_in: number
-  refresh_token?: string
-  scope?: string
+  user: {
+    id: string
+    email: string
+  }
+  session: {
+    access_token: string
+    refresh_token: string
+    expires_at: number
+    token_type: string
+  }
+  pat?: {
+    token: string
+    id: string
+    name: string
+    scopes: string[]
+    expires_at: number | null
+  }
+  warning?: string
 }
 
 /**
