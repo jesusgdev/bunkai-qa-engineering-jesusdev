@@ -61,6 +61,6 @@ test.describe('UPEX-100: User Session API', { tag: ['@critical'] }, () => {
 
     // Verify new token was obtained and set
     expect(response.status()).toBe(200);
-    expect(tokenData.access_token).toBeDefined();
+    expect(tokenData.session.access_token).toBeDefined();
   });
 });
