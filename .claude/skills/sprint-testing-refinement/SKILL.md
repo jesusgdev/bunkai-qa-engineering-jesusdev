@@ -448,6 +448,249 @@ Append to `context.md`:
 
 ---
 
+## Forbidden Invocations
+
+NEVER invoke from sprint-testing or sprint-testing-refinement:
+
+```
+/project-discovery       # No discovery during test execution
+/adapt-framework         # No framework changes during test execution
+/shift-left-testing      # No batch refinement during sprint testing
+/business-data-map       # No business mapping during test execution
+/business-feature-map    # No feature mapping during test execution
+/business-api-map        # No API mapping during test execution
+/sync-ai-memory          # No memory sync during test execution
+```
+
+Any request to discover architecture, adapt framework, or run shift-left batch is out of scope for sprint testing.
+
+## 7-Component Briefing (Subagent Dispatch)
+
+When dispatching subagents for sprint testing, use this exact briefing format:
+
+1. **Goal** — one sentence
+2. **Context docs** — files to read first
+3. **Project Standards** — compact rules from `.claude/skills/REGISTRY.md`
+4. **Skills to load** — explicit (e.g. `/sprint-testing`)
+5. **Exact instructions** — step-by-step, not vague goals
+6. **Report format** — what to return (files changed, tests passed, blockers)
+7. **Rules** — relevant Critical Rules to follow
+
+Example:
+```
+## 1. Goal
+Execute Stage 2 (Execution) for BK-34 user story.
+
+## 2. Context docs
+- .context/PBI/user-management/BK-34-story-key/pre-flight-check.md
+- .context/PBI/user-management/BK-34-story-key/acceptance-test-plan.md
+
+## 3. Project Standards
+- Skills: REGISTRY.md rules apply
+- Trifuerza: UI + API + DB layers
+- Rate-limiting: 10 per batch, 1s pause
+
+## 4. Skills to load
+- /sprint-testing (this skill)
+- /playwright-cli (for UI layer)
+
+## 5. Exact instructions
+a. Read pre-flight-check.md (verdict must be GO/CONDITIONAL-GO)
+b. Execute smoke subset TCs first
+c. Capture evidence per TC (screenshot + trace)
+d. File bugs for any failures using BK-182 rule
+e. Do NOT publish to Jira (user hasn't requested)
+
+## 6. Report format
+Return: TC results table, evidence list, bugs filed, verdict (PASS/FAIL/BLOCKED).
+
+## 7. Rules
+- Pre-flight GO required before execution
+- Trifuerza: check UI + API + DB layers
+- Bug-report handoff guard: native fields + ADF description
+- No comment-only bug reports
+```
+
+---
+
+## Triage + Veto + Risk-Score (Bug Mode)
+
+When sprint-testing processes Bugs (not Stories), use this decision tree BEFORE executing retest:
+
+### Triage Decision Tree
+
+```
+Bug Report Received
+       │
+       ▼
+┌─────────────────────────┐
+│ Has reproduce steps?    │
+│ Has expected vs actual? │
+│ Has evidence (screenshot│
+│  or log)?               │
+└─────────┬───────────────┘
+          │
+    ┌─────┴─────┐
+    │           │
+   YES         NO → Request missing info from reporter
+    │
+    ▼
+┌─────────────────────────┐
+│ Veto Check:             │
+│ - Duplicate of open?    │
+│ - Already fixed in      │
+│   current build?        │
+│ - Out of scope (known   │
+│   limitation)?          │
+│ - Cannot reproduce in   │
+│   staging?              │
+└─────────┬───────────────┘
+          │
+    ┌─────┴─────┐
+    │           │
+  CLEAR      VETOED → Document reason, close as
+    │                "Cannot Reproduce" / "Duplicate"
+    ▼
+┌─────────────────────────┐
+│ Risk Score:             │
+│ Severity (1-5) ×        │
+│ Frequency (1-5) =       │
+│ Risk (1-25)             │
+│                         │
+│ 1-5:   LOW → Manual    │
+│ 6-15:  MED → Manual+Auto│
+│ 16-25: HIGH → Full Auto│
+└─────────┬───────────────┘
+          │
+          ▼
+   Execute based on risk level
+```
+
+### Risk Score Matrix
+
+| Severity × Frequency | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| **5 (Critical)** | 5 | 10 | 15 | 20 | 25 |
+| **4 (Major)** | 4 | 8 | 12 | 16 | 20 |
+| **3 (Moderate)** | 3 | 6 | 9 | 12 | 15 |
+| **2 (Minor)** | 2 | 4 | 6 | 8 | 10 |
+| **1 (Cosmetic)** | 1 | 2 | 3 | 4 | 5 |
+
+### Execution Strategy by Risk
+
+| Risk Level | Strategy | TCs | Automation |
+|---|---|---|---|
+| LOW (1-5) | Manual exploration | Smoke only | Candidate for future |
+| MED (6-15) | Manual + targeted automation | Smoke + key paths | Automate high-frequency |
+| HIGH (16-25) | Full automation priority | All related TCs | Automate immediately |
+
+---
+
+## Trifuerza Exploration (UI/API/DB)
+
+When executing Stage 2, explore the change across THREE layers:
+
+### Trifuerza Strategy
+
+| Layer | Tool | What to check | When |
+|---|---|---|---|
+| **UI** | `/playwright-cli` | Visual behavior, user flows, error states | Any user-facing change |
+| **API** | `[API_TOOL]` | Endpoint contracts, status codes, response schemas | Any backend change |
+| **DB** | `[DB_TOOL]` | Data integrity, state transitions, side effects | Any data-affecting change |
+
+### Layer Selection by Change Type
+
+| Change Type | Required Layers | Optional |
+|---|---|---|
+| Frontend-only | UI | API (if data fetching) |
+| Backend-only | API | DB (if data mutation) |
+| Full-stack | UI + API + DB | — |
+| Data migration | DB | API (verify endpoints) |
+| Auth/security | API + DB | UI (login flow) |
+
+### Trifuerza Execution Pattern
+
+```
+1. Identify change type from git diff / Jira description
+2. Select required layers (see matrix above)
+3. Execute UI layer:
+   a. Navigate to affected page
+   b. Perform user flow
+   c. Capture screenshot/trace
+   d. Verify console for errors
+4. Execute API layer:
+   a. Call affected endpoints
+   b. Verify status codes
+   c. Validate response schema
+   d. Check error handling
+5. Execute DB layer:
+   a. Query affected tables
+   b. Verify data state
+   c. Check constraints/integrity
+   d. Validate state transitions
+6. Cross-reference findings across layers
+7. File bugs for any layer-specific defects
+```
+
+---
+
+## QAR (QA Result) Template
+
+Use this template for the final QA comment in Jira:
+
+```markdown
+# QA Result — {{ISSUE_KEY}}
+
+## Summary
+<one-line verdict: PASS / FAIL / BLOCKED / DEFERRED>
+
+## Execution Summary
+| Metric | Value |
+|---|---|
+| Total TCs | N |
+| Executed | M |
+| Passed | P |
+| Failed | F |
+| Blocked | B |
+| Deferred | D |
+| Pass Rate | P/M × 100% |
+
+## Test Environment
+- URL: <staging URL>
+- Browser: <browser + version>
+- OS: <operating system>
+- Date: <execution date>
+
+## TC Results
+| TC | Status | Layer | Notes |
+|---|---|---|---|
+| TC-01 | ✅ PASS | UI | — |
+| TC-02 | ❌ FAIL | API | 403 on /api/v1/users |
+| TC-03 | ⏭️ DEFER | DB | Data not available |
+
+## Defects Filed
+| Bug Key | Severity | Summary | Status |
+|---|---|---|---|
+| BK-100 | Major | Login fails with SSO | OPEN |
+
+## Evidence
+| Evidence | Attachment | Result |
+|---|---|---|
+| Login flow | BK-34-step01-login.png | SSO redirect works |
+| API response | BK-34-step02-api.json | 403 returned |
+
+## Risks / Notes
+<any risks, limitations, or notes for next tester>
+
+## Verdict
+**PASS** — all critical ACs verified, no blocking defects.
+**FAIL** — N blocking defects found, rerun required.
+**BLOCKED** — environment/data/tooling prevents valid test.
+**DEFERRED** — external constraint, continue next sprint.
+```
+
+---
+
 ## Session Management
 
 - Session state: `.session/sprint-testing-refinement/<JIRA_KEY>/`
