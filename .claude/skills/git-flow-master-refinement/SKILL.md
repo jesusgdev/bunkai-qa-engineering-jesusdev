@@ -16,6 +16,36 @@ Advisory companion for `/git-flow-master` when a worktree has many modified or u
 - Separating product, test, docs, generated metadata, config, and tooling changes.
 - Creating a commit plan with exact paths per commit.
 - Flagging files that should stay unstaged or need user confirmation.
+- **Staging all changes and creating intelligent commits** when user requests "add all changes to staging" or similar.
+- **Expert validation** via `/expert-panel-review` before finalizing the commit plan.
+
+## Automatic Workflow
+
+When invoked, this skill:
+
+1. **Reads repo state** via `/git-flow-master` Step 1 outputs.
+2. **Classifies all files** (staged, modified, untracked) by responsibility.
+3. **Creates a commit plan** with atomic conventional commits and exact paths.
+4. **Runs expert validation** via `/expert-panel-review` to verify the plan.
+5. **Executes the commits** one by one after user approval.
+6. **Pushes to the target branch** (default: `main`).
+
+## Expert Validation
+
+Before finalizing any commit plan, this skill MUST invoke `/expert-panel-review` to:
+
+- **Validate commit grouping** — ensure files are correctly classified by responsibility.
+- **Verify commit messages** — check conventional commit format and clarity.
+- **Review safety rules** — confirm no secrets, artifacts, or unrelated changes are staged.
+- **Assess risk** — identify any changes that might break existing functionality.
+
+The expert panel consists of:
+- **Senior QA Lead** — validates test coverage and quality implications.
+- **Senior Technical Architect** — reviews architectural impact.
+- **Security/AppSec Engineer** — ensures no security risks are introduced.
+- **Delivery/Scrum Lead** — verifies alignment with project goals.
+
+If the expert panel raises concerns, the commit plan is revised before execution.
 
 ## Do Not Use This Skill For
 
@@ -83,6 +113,19 @@ Return this plan to `/git-flow-master` before any staging:
 - Project checks required by `package.json` and project rules
 ```
 
+## Execution Mode
+
+When the user requests "add all changes to staging and push to main" or similar:
+
+1. **Stage all changes** using explicit paths (never `git add -A` or `git add .`).
+2. **Classify files** into atomic commits by responsibility.
+3. **Run expert validation** via `/expert-panel-review`.
+4. **Execute commits** one by one with conventional commit messages.
+5. **Push to main** after all commits are complete.
+6. **Report results** — list all commits created and confirm push.
+
 ## Handoff Back To `/git-flow-master`
 
 After the user approves the plan, `/git-flow-master` owns staging, committing, push confirmation, PR creation, and conflict recovery. This skill never mutates git state.
+
+**Exception**: In "automatic mode" (user requests full staging + push), this skill executes the approved plan directly without handing off to `/git-flow-master`.
