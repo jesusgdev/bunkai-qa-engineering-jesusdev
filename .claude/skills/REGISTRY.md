@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-08-21T23:21:36.013Z`
+> Generated: `2026-08-22T18:06:41.488Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.claude/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -430,16 +430,16 @@ Skills indexed: 32
 - Separating product, test, docs, generated metadata, config, and tooling changes.
 - Creating a commit plan with exact paths per commit.
 - Flagging files that should stay unstaged or need user confirmation.
-- Branch creation, commits, push, PR creation, conflict resolution, or strategy setup. Use `/git-flow-master` for those actions.
-- Replacing `/git-flow-master` safety rules.
-- Running destructive git commands or broad staging commands.
-- `git status --porcelain` or `git status --short`
-- `git diff --stat`
-- Relevant `git diff -- <path>` for each changed group
-- For untracked files, inspect content/type before recommending staging
-- Classify by responsibility and outcome, not by directory alone.
-- Identify the dominant change type per file cluster: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`.
-- If supporting files exist only because of the dominant change, keep them in the same commit.
+- **Staging all changes and creating intelligent commits** when user requests "add all changes to staging" or similar.
+- **Expert validation** via `/expert-panel-review` before finalizing the commit plan.
+- **Reads repo state** via `/git-flow-master` Step 1 outputs.
+- **Classifies all files** (staged, modified, untracked) by responsibility.
+- **Creates a commit plan** with atomic conventional commits and exact paths.
+- **Runs expert validation** via `/expert-panel-review` to verify the plan.
+- **Executes the commits** one by one after user approval.
+- **Pushes to the target branch** (default: `main`).
+- **Validate commit grouping** — ensure files are correctly classified by responsibility.
+- **Verify commit messages** — check conventional commit format and clarity.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
