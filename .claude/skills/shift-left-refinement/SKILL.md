@@ -246,6 +246,67 @@ Run this check after any Jira write, and also when reviewing work left by anothe
 
 If the audit finds a gap, fix the smallest canonical artifact first: behavior gaps go to AC; coverage gaps go to ATP; status/publication gaps go to mirror; traceability gaps go to description/local artifact.
 
+## Forbidden Invocations
+
+NEVER invoke from this skill — use only the tools listed in `## Core Tools`:
+
+```
+/test-automation         # No code in shift-left
+/playwright-cli          # No browser in shift-left
+/regression-testing      # No suite execution in shift-left
+/test-documentation      # No formal TMS TCs in shift-left
+/xray-cli                # No Xray entity creation in shift-left
+/dbhub_*                 # No DB queries in shift-left
+/postman_*               # No API calls in shift-left
+```
+
+Any request to run automated tests, create Xray test plans, or execute API/DB checks is out of scope for this skill.
+
+## 7-Component Briefing (Subagent Dispatch)
+
+When dispatching subagents, use this exact briefing format:
+
+1. **Goal** — one sentence
+2. **Context docs** — files to read first
+3. **Project Standards** — compact rules from `.claude/skills/REGISTRY.md`
+4. **Skills to load** — explicit (e.g. `/shift-left-refinement`)
+5. **Exact instructions** — step-by-step, not vague goals
+6. **Report format** — what to return (files changed, tests passed, blockers)
+7. **Rules** — relevant Critical Rules to follow
+
+Example:
+```
+## 1. Goal
+Refine BK-34 into a complete shift-left package with ATP DRAFT.
+
+## 2. Context docs
+- .context/PBI/user-management/BK-34-story-key/story.md
+- .context/business/business-feature-map.md
+
+## 3. Project Standards
+- Skills: REGISTRY.md rules apply
+- ADF: Use md-to-adf.ts, never raw Markdown
+- Evidence labels: Jira, Repo, Engram, External, Inference
+
+## 4. Skills to load
+- /shift-left-refinement (this skill)
+
+## 5. Exact instructions
+a. Read story.md via bun run jira:sync-issues
+b. Load .context/business context
+c. Run Expert Panel via /expert-panel-review
+d. Generate Refined Package with all required sections
+e. Do NOT publish to Jira (user hasn't requested)
+
+## 6. Report format
+Return: refined package markdown, publication checklist (all "not requested"), improvement metrics.
+
+## 7. Rules
+- Stories-only (route bugs/Spikes to correct skill)
+- No Jira mutation unless explicitly requested
+- ACs are the floor; push beyond happy path
+```
+
 ## Boundaries
 
 - No Jira mutation unless explicitly requested.
