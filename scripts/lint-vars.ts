@@ -103,6 +103,10 @@ const DOC_META_ALLOWLIST: Array<[string, string]> = [
   ['VAR_NAME', 'resend-cli/references/templates.md'],
   ['NAME', 'resend-cli/references/workflows.md'],
   ['PLAN', 'resend-cli/references/workflows.md'],
+  // sprint-testing-refinement QAR template: {{ISSUE_KEY}} is a template placeholder in a markdown code block
+  ['ISSUE_KEY', 'sprint-testing-refinement/SKILL.md'],
+  // defect-management-doctrine: {{QA_ARTIFACT_LABEL}} documents the label convention for QA epics
+  ['QA_ARTIFACT_LABEL', 'defect-management-doctrine.md'],
 ];
 
 // -----------------------------------------------------------------------------
