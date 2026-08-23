@@ -35,6 +35,8 @@ export default antfu({
     // TypeScript that needs linting.
     '.claude/skills/**',
     '.agents/skills/**',
+    // Vendored html-ppt runtime and theme assets for the static guide
+    'examples/guia-ciclo-vida-qa/assets/**',
     // MCP reference templates — syntax-sensitive opt-in configs. Linting them
     // (e.g. toml/array-bracket-newline) corrupts the layout users copy from.
     'docs/mcp/**',
