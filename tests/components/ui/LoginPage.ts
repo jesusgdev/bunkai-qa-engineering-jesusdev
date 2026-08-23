@@ -8,9 +8,10 @@
  *
  * Page: /login (UPEX Dojo)
  * Locators (data-testid):
- * - Email: [data-testid="login-email-input"]
- * - Password: [data-testid="login-password-input"]
- * - Submit: [data-testid="login-submit-button"]
+ * - Email: [data-testid="login-email"]
+ * - Continue: [data-testid="login-continue"]
+ * - Password: [data-testid="login-password"]
+ * - Sign in: [data-testid="login-signin"]
  * - Error: [data-testid="login-error"]
  */
 
@@ -51,9 +52,13 @@ export class LoginPage extends UiBase {
    * Helper that combines fill + submit actions
    */
   private async fillAndSubmitLoginForm(credentials: LoginCredentials): Promise<void> {
-    await this.page.locator('[data-testid="login-email-input"]').fill(credentials.email);
-    await this.page.locator('[data-testid="login-password-input"]').fill(credentials.password);
-    await this.page.locator('[data-testid="login-submit-button"]').click();
+    // Step 1: Enter email and click Continue
+    await this.page.locator('[data-testid="login-email"]').fill(credentials.email);
+    await this.page.locator('[data-testid="login-continue"]').click();
+
+    // Step 2: Enter password and click Sign in
+    await this.page.locator('[data-testid="login-password"]').fill(credentials.password);
+    await this.page.locator('[data-testid="login-signin"]').click();
   }
 
   // ============================================
