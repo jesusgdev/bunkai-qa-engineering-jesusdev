@@ -15,10 +15,12 @@ on:
 env:
   CI: true
   TEST_ENV: 'staging'
+  TEST_ROLE: 'member'
   # Credentials (required to validate environment configuration)
-  STAGING_USER_EMAIL: ${{ secrets.STAGING_USER_EMAIL }}
-  STAGING_USER_PASSWORD: ${{ secrets.STAGING_USER_PASSWORD }}
-
+  STAGING_MEMBER_EMAIL: ${{ secrets.STAGING_MEMBER_EMAIL }}
+  STAGING_MEMBER_PASSWORD: ${{ secrets.STAGING_MEMBER_PASSWORD }}
+  XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+  XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
 jobs:
   TestBuild:
     name: Framework Validation
