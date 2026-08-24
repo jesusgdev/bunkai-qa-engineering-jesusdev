@@ -66,10 +66,9 @@ Login Flow (UI):
 
 | Element | Selector | Page |
 |---------|----------|------|
-| Email input | `[data-testid="login-email"]` | `/login` |
-| Continue button | `[data-testid="login-continue"]` | `/login` |
-| Password input | `[data-testid="login-password"]` | `/login` |
-| Sign in button | `[data-testid="login-signin"]` | `/login` |
+| Email input | `[data-testid="login-email-input"]` | `/login` |
+| Password input | `[data-testid="login-password-input"]` | `/login` |
+| Submit button | `[data-testid="login-submit-button"]` | `/login` |
 
 ---
 

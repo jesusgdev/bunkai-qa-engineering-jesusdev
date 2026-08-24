@@ -1,278 +1,416 @@
-/**
- * @fileoverview Cross-harness agent compatibility: canonical file validation,
- * Claude skills alias repair, command wrapper generation, and utility helpers
- * consumed by the installer, updater, and doctor.
- */
+#!/usr/bin/env bun
 
-import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import type { Stats } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { isAbsolute, join, normalize, relative, resolve } from 'node:path';
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+import { validateHookCompatibility, validateMcpParity } from './agent-compatibility-contracts.ts';
 
-/** The one-line shim content written to CLAUDE.md after migration. */
-export const CLAUDE_INSTRUCTIONS_SHIM = '@AGENTS.md';
+export const CLAUDE_INSTRUCTIONS_SHIM = '@AGENTS.md\n';
 
-/** Canonical skills store used by OpenCode, Codex, Copilot, and Warp. */
-const AGENTS_SKILLS_DIR = '.agents/skills';
+/** OS-generated files that never count as skill content. */
+export const OS_METADATA_FILES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini']);
+export const POSIX_CLAUDE_SKILLS_TARGET = '../.agents/skills';
+export const COMMAND_ALIAS_MANIFEST = '.agents/compatibility/command-aliases.json';
 
-/** The Claude alias that must point at the canonical store. */
-const CLAUDE_SKILLS_ALIAS = '.claude/skills';
+const WRAPPER_HOSTS = [
+  { id: 'claude', directory: '.claude/commands' },
+  { id: 'opencode', directory: '.opencode/commands' },
+] as const;
 
-/** Command wrapper manifests consumed by each harness. */
-const WRAPPER_MANIFESTS: Array<{ name: string, expected: number }> = [
-  { name: '.agents/compatibility/command-aliases.json', expected: 10 },
-];
+interface CommandAlias {
+  alias: string
+  skill: string
+  mode: string
+  description: string
+  argumentHint: string
+  forwardArguments: true
+  mutability: 'read-only' | 'local-write' | 'local-write-after-approval' | 'external-write-after-approval' | 'external-and-local-write-after-approval'
+}
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+interface CommandAliasManifest {
+  version: 1
+  wrapperHosts: Array<(typeof WRAPPER_HOSTS)[number]['id']>
+  aliases: CommandAlias[]
+}
 
-/** Check if `childPath` is inside `parentDir` (POSIX or OS-native separators). */
-export function isInside(childPath: string, parentDir: string): boolean {
-  const rel = relative(parentDir, childPath);
-  return rel !== '' && !rel.startsWith('..') && !rel.startsWith('.');
+export interface CompatibilityPaths {
+  root: string
+  instructions: string
+  claudeShim: string
+  canonicalSkills: string
+  claudeSkills: string
+}
+
+export interface AliasStatus {
+  path: string
+  target: string
+  type: 'symlink' | 'junction'
+  status: 'created' | 'repaired' | 'valid'
+}
+
+export interface CompatibilityCheck {
+  ok: boolean
+  errors: string[]
+  alias: Omit<AliasStatus, 'status'> & { status: 'missing' | 'invalid' | 'valid' }
+}
+
+export function compatibilityPaths(root = process.cwd()): CompatibilityPaths {
+  const resolvedRoot = resolve(root);
+  return {
+    root: resolvedRoot,
+    instructions: join(resolvedRoot, 'AGENTS.md'),
+    claudeShim: join(resolvedRoot, 'CLAUDE.md'),
+    canonicalSkills: join(resolvedRoot, '.agents', 'skills'),
+    claudeSkills: join(resolvedRoot, '.claude', 'skills'),
+  };
+}
+
+function aliasType(platform: NodeJS.Platform): AliasStatus['type'] {
+  return platform === 'win32' ? 'junction' : 'symlink';
+}
+
+function desiredAliasTarget(paths: CompatibilityPaths, platform: NodeJS.Platform): string {
+  return platform === 'win32' ? paths.canonicalSkills : POSIX_CLAUDE_SKILLS_TARGET;
+}
+
+function resolvesToCanonical(
+  linkPath: string,
+  actualTarget: string,
+  canonicalTarget: string,
+): boolean {
+  const resolvedTarget = isAbsolute(actualTarget)
+    ? resolve(actualTarget)
+    : resolve(join(linkPath, '..'), actualTarget);
+  return normalize(resolvedTarget) === normalize(resolve(canonicalTarget));
+}
+
+function lstatIfPresent(path: string): Stats | null {
+  try {
+    return lstatSync(path);
+  }
+  catch (error) {
+    const code = error instanceof Error && 'code' in error ? error.code : undefined;
+    if (code === 'ENOENT') { return null; }
+    throw error;
+  }
 }
 
 /**
- * Resolves a POSIX-style repo-relative path against a root directory.
- * Handles both forward and back slashes.
+ * True when `.claude/skills` is a real directory holding NOTHING but symlinks that
+ * resolve inside `.agents/skills` — i.e. the shim the `skills` CLI writes.
+ *
+ * `bunx skills add` (project level) installs the skill body into `.agents/skills/<slug>/`
+ * and then, for Claude Code compatibility, creates `.claude/skills/` as a REAL directory
+ * containing one symlink per skill. That collides head-on with our single directory-level
+ * alias: `bun run setup` installs community skills BEFORE repairing compatibility, so a
+ * clean clone hit "Refusing to replace" and the install aborted.
+ *
+ * Reclaiming that specific shape is lossless — every entry is a pointer, the bodies live
+ * in the canonical store and are untouched. Anything else (a real subdirectory, a file, a
+ * symlink aiming outside `.agents/skills`) means somebody put real work there, and the
+ * caller must still refuse rather than delete it.
  */
-function repoPath(root: string, ...segments: string[]): string {
-  return join(root, ...segments);
+function isSkillsCliShim(claudeSkills: string, canonicalSkills: string): boolean {
+  let entries: string[];
+  try { entries = readdirSync(claudeSkills); }
+  catch { return false; }
+
+  const canonical = resolve(canonicalSkills);
+  return entries.every((entry) => {
+    // Finder/Explorer leftovers carry no content: they must not make an otherwise
+    // reclaimable shim look like a directory holding somebody's work.
+    if (OS_METADATA_FILES.has(entry)) { return true; }
+    const child = join(claudeSkills, entry);
+    const stats = lstatIfPresent(child);
+    if (stats === null || !stats.isSymbolicLink()) { return false; }
+    const resolved = resolve(claudeSkills, readlinkSync(child));
+    return isInside(resolved, canonical);
+  });
 }
 
-// ---------------------------------------------------------------------------
-// Canonical source validation
-// ---------------------------------------------------------------------------
-
 /**
- * Validates that the canonical instruction + skill files exist and are in the
- * expected shape. Returns an array of human-readable error strings (empty = ok).
+ * True when `target` is `parent` itself or sits under it.
+ *
+ * Uses `relative()` rather than a string prefix on purpose. `resolve()` returns
+ * `C:\repo\.agents\skills` on Windows, so comparing against `` `${parent}/` `` never
+ * matches there — every legitimate per-skill symlink would read as "content", the
+ * alias repair would refuse, and a clean Windows install would abort. Same class of
+ * separator bug a downstream user hit on Windows-with-bash, where `process.platform`
+ * is still `win32` even though the shell is not.
  */
-export function validateCanonicalSources(root: string): string[] {
+export function isInside(target: string, parent: string): boolean {
+  const rel = relative(resolve(parent), resolve(target));
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+}
+
+export function validateCanonicalSources(root = process.cwd()): string[] {
+  const paths = compatibilityPaths(root);
+  try {
+    assertCanonicalSources(paths);
+    return [];
+  }
+  catch (error) {
+    return [error instanceof Error ? error.message : String(error)];
+  }
+}
+
+function assertCanonicalSources(paths: CompatibilityPaths): void {
+  if (!existsSync(paths.instructions) || !lstatSync(paths.instructions).isFile()) {
+    throw new Error(`Canonical instructions missing: ${relative(paths.root, paths.instructions)}`);
+  }
+  if (!existsSync(paths.canonicalSkills) || !lstatSync(paths.canonicalSkills).isDirectory()) {
+    throw new Error(`Canonical skills directory missing: ${relative(paths.root, paths.canonicalSkills)}`);
+  }
+  if (!existsSync(paths.claudeShim) || !lstatSync(paths.claudeShim).isFile()) {
+    throw new Error(`Claude instruction shim missing: ${relative(paths.root, paths.claudeShim)}`);
+  }
+  const shim = readFileSync(paths.claudeShim, 'utf8');
+  if (shim !== CLAUDE_INSTRUCTIONS_SHIM) {
+    throw new Error('CLAUDE.md must contain exactly `@AGENTS.md` followed by one newline.');
+  }
+}
+
+function commandWrapper(alias: CommandAlias): string {
+  return `---\ndescription: ${alias.description}\nargument-hint: ${alias.argumentHint}\n---\n\nInvoke skill \`${alias.skill}\` in mode \`${alias.mode}\`.\nForward \`$ARGUMENTS\` unchanged.\n`;
+}
+
+function readCommandAliasManifest(root: string): CommandAliasManifest {
+  const manifestPath = join(root, COMMAND_ALIAS_MANIFEST);
+  if (!existsSync(manifestPath)) {
+    throw new Error(`Command alias manifest missing: ${COMMAND_ALIAS_MANIFEST}`);
+  }
+
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as CommandAliasManifest;
+  if (manifest.version !== 1 || !Array.isArray(manifest.aliases)) {
+    throw new Error('Command alias manifest must have version 1 and an aliases array.');
+  }
+  return manifest;
+}
+
+export function validateCommandAliases(root: string): string[] {
   const errors: string[] = [];
-
-  // AGENTS.md must exist (canonical instructions)
-  if (!existsSync(repoPath(root, 'AGENTS.md'))) {
-    errors.push('Canonical instructions: AGENTS.md missing');
+  let manifest: CommandAliasManifest;
+  try {
+    manifest = readCommandAliasManifest(root);
+  }
+  catch (error) {
+    return [error instanceof Error ? error.message : String(error)];
   }
 
-  // CLAUDE.md must be the one-line shim (not the full memory)
-  const claudePath = repoPath(root, 'CLAUDE.md');
-  if (existsSync(claudePath)) {
-    const content = readFileSync(claudePath, 'utf8').trim();
-    if (content !== CLAUDE_INSTRUCTIONS_SHIM) {
-      errors.push(`Canonical instructions: CLAUDE.md is not the @AGENTS.md shim (length ${content.length})`);
+  const expectedHosts = WRAPPER_HOSTS.map(host => host.id);
+  if (JSON.stringify(manifest.wrapperHosts) !== JSON.stringify(expectedHosts)) {
+    errors.push(`Command alias wrapperHosts must be exactly: ${expectedHosts.join(', ')}`);
+  }
+
+  const aliases = new Set<string>();
+  for (const alias of manifest.aliases) {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(alias.alias)) {
+      errors.push(`Invalid command alias: ${alias.alias}`);
+      continue;
     }
-  }
+    if (aliases.has(alias.alias)) {
+      errors.push(`Duplicate command alias: ${alias.alias}`);
+      continue;
+    }
+    aliases.add(alias.alias);
 
-  // .agents/skills/ must be a real directory (or at least exist)
-  if (!existsSync(repoPath(root, AGENTS_SKILLS_DIR))) {
-    errors.push('Canonical skills: .agents/skills/ missing');
+    if (alias.forwardArguments !== true) {
+      errors.push(`Command alias must forward arguments: ${alias.alias}`);
+    }
+
+    const skillPath = join(root, '.agents', 'skills', alias.skill, 'SKILL.md');
+    if (!existsSync(skillPath)) {
+      errors.push(`Command alias target skill missing: ${alias.alias} -> ${alias.skill}`);
+      continue;
+    }
+    const skill = readFileSync(skillPath, 'utf8');
+    if (!skill.includes(`name: ${alias.skill}`)) {
+      errors.push(`Command alias target has mismatched skill name: ${alias.skill}`);
+    }
+    if (!skill.includes(`\`${alias.mode}\``)) {
+      errors.push(`Command alias target mode missing: ${alias.alias} -> ${alias.skill}:${alias.mode}`);
+    }
+
+    const expected = commandWrapper(alias);
+    for (const host of WRAPPER_HOSTS) {
+      const wrapperPath = join(root, host.directory, `${alias.alias}.md`);
+      if (!existsSync(wrapperPath)) {
+        errors.push(`${host.id} command wrapper missing: ${relative(root, wrapperPath)}`);
+        continue;
+      }
+      const actual = readFileSync(wrapperPath, 'utf8');
+      if (actual !== expected) {
+        const copiedWorkflow = actual.split('\n').length > expected.split('\n').length + 2;
+        errors.push(`${host.id} command wrapper ${copiedWorkflow ? 'contains workflow prose' : 'is stale'}: ${relative(root, wrapperPath)}`);
+      }
+    }
   }
 
   return errors;
 }
 
-// ---------------------------------------------------------------------------
-// Claude skills alias
-// ---------------------------------------------------------------------------
-
-export interface AliasPlan {
-  target: string
-  type: 'symlink' | 'junction'
+export function commandWrapperCounts(root = process.cwd()): {
+  expected: number
+  claude: number
+  opencode: number
+} {
+  const resolvedRoot = resolve(root);
+  const manifest = readCommandAliasManifest(resolvedRoot);
+  const aliases = new Set(manifest.aliases.map(alias => `${alias.alias}.md`));
+  const count = (directory: string): number => [...aliases]
+    .filter(name => existsSync(join(resolvedRoot, directory, name)))
+    .length;
+  return {
+    expected: aliases.size,
+    claude: count('.claude/commands'),
+    opencode: count('.opencode/commands'),
+  };
 }
 
-/**
- * Builds the plan for the Claude skills alias without touching the filesystem.
- * On POSIX: symlink with relative target. On Windows: junction with absolute target.
- */
 export function claudeSkillsAliasPlan(
-  root: string,
+  root = process.cwd(),
   platform: NodeJS.Platform = process.platform,
-): AliasPlan {
-  if (platform === 'win32') {
-    return { target: join(root, AGENTS_SKILLS_DIR), type: 'junction' };
-  }
-  return { target: join('..', AGENTS_SKILLS_DIR), type: 'symlink' };
+): Omit<AliasStatus, 'status'> {
+  const paths = compatibilityPaths(root);
+  return {
+    path: paths.claudeSkills,
+    target: desiredAliasTarget(paths, platform),
+    type: aliasType(platform),
+  };
 }
 
-/**
- * Repairs `.claude/skills` to be a symlink/junction pointing at `.agents/skills/`.
- *
- * Safe to call repeatedly (idempotent). Throws if:
- * - `.claude/skills` is a real directory with non-symlink content
- * - The symlink already points somewhere unexpected
- */
-export function repairClaudeSkillsAlias(
-  root: string,
-  platform: NodeJS.Platform = process.platform,
-): { target: string, type: string, status: 'valid' | 'repaired' } {
-  const aliasPath = repoPath(root, CLAUDE_SKILLS_ALIAS);
-  const plan = claudeSkillsAliasPlan(root, platform);
-
-  // Already correct — nothing to do
-  if (existsSync(aliasPath)) {
-    const stat = lstatSync(aliasPath);
-    if (stat.isSymbolicLink()) {
-      const currentTarget = readlinkSync(aliasPath);
-      if (currentTarget === plan.target) {
-        return { target: plan.target, type: plan.type, status: 'valid' };
-      }
-      // Symlink exists but points elsewhere — fix it
-      rmSync(aliasPath, { recursive: true });
-    }
-    else if (stat.isDirectory()) {
-      // Real directory — check if it's all symlinks (the shim pattern from `bunx skills add`)
-      const entries = readdirSync(aliasPath);
-      const allSymlinks = entries.length > 0 && entries.every((entry) => {
-        try { return lstatSync(join(aliasPath, entry)).isSymbolicLink(); }
-        catch { return false; }
-      });
-      if (!allSymlinks) {
-        throw new Error(`Refusing to replace ${CLAUDE_SKILLS_ALIAS}: real directory with non-symlink content`);
-      }
-      // All entries are symlinks — safe to remove and recreate as a single alias
-      rmSync(aliasPath, { recursive: true });
-    }
-    else {
-      // File or other — remove and recreate
-      rmSync(aliasPath);
-    }
-  }
-
-  // Ensure parent exists
-  mkdirSync(join(root, CLAUDE_SKILLS_ALIAS, '..'), { recursive: true });
-
-  // Create the alias
-  if (plan.type === 'symlink') {
-    symlinkSync(plan.target, aliasPath);
-  }
-  else {
-    symlinkSync(plan.target, aliasPath, 'junction');
-  }
-
-  return { target: plan.target, type: plan.type, status: 'repaired' };
-}
-
-// ---------------------------------------------------------------------------
-// Command wrapper validation
-// ---------------------------------------------------------------------------
-
-/**
- * Counts how many command wrappers exist per harness versus how many are expected.
- */
-export function commandWrapperCounts(
-  root: string,
-): { expected: number, claude: number, opencode: number } {
-  const manifestPath = repoPath(root, WRAPPER_MANIFESTS[0].name);
-  if (!existsSync(manifestPath)) {
-    return { expected: WRAPPER_MANIFESTS[0].expected, claude: 0, opencode: 0 };
-  }
-
-  try {
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      aliases?: Array<{ name?: string }>
-    };
-    const aliases = manifest.aliases ?? [];
-    const claudeAliases = aliases.filter(a => a.name?.startsWith('claude:')).length;
-    const opencodeAliases = aliases.filter(a => a.name?.startsWith('opencode:')).length;
-    return { expected: WRAPPER_MANIFESTS[0].expected, claude: claudeAliases, opencode: opencodeAliases };
-  }
-  catch {
-    return { expected: WRAPPER_MANIFESTS[0].expected, claude: 0, opencode: 0 };
-  }
-}
-
-/**
- * Writes missing command wrappers to the manifest file.
- * Returns the number of wrappers actually written.
- */
-export function repairCommandWrappers(root: string): number {
-  const manifestPath = repoPath(root, WRAPPER_MANIFESTS[0].name);
-  if (!existsSync(manifestPath)) { return 0; }
-
-  const current = commandWrapperCounts(root);
-  if (current.claude === current.expected && current.opencode === current.expected) {
-    return 0;
-  }
-
-  // Read the existing manifest and count what's missing
-  try {
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      aliases: Array<{ name?: string, skill?: string }>
-    };
-    const existing = new Set(manifest.aliases.map(a => a.name));
-    let added = 0;
-
-    // Generate expected wrappers if they don't exist
-    for (const prefix of ['claude', 'opencode'] as const) {
-      for (let i = manifest.aliases.length; i < current.expected; i++) {
-        const name = `${prefix}:wrapper-${i}`;
-        if (!existing.has(name)) {
-          manifest.aliases.push({ name, skill: 'generated' });
-          added++;
-        }
+export function repairCommandWrappers(root = process.cwd()): number {
+  const resolvedRoot = resolve(root);
+  const manifest = readCommandAliasManifest(resolvedRoot);
+  let written = 0;
+  for (const host of WRAPPER_HOSTS) {
+    const directory = join(resolvedRoot, host.directory);
+    mkdirSync(directory, { recursive: true });
+    for (const alias of manifest.aliases) {
+      const path = join(directory, `${alias.alias}.md`);
+      const expected = commandWrapper(alias);
+      if (!existsSync(path) || readFileSync(path, 'utf8') !== expected) {
+        writeFileSync(path, expected);
+        written++;
       }
     }
-
-    if (added > 0) {
-      writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-    }
-    return added;
   }
-  catch {
-    return 0;
-  }
+  return written;
 }
 
-// ---------------------------------------------------------------------------
-// Full compatibility check
-// ---------------------------------------------------------------------------
-
-export interface CompatibilityCheck {
-  ok: boolean
-  errors: string[]
-  alias: { status: 'valid' | 'repaired', target?: string }
-}
-
-/**
- * Runs all canonical source validations and returns an overall status.
- * Does NOT repair anything — use `repairClaudeSkillsAlias` + `repairCommandWrappers` for that.
- */
 export function checkAgentCompatibility(
-  root: string,
+  root = process.cwd(),
   platform: NodeJS.Platform = process.platform,
 ): CompatibilityCheck {
+  const paths = compatibilityPaths(root);
+  const type = aliasType(platform);
+  const target = desiredAliasTarget(paths, platform);
   const errors: string[] = [];
 
-  // Validate canonical sources
-  errors.push(...validateCanonicalSources(root));
-
-  // Check alias status
-  let alias: CompatibilityCheck['alias'] = { status: 'valid' };
   try {
-    const plan = claudeSkillsAliasPlan(root, platform);
-    const aliasPath = repoPath(root, CLAUDE_SKILLS_ALIAS);
-    if (existsSync(aliasPath)) {
-      const stat = lstatSync(aliasPath);
-      if (stat.isSymbolicLink()) {
-        const target = readlinkSync(aliasPath);
-        alias = { status: target === plan.target ? 'valid' : 'repaired', target: plan.target };
-      }
-      else {
-        alias = { status: 'repaired', target: plan.target };
-      }
-    }
-    else {
-      alias = { status: 'repaired', target: plan.target };
-    }
+    assertCanonicalSources(paths);
+    errors.push(...validateCommandAliases(paths.root));
+    errors.push(...validateHookCompatibility(paths.root));
+    errors.push(...validateMcpParity(paths.root));
   }
-  catch {
-    // Non-fatal — alias validation is best-effort
+  catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
   }
 
-  return { ok: errors.length === 0, errors, alias };
+  const entry = lstatIfPresent(paths.claudeSkills);
+  if (entry === null) {
+    errors.push('Claude skills alias missing: .claude/skills');
+    return { ok: false, errors, alias: { path: paths.claudeSkills, target, type, status: 'missing' } };
+  }
+
+  if (!entry.isSymbolicLink()) {
+    errors.push('Refusing compatibility state: .claude/skills exists but is not a generated symlink or junction.');
+    return { ok: false, errors, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
+  }
+
+  const actualTarget = readlinkSync(paths.claudeSkills);
+  const exactTarget = platform === 'win32'
+    ? resolvesToCanonical(paths.claudeSkills, actualTarget, paths.canonicalSkills)
+    : actualTarget === POSIX_CLAUDE_SKILLS_TARGET;
+  if (!exactTarget) {
+    errors.push(`Claude skills alias has unexpected target: ${actualTarget}`);
+    return { ok: false, errors, alias: { path: paths.claudeSkills, target, type, status: 'invalid' } };
+  }
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    alias: { path: paths.claudeSkills, target, type, status: 'valid' },
+  };
+}
+
+export function repairClaudeSkillsAlias(
+  root = process.cwd(),
+  platform: NodeJS.Platform = process.platform,
+): AliasStatus {
+  const paths = compatibilityPaths(root);
+  assertCanonicalSources(paths);
+  mkdirSync(join(paths.root, '.claude'), { recursive: true });
+
+  const target = desiredAliasTarget(paths, platform);
+  const type = aliasType(platform);
+  let status: AliasStatus['status'] = 'created';
+
+  const entry = lstatIfPresent(paths.claudeSkills);
+  if (entry !== null) {
+    if (!entry.isSymbolicLink()) {
+      // Reclaim the `skills` CLI's per-skill symlink shim (see isSkillsCliShim);
+      // refuse anything holding real content.
+      if (entry.isDirectory() && isSkillsCliShim(paths.claudeSkills, paths.canonicalSkills)) {
+        rmSync(paths.claudeSkills, { recursive: true, force: true });
+        symlinkSync(target, paths.claudeSkills, platform === 'win32' ? 'junction' : 'dir');
+        return { path: paths.claudeSkills, target, type, status: 'repaired' };
+      }
+      throw new Error('Refusing to replace .claude/skills because it is a real directory or file, not a generated alias.');
+    }
+
+    const actualTarget = readlinkSync(paths.claudeSkills);
+    const isExpected = platform === 'win32'
+      ? resolvesToCanonical(paths.claudeSkills, actualTarget, paths.canonicalSkills)
+      : actualTarget === POSIX_CLAUDE_SKILLS_TARGET;
+    if (isExpected) {
+      return { path: paths.claudeSkills, target, type, status: 'valid' };
+    }
+
+    unlinkSync(paths.claudeSkills);
+    status = 'repaired';
+  }
+
+  symlinkSync(target, paths.claudeSkills, platform === 'win32' ? 'junction' : 'dir');
+  return { path: paths.claudeSkills, target, type, status };
+}
+
+function printCheck(result: CompatibilityCheck): void {
+  if (result.ok) {
+    console.log(`Agent compatibility OK: ${result.alias.path} -> ${result.alias.target} (${result.alias.type})`);
+    return;
+  }
+  for (const error of result.errors) {
+    console.error(`ERROR: ${error}`);
+  }
+}
+
+if (import.meta.main) {
+  const checkOnly = process.argv.includes('--check');
+  try {
+    if (!checkOnly) {
+      const alias = repairClaudeSkillsAlias();
+      console.log(`Claude skills alias ${alias.status}: ${alias.path} -> ${alias.target} (${alias.type})`);
+      const wrappers = repairCommandWrappers();
+      console.log(`Command wrappers synchronized: ${wrappers} updated`);
+    }
+    const result = checkAgentCompatibility();
+    printCheck(result);
+    if (!result.ok) { process.exitCode = 1; }
+  }
+  catch (error) {
+    console.error(`ERROR: ${error instanceof Error ? error.message : String(error)}`);
+    process.exitCode = 1;
+  }
 }

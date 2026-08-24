@@ -236,7 +236,7 @@
   "terminal.integrated.cursorBlinking": true,
   "terminal.integrated.cursorStyle": "line",
   "terminal.integrated.fontSize": 14,
-  "terminal.integrated.fontFamily": "FiraCode Nerd Font Mono",
+  "terminal.integrated.fontFamily": "monospace",
   "terminal.integrated.tabs.enabled": true,
   "terminal.integrated.tabs.defaultColor": "terminal.ansiGreen",
   "terminal.integrated.tabs.defaultIcon": "terminal",
@@ -322,7 +322,7 @@
   // según tu preferencia personal.
   // Tema recomendado: Winter is Coming (Dark Blue)
   // Para instalarlo: busca "Winter is Coming" en extensiones
-  "workbench.colorTheme": "SynthWave '84",
+  "workbench.colorTheme": "Winter is Coming (Dark Blue)",
   // Icon Theme recomendado: Material Icon Theme
   // Mejora significativamente la visualización de la estructura del proyecto
   "workbench.iconTheme": "material-icon-theme",
