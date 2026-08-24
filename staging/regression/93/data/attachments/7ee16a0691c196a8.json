@@ -1,0 +1,20 @@
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "Request body failed validation.",
+    "details": [
+      {
+        "origin": "string",
+        "code": "too_big",
+        "maximum": 50,
+        "inclusive": true,
+        "path": [
+          "tags",
+          0
+        ],
+        "message": "Invalid input"
+      }
+    ],
+    "request_id": "b0224fab-0767-4398-a1e4-e90137bbc9b6"
+  }
+}
