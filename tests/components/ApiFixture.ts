@@ -14,6 +14,7 @@
  * 4. Initialize in constructor passing the options
  */
 
+import type { APIRequestContext } from '@playwright/test';
 import type { TestContextOptions } from '@TestContext';
 
 import { ApiBase } from '@api/ApiBase';
@@ -43,7 +44,7 @@ export class ApiFixture extends ApiBase {
   /** Test Builder component - BK-28 (Reorder) + BK-32 (View) + BK-33 (Tags) */
   readonly testBuilder: TestBuilderApi;
 
-  constructor(options: TestContextOptions) {
+  constructor(options: TestContextOptions & { isolatedRequest?: APIRequestContext }) {
     super(options);
 
     // All components receive the same options (same request context)

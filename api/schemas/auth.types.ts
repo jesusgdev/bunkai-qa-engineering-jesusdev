@@ -34,7 +34,7 @@
 // export type LoginErrorResponse = LoginPath['responses']['401']['content']['application/json'];
 
 // ============================================================================
-// Endpoint Types - GET /api/auth/me
+// Endpoint Types - GET /api/v1/me
 // ============================================================================
 
 // TODO: Uncomment after running `bun run api:sync`
@@ -95,15 +95,26 @@ export interface AuthErrorResponse {
 }
 
 /**
- * User info response from /api/auth/me.
- * TODO: Replace with OpenAPI endpoint type after sync.
+ * User info response from /api/v1/me.
+ * Matches MeResponse schema from OpenAPI spec.
  */
 export interface UserInfoResponse {
   user: {
     id: string
-    email: string
+    email: string | null
+  }
+  workspaces: Array<{
+    id: string
+    slug: string
     name: string
-    createdAt: string
-    updatedAt: string
+    plan: string
+    owner_user_id: string
+    created_at: string
+  }>
+  active_workspace_id: string | null
+  active_workspace_role: string | null
+  auth: {
+    source: 'cookie' | 'bearer'
+    scopes: string[]
   }
 }

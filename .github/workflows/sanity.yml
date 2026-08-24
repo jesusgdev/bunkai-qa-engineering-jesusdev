@@ -7,6 +7,9 @@
 name: Sanity Tests
 run-name: ${{ github.actor }} triggered Sanity Tests on ${{ github.event.inputs.environment || 'staging' }}
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:

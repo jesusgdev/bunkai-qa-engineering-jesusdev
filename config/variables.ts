@@ -180,7 +180,7 @@ export const config = {
   auth: {
     loginEndpoint: '/v1/auth/signin',
     tokenEndpoint: '/v1/auth/signin', // Endpoint to intercept for token (used by page.waitForResponse)
-    meEndpoint: '/v1/auth/me',
+    meEndpoint: '/v1/me',
     tokenLifetimeSeconds: 86400, // 24 hours (1 day)
     // Storage paths for authenticated sessions
     storageStatePath: '.auth/user.json',

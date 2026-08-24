@@ -38,6 +38,9 @@ export class ApiBase extends TestContext {
   /** Authentication token for Bearer auth */
   authToken: string | null = null;
 
+  /** Isolated request context (no cookies) for API-only tests */
+  private readonly _isolatedRequest?: APIRequestContext;
+
   /** Default request headers */
   requestHeaders: Record<string, string> = {
     // Use */* to avoid 406 errors on servers that don't accept application/json explicitly
@@ -46,9 +49,10 @@ export class ApiBase extends TestContext {
     'Content-Type': 'application/json',
   };
 
-  constructor(options: TestContextOptions) {
+  constructor(options: TestContextOptions & { isolatedRequest?: APIRequestContext }) {
     super(options);
     this.apiBaseUrl = this.config.apiUrl;
+    this._isolatedRequest = options.isolatedRequest;
   }
 
   // ============================================
@@ -58,8 +62,18 @@ export class ApiBase extends TestContext {
   /**
    * Get Playwright APIRequestContext instance.
    * Throws if request is not available.
+   *
+   * Priority:
+   * 1. Isolated request (API-only tests, no cookies from browser)
+   * 2. page.request (E2E tests, shares cookies with browser)
+   * 3. Standalone request (fallback)
    */
   get request(): APIRequestContext {
+    // Prefer isolated request if available (API-only tests — no browser cookies)
+    if (this._isolatedRequest) {
+      return this._isolatedRequest;
+    }
+
     // Prefer page.request if page is available (E2E tests)
     // page.request shares cookies and storage with the browser
     if (this._page) {
@@ -104,11 +118,6 @@ export class ApiBase extends TestContext {
    * Returns empty object if parsing fails.
    */
   async getResponseJsonObject<T = Record<string, unknown>>(response: APIResponse): Promise<T> {
-    const status = response.status();
-    const endpoint = response.url().split('?')[0];
-
-    console.log(`---- API ${response.ok() ? 'OK' : 'NOK'}: ${status} - ${endpoint}`);
-
     try {
       return (await response.json()) as T;
     }

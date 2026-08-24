@@ -7,6 +7,9 @@
 name: Regression Tests
 run-name: ${{ github.actor }} triggered Regression Tests on ${{ github.event.inputs.environment || 'staging' }}
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '0 0 * * *' # Runs daily at midnight UTC

@@ -7,6 +7,9 @@
 name: Smoke Tests
 run-name: ${{ github.actor }} triggered Smoke Tests on ${{ github.event.inputs.environment || 'staging' }}
 
+permissions:
+  contents: write
+
 on:
   schedule:
     - cron: '0 2 * * *' # Runs daily at 2:00 AM UTC

@@ -10,11 +10,11 @@
  * TODO: Replace 'PROJ' in @atc IDs with your Jira project key (e.g., @atc('UPEX-101'))
  *
  * Endpoints:
- * - POST /api/auth/login - Authenticate and get JWT token
- * - GET /api/auth/me - Get current user info (requires auth)
+ * - POST /api/v1/auth/signin - Authenticate and get JWT token
+ * - GET /api/v1/me - Get current user info (requires auth)
  */
 
-import type { APIResponse } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
 import type { AuthErrorResponse, LoginPayload, TokenResponse, UserInfoResponse } from '@schemas/auth.types';
 import type { TestContextOptions } from '@TestContext';
 
@@ -30,7 +30,7 @@ export type { AuthErrorResponse, LoginPayload, TokenResponse, UserInfoResponse }
 // ============================================
 
 export class AuthApi extends ApiBase {
-  constructor(options: TestContextOptions) {
+  constructor(options: TestContextOptions & { isolatedRequest?: APIRequestContext }) {
     super(options);
   }
 
@@ -61,8 +61,8 @@ export class AuthApi extends ApiBase {
    * ATC: Authenticate with valid credentials - expects success (200)
    *
    * Complete flow:
-   * 1. POST credentials to /auth/login (ACTION)
-   * 2. GET /auth/me to confirm session is valid (VERIFICATION)
+   * 1. POST credentials to /v1/auth/signin (ACTION)
+   * 2. GET /v1/me to confirm session is valid (VERIFICATION)
    * 3. Validate token response and user info
    *
    * The token is automatically set for subsequent API requests.
@@ -96,8 +96,8 @@ export class AuthApi extends ApiBase {
    * ATC: Login with invalid credentials - expects error (401)
    *
    * Complete flow:
-   * 1. POST invalid credentials to /auth/login (ACTION)
-   * 2. GET /auth/me to confirm NO session was created (VERIFICATION)
+   * 1. POST invalid credentials to /v1/auth/signin (ACTION)
+   * 2. GET /v1/me to confirm NO session was created (VERIFICATION)
    * 3. Validate error response and unauthorized access
    *
    * @param credentials - Invalid email or password
@@ -118,7 +118,7 @@ export class AuthApi extends ApiBase {
     expect(response.ok()).toBe(false);
     expect(body.error).toBeDefined();
 
-    // VERIFICATION: Confirm no session was created via GET /auth/me → 401
+    // VERIFICATION: Confirm no session was created via GET /v1/me → 401
     const savedToken = this.authToken;
     this.clearAuthToken();
     const [meResponse] = await this.getCurrentUser();

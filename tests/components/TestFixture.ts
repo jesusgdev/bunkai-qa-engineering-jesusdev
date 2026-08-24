@@ -36,6 +36,7 @@ import { test as base, expect } from '@playwright/test';
 import { TestContext } from '@TestContext';
 import { UiFixture } from '@UiFixture';
 import { config, env } from '@variables';
+import playwright from 'playwright';
 
 // ============================================
 // E2E Fixture (Page + API)
@@ -143,8 +144,20 @@ export const test = base.extend<{
   },
 
   // API-only fixture (NO browser opened - Playwright fixtures are lazy)
-  api: async ({ request }, use) => {
-    const apiFixture = new ApiFixture({ request });
+  // Uses an isolated request context (no cookies from browser session)
+  // This ensures clearAuthToken() actually produces unauthenticated requests
+  api: async (_fixtures, use) => {
+    // Create isolated request context (no cookies from browser session)
+    // IMPORTANT: Pass explicit empty storageState to prevent Playwright from
+    // inheriting the project's storageState cookies (e.g. Supabase session cookie).
+    // Without this, the server reads the cookie and returns 200 even with authToken=null.
+    const isolatedRequest = await playwright.request.newContext({
+      baseURL: config.apiUrl,
+      ignoreHTTPSErrors: true,
+      storageState: { cookies: [], origins: [] },
+    });
+
+    const apiFixture = new ApiFixture({ request: isolatedRequest, isolatedRequest });
 
     // Load token from file if exists (for integration tests)
     const apiStatePath = config.auth.apiStatePath;
@@ -162,6 +175,9 @@ export const test = base.extend<{
     }
 
     await use(apiFixture);
+
+    // Dispose isolated request context
+    await isolatedRequest.dispose();
   },
 });
 

@@ -5,7 +5,7 @@
  * 34 ATCs total, all API-only (no browser)
  */
 
-import type { APIResponse } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
 import type {
   ActivityResponse,
   ApiError,
@@ -31,7 +31,7 @@ import { atc, step } from '@utils/decorators';
 export class TestBuilderApi extends ApiBase {
   readonly apiBaseUrl: string;
 
-  constructor(options: TestContextOptions) {
+  constructor(options: TestContextOptions & { isolatedRequest?: APIRequestContext }) {
     super(options);
     this.apiBaseUrl = this.config.apiUrl;
   }

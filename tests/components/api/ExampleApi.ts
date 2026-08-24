@@ -21,7 +21,7 @@
  * - Fixed assertions validate the ATC succeeded
  */
 
-import type { APIResponse } from '@playwright/test';
+import type { APIRequestContext, APIResponse } from '@playwright/test';
 import type { CreateExampleRequest, CreateExampleResponse, GetExampleResponse } from '@schemas/example.types';
 import type { TestContextOptions } from '@TestContext';
 
@@ -37,7 +37,7 @@ export type { CreateExampleRequest, CreateExampleResponse, GetExampleResponse } 
 // ============================================
 
 export class ExampleApi extends ApiBase {
-  constructor(options: TestContextOptions) {
+  constructor(options: TestContextOptions & { isolatedRequest?: APIRequestContext }) {
     super(options);
   }
 
