@@ -146,7 +146,8 @@ export const test = base.extend<{
   // API-only fixture (NO browser opened - Playwright fixtures are lazy)
   // Uses an isolated request context (no cookies from browser session)
   // This ensures clearAuthToken() actually produces unauthenticated requests
-  api: async (_fixtures, use) => {
+  // eslint-disable-next-line no-empty-pattern
+  api: async ({}, use) => {
     // Create isolated request context (no cookies from browser session)
     // IMPORTANT: Pass explicit empty storageState to prevent Playwright from
     // inheriting the project's storageState cookies (e.g. Supabase session cookie).
