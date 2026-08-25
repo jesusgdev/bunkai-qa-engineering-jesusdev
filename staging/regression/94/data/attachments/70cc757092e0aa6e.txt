@@ -1,0 +1,1 @@
+✅ [BK-370] rejectUnsupportedWindow - PASS (115ms)

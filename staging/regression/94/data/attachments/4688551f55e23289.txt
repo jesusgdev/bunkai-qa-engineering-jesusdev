@@ -1,0 +1,4 @@
+❌ [BK-360] verifyCurrZeroTrend - FAIL: expect(received).toBe(expected) // Object.is equality
+
+Expected: -100
+Received: -92
