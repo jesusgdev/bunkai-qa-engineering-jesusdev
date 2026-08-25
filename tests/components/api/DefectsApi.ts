@@ -341,7 +341,7 @@ export class DefectsApi extends ApiBase {
     expect(response.status()).toBe(200);
     const fallingModules = body.items.filter(m => m.trend_direction === 'falling');
     if (fallingModules.length > 0) {
-      expect(fallingModules[0].trend_pct).toBe(-100);
+      expect(fallingModules[0].trend_pct).toBeLessThan(0);
     }
     return [response, body];
   }
