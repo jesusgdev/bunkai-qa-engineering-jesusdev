@@ -8,24 +8,27 @@
 
 1. **CREDENTIALS**: ALWAYS read from `.env`. NEVER hardcode/guess. Example keys: `LOCAL_USER_EMAIL`, `STAGING_USER_PASSWORD`.
 2. **PLAN BEFORE CODING**: Produce test plan (`spec.md` / impl plan) BEFORE writing test code. Flow: Plan → Code → Review.
-3. **NO AI ATTRIBUTION**: NEVER include "Generated with Claude Code", "Co-Authored-By: Claude" in commits. Commits look human-authored.
+3. **NO AI ATTRIBUTION**: NEVER include "Generated with AI", harness branding, or AI `Co-Authored-By` trailers in commits. Commits look human-authored.
 4. **SHIFT-LEFT**: Evaluate ACs for clarity, testability, completeness. Raise questions ONLY when genuine gaps exist — never force questions to fill checklist.
 5. **CONFIRM BEFORE PUSH TO MAIN**: NEVER push to `main` without explicit user confirmation.
 6. **GIT HISTORY**: NEVER rewrite pushed history (rebase/amend on pushed commits). NEVER force-push to shared branches. NEVER delete remote branches without confirmation. ALWAYS add forward (new commits, not rewrite). ALWAYS preserve merge history.
 7. **QUALITY VERIFICATION**: After code changes, verify in order: tests → types → lint. No skip steps.
 8. **FILE OPERATIONS**: ALWAYS read file before edit. Preserve formatting + indent. NEVER overwrite without reading.
-9. **SKILLS-FIRST**: All workflows live in `.claude/skills/`. NEVER paste instructions inline. Invoke matching skill, let it self-load detail. Use `[TAG_TOOL]` pseudocode + `{{VARIABLES}}` for dynamic content.
+9. **SKILLS-FIRST**: All workflows live in `.agents/skills/`. NEVER paste instructions inline. Invoke matching skill, let it self-load detail. Use `[TAG_TOOL]` pseudocode + `{{VARIABLES}}` for dynamic content.
 10. **MCP CREDENTIAL FAILURE = STOP IMMEDIATELY**: MCP fail auth or env var missing (`.mcp.json` use `${VAR}` — Claude Code fail parse if unset; `opencode.jsonc` use `{env:VAR}` — OpenCode silently substitute empty → 401/403 is signal). NO workaround. STOP, tell user exact env var, point to `.env` / `.env.example`, ask fix `.env` + **RESTART AGENT SESSION** (env cached at MCP-spawn time, no refresh mid-session).
 11. **SCRIPTS = READ `package.json` DIRECTLY**. NEVER quote test/build commands from this file or any doc — drift kills. Open `package.json` first, then answer.
-12. **KATA MANIFEST = SOURCE OF TRUTH**. `kata-manifest.json` (root) is authoritative registry of every existing Component + ATC. Before proposing new `Page`, `Api`, `Steps` module, or `@atc('TC-XXX')` ID — MUST load `kata-manifest.json` and check it. Anti-duplication gate. Stale manifest blocks commits via `.husky/pre-commit`. Regenerate: `bun run kata:manifest`. Validate: `bun run kata:manifest:check`.
+12. **KATA MANIFEST = SOURCE OF TRUTH**. `kata-manifest.json` (root) is authoritative registry of every existing Component + ATC. Before proposing new `Page`, `Api`, `Steps` module, or `@atc('...')` ID — MUST load `kata-manifest.json` and check it. Anti-duplication gate. Stale manifest blocks commits via `.husky/pre-commit`. Regenerate: `bun run kata:manifest`. Validate: `bun run kata:manifest:check`.
 13. **DEFAULT COMMUNICATION MODE — CAVEMAN**: If `caveman` skill installed user-level (`~/.claude/skills/caveman/`), respond caveman level `full` by default (drop articles, fillers, pleasantries; fragments OK; technical terms exact; code/commits/PRs/security warnings always write normal English — caveman built-in boundary). Revert verbose ONLY when user explicitly say "normal mode", "habla normal", "stop caveman", "speak normally", "be verbose", "más detallado" or clear semantic equivalent. If caveman skill not installed, rule = no-op.
 14. **LANGUAGE DETECTION + MIRRORING**: At start of every conversation, READ FULL USER MESSAGE (not just opening words) to detect user's working language. Mirror that language in ALL conversational replies (questions, summaries, explanations, status updates). Repo artifacts ALWAYS English regardless of conversation language: code, code comments, commits, PR titles + bodies, branch names, file names, test names, configuration values, + any external action artifact (Jira issues/comments, GitHub issues/PRs/comments, Slack messages, emails, deploy notes, MCP tool inputs). Override: if user explicitly request another language for specific artifact ("crea el ticket en español", "write this PR description in Spanish"), honor that request only for that artifact + continue defaulting to English for next ones unless re-requested.
+15. **NO GLOBAL DISCARDS**: NEVER discard output, context, or artifacts across the whole session to save tokens — that destroys live variables, in-flight plans, and accumulated session state. Prefer targeted, per-topic compression (caveman per-bullet, scoped summaries, selective file drops) over blanket context wipes. Blanket wipes are a hard safety boundary; if the user or a hook requests one, STOP and warn: "This will discard live session variables and in-flight work — proceeding breaks state." If the user insists, archive the session first via `mem_session_summary`, then proceed.
 
 ---
 
 ## 2. BEHAVIORAL LAYER — HOW AI REASONS
 
 > Bias toward caution over speed. **Personality contract**: runtime contract for speech style + register. Mirror → `docs/ai-personality.md` (keep in sync when editing here).
+
+> **LAYER SPLIT** (one sentence each): Behavior (§2) = how I think. Rules (§1) = what I never do. Orchestration (§3) = how I scale. Together they form a complete operating model.
 
 **THINK BEFORE CODING.** State assumptions explicit. Multiple interpretations → present them, NEVER pick silently. Simpler approach exists → say so. Unclear → STOP, name confusion, ASK.
 
@@ -39,7 +42,7 @@
 
 - **Atomicity**: 12 specific bullets beats 3 broad buckets. Bundling hides the one item that matters.
 - **No cap**: bullet count = actual information richness (2 topics → 2 bullets, 15 → 15).
-- **Bullet style**: 1-line hook (`topic-name — short fragment`), not paragraph.
+- **Bullet style**: 1-line hook (`topic-name: short fragment`), not paragraph.
 - **Headline first**: stands alone even if user ignores menu.
 - **Composes with caveman**: caveman compacts WORDS, butler controls GRANULARITY.
 
@@ -82,7 +85,7 @@ Example: ❌ "Added `waitForResponse('**/api/auth/login')` before toast assertio
 
 1. **Goal** — one sentence
 2. **Context docs** — files to read first
-3. **Project Standards (auto-resolved)** — compact rules pulled from `.claude/skills/REGISTRY.md` (built by `bun run skills:registry`, validated by `bun run skills:registry:check`). Subagents trust these as authoritative for listed conventions and DO NOT re-read full SKILL.md unless explicitly told to. Protocol: `agentic-qa-core/references/skill-resolver.md`.
+3. **Project Standards (auto-resolved)** — compact rules pulled from `.agents/skills/REGISTRY.md` (built by `bun run skills:registry`, validated by `bun run skills:registry:check`). Subagents trust these as authoritative for listed conventions and DO NOT re-read full SKILL.md unless explicitly told to. Protocol: `agentic-qa-core/references/skill-resolver.md`.
 4. **Skills to load** — explicit (e.g. `/playwright-cli`)
 5. **Exact instructions** — step-by-step, not vague goals
 6. **Report format** — what to return (files changed, tests passed, blockers)
@@ -99,9 +102,9 @@ Example: ❌ "Added `waitForResponse('**/api/auth/login')` before toast assertio
 
 **ERROR PROTOCOL**: Subagent error → STOP, report full context, NO fix without approval, offer retry/skip/abort.
 
-**WORKFLOW SKILL COMPLIANCE**: `shift-left-testing`, `sprint-testing`, `test-documentation`, `test-automation`, `regression-testing`, `framework-development` MUST have `## Subagent Dispatch Strategy` using 7-component briefing. EXEMPT (reference/utility/generator): `agentic-qa-core`, `agentic-qa-onboard`, `acli`, `xray-cli`, `playwright-cli`, `playwright-best-practices`, `project-discovery`, `adapt-framework`, `git-flow-master`, `business-data-map`, `business-feature-map`, `business-api-map`, `master-test-plan`, `break-down-tests`, `fix-traceability`, `sync-ai-memory`.
+**WORKFLOW SKILL COMPLIANCE**: `shift-left-testing`, `sprint-testing`, `test-documentation`, `test-automation`, `regression-testing`, `framework-development` MUST have `## Subagent Dispatch Strategy` using 7-component briefing. EXEMPT (reference/utility/generator): `agentic-qa-core`, `agentic-qa-onboard`, `acli`, `xray-cli`, `playwright-cli`, `playwright-best-practices`, `project-discovery`, `adapt-framework`, `git-flow-master`, `business-data-map`, `business-feature-map`, `business-api-map`, `master-test-plan`, `break-down-tests`, `fix-traceability`, `sync-ai-memory`, `sync-ai-context`.
 
-**DEEP DETAIL** (subagent-cacheable) → `.claude/skills/agentic-qa-core/references/` (briefing-template, dispatch-patterns, orchestration-doctrine).
+**DEEP DETAIL** (subagent-cacheable) → `.agents/skills/agentic-qa-core/references/` (briefing-template, dispatch-patterns, orchestration-doctrine).
 
 ---
 
@@ -138,20 +141,36 @@ Example: ❌ "Added `waitForResponse('**/api/auth/login')` before toast assertio
 
 ---
 
+## 4.5. HOST HARNESSES — ONE SOURCE, THREE CONSUMERS
+
+`AGENTS.md` is the single source of truth for AI behavior across all host harnesses. Each harness auto-detects its own file by convention and applies the same rules without extra config.
+
+| Host | Auto-detected file | Notes |
+|---|---|---|
+| Claude Code | `CLAUDE.md` | Symlink to `AGENTS.md` in repo root. If `CLAUDE.md` exists as a separate file, treat `AGENTS.md` as source of truth during edits. |
+| OpenCode | `AGENTS.md` | Reads directly. Supports `${VAR}` env-var expansion at load time. |
+| Amp / Gemini CLI | `AGENTS.md` | Reads directly. Ignores env-var expansion syntax (treats `${VAR}` as literal). |
+
+**Edit rule**: always edit `AGENTS.md`. When pushing changes, ensure `CLAUDE.md` stays in sync — either symlink or copy the relevant sections. Stale `CLAUDE.md` creates split-brain behavior where two harnesses disagree on the same rules.
+
+**Hooks and MCPs**: hooks (`pre-commit`, `pre-push`) and MCP server configs (`.mcp.json`) are harness-agnostic — they run in the terminal and don't care which AI is driving. Keep them in repo root so they work regardless of which harness the developer uses.
+
+---
+
 ## 5. SKILLS + COMMANDS + MCPs REGISTRY
 
 ### Skill tiers (T1-T4)
 
 Repo organizes skills in 4 tiers with different discovery + load rules:
 
-- **T1** — Project-owned, committed in `.claude/skills/`. Listed below in "Workflow Skills". Load silent on trigger.
-- **T2** — Project-vendored. Committed in `.claude/skills/` from upstream (e.g. `judgment-day` from gentle-ai). License + attribution preserved in frontmatter. Load silent on explicit trigger.
-- **T3** — Community project-level. Installed by `install.ts` into `.claude/skills/` (not committed). Load silent if category matches task domain.
+- **T1** — Project-owned, committed in `.agents/skills/`. Listed below in "Workflow Skills". Load silent on trigger.
+- **T2** — Project-vendored. Committed in `.agents/skills/` from upstream (e.g. `judgment-day` from gentle-ai). License + attribution preserved in frontmatter. Load silent on explicit trigger.
+- **T3** — Community project-level. Installed by `install.ts` into `.agents/skills/` (not committed). Load silent if category matches task domain.
 - **T4** — Community user-level. Installed globally. ALWAYS ASK before loading.
 
-> Layout convention: T1 repo skills → `.claude/skills/<slug>/` (committed source). T3/T4 community skills installed via `bunx skills add` → `.agents/skills/<slug>/` (gitignored, default CLI behavior).
+> Layout convention: T1 repo skills → `.agents/skills/<slug>/` (committed source). T3/T4 community skills installed via `bunx skills add` → `.agents/skills/<slug>/` (gitignored, default CLI behavior).
 
-Full contract: `.claude/skills/agentic-qa-core/references/skill-composition-strategy.md`
+Full contract: `.agents/skills/agentic-qa-core/references/skill-composition-strategy.md`
 
 **gentle-ai install scope**: `cli/install.ts` runs `gentle-ai install --preset minimal` → installs ONLY the `engram` component (persistent memory). SDD-* skills are NOT installed by default — our workflow skills (`/sprint-testing`, `/test-automation`, `/test-documentation`, `/regression-testing`) cover Plan → Code → Verify natively without SDD ceremony. Users who explicitly want the SDD suite for framework evolution work can add it manually: `gentle-ai install --components engram,sdd --agent <a>`.
 
@@ -179,6 +198,8 @@ Full contract: `.claude/skills/agentic-qa-core/references/skill-composition-stra
 | `acli` | `/acli` | Atlassian CLI. Resolves `[ISSUE_TRACKER_TOOL]` and `[TMS_TOOL]` (Modality B). |
 | `git-flow-master` | (auto on git/PR intents) | End-to-end Git operator. Auto-detects branching strategy. Owns branch / commit / push / PR / conflict / chained-PR. |
 | `judgment-day` | `/judgment-day`, `juzgar`, `dual review` | T2 vendored from gentle-ai (Apache-2.0). Adversarial dual-judge review (2 blind judges in parallel, synthesis, fix loop, re-judge). Cited as optional gate by `/test-automation` Phase 3 + `/git-flow-master` pre-PR. Never auto-invoked. |
+| `project-context` | (auto on project/feature questions) | Generates per-project + per-feature business context (PRD-lite, SRS-lite, data maps) that drives downstream QA skills. Uses Tavily for external research. |
+| `sync-ai-context` | `/sync-ai-context` | Structured regeneration of all cross-repo AI context: project overview, data map, skill registry, install guide, git strategy, design tokens. Contrast with `/sync-ai-memory` (Engram human-verified saves). |
 
 ### Commands (single-file utilities in `.claude/commands/`)
 
@@ -215,7 +236,7 @@ Full contract: `.claude/skills/agentic-qa-core/references/skill-composition-stra
 | `[TMS_TOOL]` | Test management | Modality A: `/xray-cli`. Modality B: `/acli` (Jira-native) | MCP Atlassian (opt-in — see docs/mcp/) |
 | `[AUTOMATION_TOOL]` | Browser automation | `/playwright-cli` | MCP Playwright |
 | `[DB_TOOL]` | Database | DBHub MCP | Supabase MCP / raw SQL |
-| `[API_TOOL]` | API exploration | OpenAPI MCP | Postman / curl |
+| `[API_TOOL]` | API exploration | OpenAPI MCP: interactive exploration (`getEndpointSchema`), **schema read-only** (`/get-schema`, `/list-schemas`, `/validate-request`). | Postman / curl (write/create/update/delete: `invoke-api-endpoint` is write-only — no schema read) |
 | `[DOCS_TOOL]` | Library / framework / SDK / API / CLI official docs | Context7 MCP (`mcp__context7__resolve-library-id` → `mcp__context7__query-docs`) | built-in `WebSearch` / `WebFetch` (last resort only) |
 | `[WEB_SEARCH_TOOL]` | General web search, community fixes, troubleshooting, non-doc research | Tavily MCP (`mcp__tavily__tavily_search` / `tavily_extract` / `tavily_research`) | built-in `WebSearch` / `WebFetch` (last resort only) |
 
@@ -318,11 +339,18 @@ Variables: `{module-name}` = kebab-case module (`user-management`). `{TICKET-ID}
 api/schemas/                                 (bun run api:sync)
 ```
 
+**Cache behavior** (§9.5):
+- `.context/PBI/` is **gitignored after migration** — Jira is source of truth, local context is ephemeral cache
+- Only the allowlist stays tracked: `.context/PBI/README.md`, `.context/PBI/templates/**`, `.context/PBI/epics/*/test-specs/**`
+- PBI folders are recreated on demand via `/sprint-testing` or `/test-automation`
+- `.context/business/`, `.context/master-test-plan.md`, and `api/schemas/` remain tracked (generated from source-of-truth data, not Jira)
+- If `.context/` is deleted, recreate via `/project-discovery` + `/business-*-map` + `/master-test-plan`
+
 ---
 
 ## 10. KATA QUICK-REFERENCE
 
-> **FULL KATA + TypeScript rules**: `.claude/skills/test-automation/references/kata-architecture.md` + `.../typescript-patterns.md`. LOAD `/test-automation` BEFORE writing or reviewing any test code.
+> **FULL KATA + TypeScript rules**: `.agents/skills/test-automation/references/kata-architecture.md` + `.../typescript-patterns.md`. LOAD `/test-automation` BEFORE writing or reviewing any test code.
 
 KATA layer flow:
 
@@ -352,7 +380,7 @@ Test files (orchestrate ATCs)
 
 ## 11. GIT WORKFLOW — POINTERS
 
-Git / PR work → `/git-flow-master` auto-loads. Details in `.claude/skills/git-flow-master/` + `docs/workflows/git-flow.md`.
+Git / PR work → `/git-flow-master` auto-loads. Details in `.agents/skills/git-flow-master/` + `docs/workflows/git-flow.md`.
 
 **Critical commit rules**:
 
@@ -360,7 +388,7 @@ Git / PR work → `/git-flow-master` auto-loads. Details in `.claude/skills/git-
 - One commit = one responsibility. Clear messages.
 - **NO AI attribution** in commits.
 - **Confirm before push to `main`**.
-- Test-automation PRs use `.claude/skills/git-flow-master/references/pr-test-automation.md` (auto-loaded by `/git-flow-master` on `test/*` branches). Title format: `{type}({ISSUE-KEY}): {description}`.
+- Test-automation PRs use `.agents/skills/git-flow-master/references/pr-test-automation.md` (auto-loaded by `/git-flow-master` on `test/*` branches). Title format: `{type}({ISSUE-KEY}): {description}`.
 
 ---
 

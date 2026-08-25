@@ -19,6 +19,10 @@ export default antfu({
     'allure-report',
     'reports',
     'cli/legacy/**',
+    // JXA (JavaScript for Automation) dialect — runs under macOS osascript,
+    // not bun/node; JXA globals (ObjC, $) and osascript's run(argv) entry
+    // point false-positive against every Node-oriented rule set.
+    'cli/slack-clip.js',
     '*.min.js',
     // Documentation files (contain code examples that shouldn't be linted)
     '**/*.md',
@@ -26,22 +30,23 @@ export default antfu({
     '.github/**',
     // Generated files (auto-generated, not manually edited)
     'api/openapi-types.ts',
+    // Git worktrees placed under .claude/worktrees/ are another branch's full
+    // checkout — never lint another tree from this one.
+    '.claude/worktrees/**',
     // Skill templates — copied to target repos at install time, not linted here
-    '.claude/skills/*/templates/**',
+    '.agents/skills/*/templates/**',
     // Skills (committed QA-specific + community installed via `bunx skills add`
     // + gentle-ai loader output) are out of scope for repo-level lint rules.
     // Mixing upstream skill code with our ESLint config causes false positives;
-    // QA-specific skills under .claude/skills/ are markdown + JSON only, no
+    // QA-specific skills under .agents/skills/ are markdown + JSON only, no
     // TypeScript that needs linting.
-    '.claude/skills/**',
     '.agents/skills/**',
+    '.claude/skills/**',
     // Vendored html-ppt runtime and theme assets for the static guide
     'examples/guia-ciclo-vida-qa/assets/**',
     // MCP reference templates — syntax-sensitive opt-in configs. Linting them
     // (e.g. toml/array-bracket-newline) corrupts the layout users copy from.
     'docs/mcp/**',
-    // JXA (macOS osascript) — uses ObjC/$ globals not known to ESLint
-    'cli/slack-clip.js',
   ],
 
   // Custom rules

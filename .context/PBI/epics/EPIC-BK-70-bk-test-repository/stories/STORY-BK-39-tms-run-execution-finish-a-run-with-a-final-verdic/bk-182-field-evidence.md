@@ -1,4 +1,0 @@
-- Bearer `/api/v1/me`: authenticated `bunkai-staging-user@xenievzoau.resend.app`, workspace `545d5efe-a168-4f32-a4be-a148a2fc96db`, role `owner`, scopes `atc:read`, `atc:write`, `run:execute`.
-- Bearer `POST /api/v1/runs`: fails with `No active workspace could be resolved for this request.`
-- Cookie-session `POST /api/v1/runs`: creates Runs successfully with the same staging test fixtures.
-- Bearer `POST /api/v1/runs/{id}/finish`: succeeds on existing Runs during BK-39 validation.
