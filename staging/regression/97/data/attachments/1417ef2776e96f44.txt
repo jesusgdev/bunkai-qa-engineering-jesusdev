@@ -1,0 +1,1 @@
+✅ [BK-354] verifyUtcHalfOpen - PASS (227ms)
