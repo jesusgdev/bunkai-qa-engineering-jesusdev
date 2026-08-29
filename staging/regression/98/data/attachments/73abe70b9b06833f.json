@@ -1,0 +1,30 @@
+{
+  "window": "30d",
+  "generated_at": "2026-08-29T04:46:11.255117+00:00",
+  "items": [
+    {
+      "module_id": "2edff842-9cbd-4784-b0c7-f956105be5e7",
+      "module_name": "BK-39 QA 1782431888836",
+      "module_path": "bk-39-qa-1782431888836",
+      "defect_count": 3,
+      "heat": "elevated",
+      "current_week_count": 0,
+      "previous_week_count": 0,
+      "trend_direction": "flat",
+      "trend_delta": 0,
+      "trend_pct": 0
+    },
+    {
+      "module_id": "c9e05a37-9b4f-4194-a633-9d6f942288a1",
+      "module_name": "Run Execution",
+      "module_path": "run-execution",
+      "defect_count": 136,
+      "heat": "hotspot",
+      "current_week_count": 21,
+      "previous_week_count": 0,
+      "trend_direction": "rising",
+      "trend_delta": 21,
+      "trend_pct": null
+    }
+  ]
+}
