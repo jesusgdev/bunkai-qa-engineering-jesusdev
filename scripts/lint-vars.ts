@@ -107,9 +107,11 @@ const DOC_META_ALLOWLIST: Array<[string, string]> = [
   ['VAR_NAME', 'resend-cli/references/templates.md'],
   ['NAME', 'resend-cli/references/workflows.md'],
   ['PLAN', 'resend-cli/references/workflows.md'],
-  // sprint-testing-refinement skill uses {{ISSUE_KEY}} as a placeholder in template examples
+  // sprint-testing-refinement QAR template: {{ISSUE_KEY}} is a Jira issue key
+  // placeholder in a fenced code block example, not a project variable.
   ['ISSUE_KEY', 'sprint-testing-refinement/SKILL.md'],
-  // defect-management-doctrine uses {{QA_ARTIFACT_LABEL}} in template examples
+  // defect-management-doctrine: {{QA_ARTIFACT_LABEL}} is a Jira label placeholder
+  // in code-block examples showing how to create QA process epics.
   ['QA_ARTIFACT_LABEL', 'defect-management-doctrine.md'],
 ];
 
