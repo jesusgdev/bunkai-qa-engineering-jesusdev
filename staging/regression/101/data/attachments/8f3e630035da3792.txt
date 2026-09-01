@@ -1,0 +1,1 @@
+✅ [BK-426] assignCustomTags - PASS (283ms)

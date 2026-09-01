@@ -1,0 +1,1 @@
+✅ [BK-380] startRunRejectsInvalidTest - PASS (344ms)
