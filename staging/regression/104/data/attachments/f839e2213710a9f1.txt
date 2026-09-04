@@ -1,0 +1,1 @@
+✅ [BK-344] rejectInvalidSeverity - PASS (205ms)

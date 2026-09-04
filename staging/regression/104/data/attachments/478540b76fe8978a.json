@@ -1,0 +1,10 @@
+{
+  "error": {
+    "code": "not_found",
+    "message": "Project not found.",
+    "details": {
+      "reason": "not_found"
+    },
+    "request_id": "f210d7d7-f629-4873-b38f-44c4da8bbbe1"
+  }
+}
