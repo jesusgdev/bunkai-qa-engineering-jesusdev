@@ -104,3 +104,4 @@ git_strategy:
   meta:
     setup_version: 1
     created: 2026-06-20 # YYYY-MM-DD stamped by Strategy Setup
+    strategy_source: manual # chosen by user, not auto-detected by AI

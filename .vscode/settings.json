@@ -315,16 +315,35 @@
     }
   ],
   // =====================================================
-  // ? Preferencias Visuales — CONFIGURACIÓN LOCAL
+  // ? Preferencias Visuales Recomendadas (OPCIONALES)
   // =====================================================
-  // El tema, iconos y otras preferencias personales van en los settings
-  // GLOBALES de VSCode (~/.config/Code/User/settings.json), NO aquí.
-  // Este archivo es compartido por el equipo y solo debe contener
-  // configuraciones de productividad y estilo de código.
-  //
-  // Ejemplo en settings globales:
-  //   "workbench.colorTheme": "SynthWave '84",
-  //   "workbench.iconTheme": "material-icon-theme",
+  // Estas configuraciones son recomendaciones del autor del proyecto
+  // para mejorar la experiencia visual. Puedes removerlas o cambiarlas
+  // según tu preferencia personal.
+  // Tema recomendado: Winter is Coming (Dark Blue)
+  // Para instalarlo: busca "Winter is Coming" en extensiones
+  "workbench.colorTheme": "Winter is Coming (Dark Blue)",
+  // Icon Theme recomendado: Material Icon Theme
+  // Mejora significativamente la visualización de la estructura del proyecto
+  "workbench.iconTheme": "material-icon-theme",
+  // =====================
+  // ? Material Icon Theme Settings (OPCIONAL)
+  // =====================
+  // Configuraciones para mejorar los iconos de archivos/carpetas específicos
+  "material-icon-theme.folders.color": "#7cb342",
+  "material-icon-theme.files.associations": {
+    "conftest.py": "test-jsx",
+    "pytest.ini": "test-py",
+    "requirements.txt": "requirements",
+    ".env*": "dotenv",
+    ".envrc": "dotenv"
+  },
+  "material-icon-theme.folders.associations": {
+    "utils": "tools",
+    "test-results": "temp",
+    "tests": "test",
+    "__tests__": "test"
+  },
   // =====================
   // ? Postman Extension
   // =====================
