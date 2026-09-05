@@ -1,7 +1,7 @@
 # acli Integration — Bunkai QA Engineering (BK)
 
 > Repo-specific conventions for driving `acli` against the Bunkai TMS Jira project.
-> Project key: **BK** · Site: `upexgalaxy69.atlassian.net` · Board: **Bunkai Board** (id: 7)
+> Project key: **BK** · Site: `upexgalaxy72.atlassian.net` · Board: **Bunkai Board** (id: 7)
 
 ---
 
@@ -10,7 +10,7 @@
 | Key | Value |
 |---|---|
 | `PROJECT_KEY` | `BK` |
-| `ATLASSIAN_SITE` | `upexgalaxy69.atlassian.net` |
+| `ATLASSIAN_SITE` | `upexgalaxy72.atlassian.net` |
 | Board name | `Bunkai Board` (id: 7, type: scrum) |
 | Auth method | API token (env: `ATLASSIAN_EMAIL` + `ATLASSIAN_API_TOKEN`) |
 

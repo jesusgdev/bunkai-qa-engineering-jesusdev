@@ -2,7 +2,7 @@
 
 **Fecha**: 2026-05-26
 **Proyecto**: Bunkai TMS (key `BK`, id `10137`)
-**Instancia Jira**: `https://upexgalaxy67.atlassian.net/`
+**Instancia Jira**: `https://upexgalaxy72.atlassian.net/`
 **Usuario**: `jesusgpythondev@gmail.com`
 
 ---
@@ -163,7 +163,7 @@ Summary: ✅ 50 OK   ❌ 59 missing   ⚠️ 7 mismatched
 
 Para que los scripts funcionen al 100%, la cuenta `jesusgpythondev@gmail.com` necesita uno de estos:
 
-- **Opción A** — Rol de **Administrador de Jira** en el sitio (`upexgalaxy67.atlassian.net`)
+- **Opción A** — Rol de **Administrador de Jira** en el sitio (`upexgalaxy72.atlassian.net`)
 - **Opción B** — Permiso **"Edit workflow"** a nivel de proyecto (más granular, menos riesgo)
 
 Con permisos de administrador, ejecutar:
