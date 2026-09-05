@@ -7,7 +7,7 @@
     "commands": "0c1b4e11856bdd2a288d657f5863a9cbf816cc47",
     "scripts": "b71a4a624498a6bb99201f72b6ae6342b4542e8b",
     "docs": "0c1b4e11856bdd2a288d657f5863a9cbf816cc47",
-    "cli": "462ff09c0eace4ead0d6bbe6e716eb67ce65f885",
+    "cli": "c9b7577f38677b4b339e545aa73c0525ceef7b4c",
     "vscode": "0c1b4e11856bdd2a288d657f5863a9cbf816cc47",
     "husky": "b71a4a624498a6bb99201f72b6ae6342b4542e8b",
     "agents-docs": "0c1b4e11856bdd2a288d657f5863a9cbf816cc47",
@@ -21,7 +21,7 @@
   "syncedComponents": [],
   "ignoreFileSync": {
     ".prettierignore": {
-      "lastSyncedSha": "e61771a092a7c3a1746513759dba547ad07ac1b6",
+      "lastSyncedSha": "2d65bedc55be87885be51510bc1b977c8aef67c2",
       "appendedLines": [
         ".claude/worktrees/",
         "api/openapi*",
@@ -31,11 +31,12 @@
         "scripts/contribution-audit/out/",
         "scripts/contribution-audit/roster.local.json",
         "scripts/contribution-audit/report_template.html",
-        ".scratch/"
+        ".scratch/",
+        ".backups*/"
       ]
     },
     ".gitignore": {
-      "lastSyncedSha": "c5dd162728278252c192d3ff34a9fd487ba34165",
+      "lastSyncedSha": "82195b81ce755d511e8da13bbd672adae0959232",
       "appendedLines": [
         "**/evidence/",
         ".template/claude-md.upstream.sha",
@@ -63,7 +64,9 @@
         ".agents/skills/playwright-best-practices/",
         ".agents/skills/resend-cli/",
         "!skills-lock.json",
-        "!**/skills-lock.json"
+        "!**/skills-lock.json",
+        ".backups*/",
+        ".template/last-apply.json"
       ]
     }
   },
@@ -100,7 +103,7 @@
       }
     }
   },
-  "cliVersion": "7.0",
-  "lastSyncedAt": "2026-08-27T18:38:43.646Z",
+  "cliVersion": "8.4",
+  "lastSyncedAt": "2026-09-05T18:31:06.458Z",
   "variableSystemVersion": 1
 }

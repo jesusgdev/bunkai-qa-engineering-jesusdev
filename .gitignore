@@ -180,3 +180,7 @@ dbhub.local.toml
 .agents/skills/resend-cli/
 !skills-lock.json
 !**/skills-lock.json
+
+# ----- 2026-09-05 (sync) -----
+.backups*/
+.template/last-apply.json
