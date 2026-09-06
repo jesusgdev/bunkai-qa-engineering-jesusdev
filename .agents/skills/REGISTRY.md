@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-09-05T23:31:56.589Z`
+> Generated: `2026-09-06T19:32:54.937Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -354,7 +354,7 @@ Skills indexed: 39
 
 ## Skill: expert-panel-review
 
-**Purpose**: Run a cross-functional expert panel (7 core domain experts + 4 process roles + 4 consultant roles) to refine patterns, Jira stories, QA a...
+**Purpose**: Run a cross-functional expert panel (8 core domain experts + 5 process roles + 4 consultant roles) to refine patterns, Jira stories, QA a...
 
 **Compact Rules**:
 - Applying the former `expert-development-team-analysis` pattern.
@@ -365,13 +365,13 @@ Skills indexed: 39
 - Replacing domain skills such as `/shift-left-testing`, `/sprint-testing`, `/test-automation`, or `/test-documentation`.
 - Rubber-stamping a decision already made without review.
 - Creating permanent rules from a single unvalidated opinion.
-- **Always activate**: Orchestrator, QA Lead, Engram Curator, Skeptical Reviewer.
-- **Signal-driven activation**: Add domain experts only when their surface is in scope. Do NOT activate all 7 for every review — context efficiency matters.
+- **Always activate**: Orchestrator, QA Lead, Engram Curator, and Skeptical Reviewer. Add Expert Capability Coach when the task changes team knowledge, workflow, or skill behavior.
+- **Signal-driven activation**: Add domain experts only when their surface is in scope. Do NOT activate all 8 for every review — context efficiency matters.
 - **Consultant roles**: Activate only when the explicit trigger fires. Deactivate after the review.
-- **Security/AppSec is ALWAYS activated when**: the target touches auth, tokens, permissions, external integrations, user data, or API boundaries. This is non-negotiable for the Bunkai project (auth surface, Resend integration, workspace/member data).
-- **Small-task minimum**: Orchestrator + QA Lead + Engram Curator + Skeptical Reviewer (4 roles).
-- **Full panel**: All 7 core + relevant consultants (max 11 roles — but context budget usually limits to 5-7 active). |
-- Start with recent memory context.
+- **Security/AppSec activation**: Required for authentication, authorization, secrets, sensitive data, external exposure, tool permissions, AI agents, or API boundaries with meaningful security impact.
+- **AI Governance activation**: Required for AI autonomy, decisions affecting people, regulated or sensitive data, external models, high-impact outcomes, irreversible actions, or material changes to prompts, models, datasets, or policies.
+- **Data/MLOps activation**: Required for training data, RAG, embeddings, model or dataset versioning, drift, retraining, data pipelines, or AI provenance.
+- **SRE/Platform activation**: Required for production operation, SLOs, availability, latency, cost, scaling, rollback, or runtime model monitoring.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
