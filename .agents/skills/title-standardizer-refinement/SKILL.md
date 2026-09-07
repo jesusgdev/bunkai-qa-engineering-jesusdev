@@ -24,6 +24,12 @@ Validate and correct TC title format in batch. Ensures consistent naming convent
 - `acli/SKILL.md` — Jira CLI operations
 - `rate-limit-handler-refinement/SKILL.md` — Rate limiting for batch operations
 
+## Jira Mutation Boundary
+
+Read the configured site, auth identity, current summaries, issue type, and live edit metadata first. Produce a dry-run correction list and obtain explicit approval before writing. Resolve the project key from `{{PROJECT_KEY}}`; do not infer it from an example. Bound approved issue keys, checkpoint progress, support resume, read back every changed summary, and stop on auth/site mismatch. Report `unverified` when source or read-back evidence is unavailable.
+
+`issue | old title | proposed title | status: verified|failed|skipped|unverified | evidence | checkpoint`
+
 ## Title Format Rules
 
 ### Standard TC Title Pattern
@@ -35,15 +41,15 @@ Validate and correct TC title format in batch. Ensures consistent naming convent
 
 | Pattern | Description | Example |
 |---------|-------------|---------|
-| `^BK-\d+: TC\d+: .+$` | Standard TC format | `BK-34: TC01: should start a Run` |
-| `^BK-\d+: TC\d+:` | TC prefix only | `BK-34: TC01:` |
-| `^BK-\d+:` | Story prefix only | `BK-34:` |
+| `^{{PROJECT_KEY}}-\d+: TC\d+: .+$` | Standard TC format | `<PROJECT_KEY>-<n>: TC01: should start a Run` |
+| `^{{PROJECT_KEY}}-\d+: TC\d+:` | TC prefix only | `<PROJECT_KEY>-<n>: TC01:` |
+| `^{{PROJECT_KEY}}-\d+:` | Story prefix only | `<PROJECT_KEY>-<n>:` |
 
 ### Validation Rules
 
 | Rule | Pattern | Notes |
 |------|---------|-------|
-| Story key prefix | `^BK-\d+:` | Must start with story key |
+| Story key prefix | `^{{PROJECT_KEY}}-\d+:` | Must start with story key |
 | TC number | `TC\d+:` | Sequential numbering |
 | Description | `should .+` | Must start with "should" |
 | Max length | 255 chars | Jira Summary limit |
@@ -52,8 +58,11 @@ Validate and correct TC title format in batch. Ensures consistent naming convent
 
 ### Step 1: Extract Titles
 ```bash
-# Get all TC titles
-[TMS_TOOL] test list --project "BK" --limit 300 2>&1 | grep -E "^BK-[0-9]+" > /tmp/all-tcs.txt
+# Get all Test work items through the configured issue tracker with explicit pagination.
+[ISSUE_TRACKER_TOOL] Search Issues:
+  jql: project = {{PROJECT_KEY}} AND issuetype = Test ORDER BY key
+  paginate: true
+  fields: [summary, issuetype]
 ```
 
 ### Step 2: Validate Format
@@ -66,7 +75,7 @@ while IFS= read -r LINE; do
   KEY=$(echo "$LINE" | awk '{print $1}')
   TITLE=$(echo "$LINE" | cut -d' ' -f2-)
   
-  if echo "$TITLE" | grep -qE "^BK-[0-9]+: TC[0-9]+: .+$"; then
+  if echo "$TITLE" | grep -qE "^{{PROJECT_KEY}}-[0-9]+: TC[0-9]+: .+$"; then
     ((VALID++))
   else
     ((INVALID++))
@@ -86,16 +95,17 @@ while IFS= read -r LINE; do
   KEY=$(echo "$LINE" | awk '{print $1}')
   TITLE=$(echo "$LINE" | cut -d' ' -f2-)
   
-  # Extract story key
-  STORY_KEY=$(echo "$TITLE" | grep -oE "BK-[0-9]+" | head -1)
+  # Extract story key only when the title contains exactly one unambiguous key.
+  STORY_KEY=$(echo "$TITLE" | grep -oE "{{PROJECT_KEY}}-[0-9]+" | head -1)
   
   # Extract TC number
   TC_NUM=$(echo "$TITLE" | grep -oE "TC[0-9]+" | head -1)
   
   # Extract description
-  DESC=$(echo "$TITLE" | sed -E "s/^BK-[0-9]+: TC[0-9]+: //")
+  DESC=$(echo "$TITLE" | sed -E "s/^{{PROJECT_KEY}}-[0-9]+: TC[0-9]+: //")
   
-  # Generate corrected title
+  # Generate a proposal only when story key, TC number, and expected outcome are present.
+  # Ambiguous or semantically incomplete titles remain unverified for human review.
   CORRECTED="$STORY_KEY: $TC_NUM: $DESC"
   
   echo "$KEY|$CORRECTED"
@@ -113,7 +123,7 @@ while IFS='|' read -r KEY NEW_TITLE; do
   # Get current title
   CURRENT_TITLE=$(curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
     -X GET -H "Content-Type: application/json" \
-    "$ATLASSIAN_URL/rest/api/3/issue/$KEY" | jq -r '.fields.summary')
+    "{{issue_tracker.atlassian_url}}rest/api/3/issue/$KEY" | jq -r '.fields.summary')
   
   if [ "$CURRENT_TITLE" != "$NEW_TITLE" ]; then
     RESPONSE=$(curl -s -w "%{http_code}" -o /tmp/response.txt \
@@ -121,7 +131,7 @@ while IFS='|' read -r KEY NEW_TITLE; do
       -X PUT \
       -H "Content-Type: application/json" \
       -d "{\"fields\": {\"summary\": \"$NEW_TITLE\"}}" \
-      "$ATLASSIAN_URL/rest/api/3/issue/$KEY")
+      "{{issue_tracker.atlassian_url}}rest/api/3/issue/$KEY")
     
     if [ "$RESPONSE" = "204" ]; then
       echo "$KEY: ✓"
@@ -140,37 +150,38 @@ done < /tmp/corrections.txt
 
 | Issue | Example | Fix |
 |-------|---------|-----|
-| Missing TC number | `BK-34: should start a Run` | Add TC01: |
-| Wrong format | `BK-34-TC01-should start` | Replace `-` with `: ` |
-| Missing "should" | `BK-34: TC01: start a Run` | Add "should" |
-| Too long | `BK-34: TC01: should start...very long` | Truncate to 255 chars |
+| Missing TC number | `<PROJECT_KEY>-<n>: should start a Run` | Add TC01: |
+| Wrong format | `<PROJECT_KEY>-<n>-TC01-should start` | Replace `-` with `: ` |
+| Missing "should" | `<PROJECT_KEY>-<n>: TC01: start a Run` | Add "should" |
+| Too long | `<PROJECT_KEY>-<n>: TC01: should start...very long` | Propose a semantic shortening; never truncate automatically |
 
 ## Reporting
 
 ### Validation Report
 ```
 === Title Validation Report ===
-Total TCs: 223
-Valid format: 179
-Invalid format: 44
+Total TCs: N
+Valid format: N
+Invalid format: N
 
 === Invalid Titles ===
-BK-320: TC01: should start a Run (missing "should")
-BK-321: TC02: start a Run (missing "should")
+<PROJECT_KEY>-<n>: TC01: should start a Run (missing "should")
+<PROJECT_KEY>-<n>: TC02: start a Run (missing "should")
 ...
 ```
 
 ### Correction Report
 ```
 === Title Correction Report ===
-Total TCs: 223
-Already correct: 179
-Corrected: 44
-Failed: 0
+Total TCs: N
+Already correct: N
+Corrected: N
+Failed: N
+Unverified: N
 
 === Corrections Applied ===
-BK-320: ✓ (BK-320: TC01: should start a Run)
-BK-321: ✓ (BK-321: TC02: should start a Run)
+<PROJECT_KEY>-<n>: verified
+<PROJECT_KEY>-<n>: verified
 ...
 ```
 
@@ -192,21 +203,21 @@ For complex title standardization, use subagents:
 
 ### Example 1: Single Title Validation
 ```bash
-# Input: BK-320: TC01: should start a Run
+# Input: <PROJECT_KEY>-<n>: TC01: should start a Run
 # Process: Validate against regex
 # Output: Valid ✓
 ```
 
 ### Example 2: Batch Title Correction
 ```bash
-# Input: 44 TCs with invalid titles
+# Input: approved issue-list with invalid titles
 # Process: Generate and apply corrections
-# Output: 44 TCs with standardized titles
+# Output: verified/failed/unverified partial report and resume checkpoint
 ```
 
 ### Example 3: Title Validation Report
 ```bash
-# Input: 223 TCs to validate
+# Input: approved issue-list to validate
 # Process: Validate all titles
-# Output: 179 valid, 44 invalid
+# Output: valid, invalid, and unverified counts
 ```

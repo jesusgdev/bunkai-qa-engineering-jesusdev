@@ -14,69 +14,67 @@ Manage API rate limiting with intelligent batching, pauses, retry logic, and exp
 
 | Use for | Do not use for | Route instead |
 |---------|----------------|---------------|
-| Bulk API operations (50+ calls) | Single API calls | Specific skill |
+| Bulk API operations | Single API calls | Specific skill |
 | Rate limit prevention | Test execution | `/sprint-testing` |
 | Retry logic with backoff | Test documentation | `/test-documentation` |
 | Throttling configuration | Ad-hoc queries | `/acli` |
 
 ## Rate Limit Rules
 
-### Jira Cloud
+Do not treat undocumented service limits as facts. Read `Retry-After` and relevant rate-limit headers when present, use current service documentation only when available, and otherwise mark configured budgets as `Inference`. Classify each operation as idempotent, conditionally idempotent, or non-idempotent before retrying. Set a maximum elapsed time and persist a checkpoint before retrying or resuming.
+
+### Service-specific limits
 | Rule | Value | Notes |
 |------|-------|-------|
-| Limit | ~10 req/sec/user | Per authenticated user |
-| Burst | 20 req/sec | Short bursts allowed |
-| Window | 1 minute | Rolling window |
-| Penalty | 429 Too Many Requests | Temporary block |
+| Limit | Not assumed | Read response headers or current service documentation |
+| Penalty | 429 Too Many Requests | Honor `Retry-After` when present |
 
 ### Xray Cloud
 | Rule | Value | Notes |
 |------|-------|-------|
-| Limit | ~5 req/sec | Per API key |
-| Burst | 10 req/sec | Short bursts allowed |
-| Window | 1 minute | Rolling window |
-| Penalty | 429 Too Many Requests | Temporary block |
+| Limit | Not assumed | Read response headers or current service documentation |
+| Penalty | 429 Too Many Requests | Honor `Retry-After` when present |
 
 ## Batching Strategy
 
 ### Batch Size Calculation
 ```
-batch_size = min(rate_limit * 0.8, 10)
+batch_size = configured_bounded_value
 ```
 
-For Jira Cloud: `min(10 * 0.8, 10) = 8` → use batches of 8-10
+Do not derive a service limit from this example. Record the chosen value and its evidence source.
 
 ### Pause Calculation
 ```
-pause_between_issues = 1 / (rate_limit * 0.8)
-pause_between_batches = pause_between_issues * batch_size
+delay = max(server_retry_after, configured_jittered_backoff)
 ```
 
-For Jira Cloud:
-- Pause between issues: `1 / (10 * 0.8) = 0.125s` → use 0.5s for safety
-- Pause between batches: `0.5 * 10 = 5s` → use 1s minimum
+Use integer milliseconds in code. Decimal seconds must be converted before shell arithmetic, for example `500ms`, not `0.5` passed to `$((...))`.
 
 ### Recommended Settings
 
-| Setting | Jira Cloud | Xray Cloud | Custom |
-|---------|------------|------------|--------|
-| Batch size | 10 | 5 | `rate_limit * 0.8` |
-| Pause between issues | 0.5s | 1s | `1 / (rate_limit * 0.8)` |
-| Pause between batches | 1s | 2s | `batch_size * pause_between_issues` |
-| Max retries | 3 | 3 | Configurable |
-| Backoff multiplier | 2 | 2 | Configurable |
+| Setting | Required behavior |
+|---------|-------------------|
+| Batch size | Configured, bounded, and checkpointed |
+| Retry delay | `Retry-After` first, otherwise jittered exponential backoff |
+| Max retries | Configurable and bounded by max elapsed time |
+| Idempotency | Classify before retry; do not blindly replay non-idempotent writes |
+| Resume | Persist checkpoint and skip verified items |
 
 ## Retry Logic
 
 ### Exponential Backoff
 ```python
-def retry_with_backoff(func, max_retries=3, base_delay=1):
+def retry_with_backoff(func, retry_after_ms=None, max_retries=3, base_delay_ms=1000, max_elapsed_ms=30000):
+    started_ms = monotonic_ms()
     for attempt in range(max_retries):
         try:
             return func()
         except RateLimitError:
-            delay = base_delay * (2 ** attempt)
-            sleep(delay)
+            delay_ms = retry_after_ms or jittered(base_delay_ms * (2 ** attempt))
+            if monotonic_ms() - started_ms + delay_ms > max_elapsed_ms:
+                raise MaxElapsedTimeExceeded()
+            sleep(delay_ms / 1000)
     raise MaxRetriesExceeded()
 ```
 
@@ -96,10 +94,11 @@ def retry_with_backoff(func, max_retries=3, base_delay=1):
 ### Bash Pattern
 ```bash
 #!/bin/bash
-BATCH_SIZE=10
-PAUSE_BETWEEN_ISSUES=0.5
-PAUSE_BETWEEN_BATCHES=1
+BATCH_SIZE="${RATE_LIMIT_BATCH_SIZE:?set an approved integer batch size}"
+PAUSE_BETWEEN_ISSUES_MS=500
+PAUSE_BETWEEN_BATCHES_MS=1000
 MAX_RETRIES=3
+MAX_ELAPSED_MS=30000
 
 process_batch() {
     local batch=("$@")
@@ -115,22 +114,22 @@ process_batch() {
                 -X PUT \
                 -H "Content-Type: application/json" \
                 -d "$(generate_payload "$issue")" \
-                "$ATLASSIAN_URL/rest/api/3/issue/$issue")
+                "{{issue_tracker.atlassian_url}}rest/api/3/issue/$issue")
             
             if [ "$RESPONSE" = "204" ]; then
                 echo "$issue: ✓"
                 break
             elif [ "$RESPONSE" = "429" ]; then
-                DELAY=$((PAUSE_BETWEEN_ISSUES * (2 ** (attempt - 1))))
-                echo "Rate limited, waiting ${DELAY}s..."
-                sleep $DELAY
+                DELAY_MS="${RETRY_AFTER_MS:-$((PAUSE_BETWEEN_ISSUES_MS * (2 ** (attempt - 1))))}"
+                echo "Rate limited, waiting ${DELAY_MS}ms..."
+                sleep "$(awk "BEGIN {print ${DELAY_MS}/1000}")"
             else
                 echo "$issue: ✗ ($RESPONSE)"
                 break
             fi
         done
         
-        sleep $PAUSE_BETWEEN_ISSUES
+        sleep "$(awk "BEGIN {print ${PAUSE_BETWEEN_ISSUES_MS}/1000}")"
     done
 }
 
@@ -139,7 +138,7 @@ TOTAL=${#ISSUES[@]}
 for ((i=0; i<TOTAL; i+=BATCH_SIZE)); do
     BATCH=("${ISSUES[@]:$i:$BATCH_SIZE}")
     process_batch "${BATCH[@]}"
-    sleep $PAUSE_BETWEEN_BATCHES
+    sleep "$(awk "BEGIN {print ${PAUSE_BETWEEN_BATCHES_MS}/1000}")"
 done
 ```
 
@@ -217,26 +216,24 @@ class RateLimitHandler {
 ### Progress Indicators
 ```
 === Rate Limit Handler ===
-Total items: 89
-Batch size: 10
-Total batches: 9
+Total items: N
+Batch size: configured value
+Total batches: derived
 
-[Lote 1/9] Items 1-10...
-  BK-320: ✓
-  BK-321: ✓
+[Batch 1/derived] Items 1-N...
+  <item>: verified
   ...
-  Pause 1s...
+  Pause response-guided delay...
 
 [Lote 2/9] Items 11-20...
 ...
 
 === Final Report ===
-Total processed: 89
-Success: 89
-Failed: 0
-Rate limited: 0
-Total time: 45s
-Avg time per item: 0.5s
+Total processed: N
+Verified: N
+Failed: N
+Unverified: N
+Elapsed: measured
 ```
 
 ### Metrics to Track
@@ -244,25 +241,20 @@ Avg time per item: 0.5s
 - Success/fail rate
 - Rate limit incidents
 - Average processing time
-- Total execution time
+- Total execution time against max elapsed time
 
 ## Configuration
 
 ### Environment Variables
 ```bash
 # Rate limiting
-RATE_LIMIT_BATCH_SIZE=10
-RATE_LIMIT_PAUSE_ISSUES=0.5
-RATE_LIMIT_PAUSE_BATCHES=1
+RATE_LIMIT_BATCH_SIZE=<approved integer>
+RATE_LIMIT_PAUSE_ISSUES_MS=500
+RATE_LIMIT_PAUSE_BATCHES_MS=1000
 RATE_LIMIT_MAX_RETRIES=3
+RATE_LIMIT_MAX_ELAPSED_MS=30000
 
-# Jira specific
-JIRA_RATE_LIMIT=10
-JIRA_BURST_LIMIT=20
-
-# Xray specific
-XRAY_RATE_LIMIT=5
-XRAY_BURST_LIMIT=10
+# Service-specific limits are not hardcoded; capture response headers/configuration at runtime.
 ```
 
 ### Config File
@@ -305,9 +297,9 @@ For complex rate-limiting scenarios, use subagents:
 
 ### Example 1: Jira Batch Update
 ```bash
-# Input: 89 TCs to update
-# Config: batch_size=10, pause=0.5s issues, 1s batches
-# Output: 89 TCs updated, 0 rate limit errors
+# Input: approved issue list to update
+# Config: bounded batch size, response-guided delay, max elapsed time
+# Output: verified/failed/unverified results and resume checkpoint
 ```
 
 ### Example 2: Xray Batch Import

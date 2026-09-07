@@ -15,7 +15,7 @@ Convert one under-specified Jira Story into a clear, testable, pre-sprint refine
 | Use for | Do not use for | Route instead |
 |---|---|---|
 | Single-Story AC refinement before estimation/sprint planning | Batch selection, workflow transitions, or Stage 0 orchestration | `/shift-left-testing` |
-| Former `shift-left-workflow-pattern` / BK-34 / Ely-style refinement | In-sprint QA, bug retest, ATP/ATR execution, evidence capture | `/sprint-testing` |
+| Former shift-left workflow pattern / Ely-style refinement | In-sprint QA, bug retest, ATP/ATR execution, evidence capture | `/sprint-testing` |
 | Jira description, QA comment/field, or ATP DRAFT preparation | Formal Jira/Xray test cases | `/test-documentation` |
 | Advisory QA story-point recommendation | Automated test code / KATA implementation | `/test-automation` |
 
@@ -29,11 +29,17 @@ Read only what adds signal for the current Story:
 2. Story title, description, ACs, scope, business rules, source spec, labels, status, points, parent epic, and comments.
 3. Parent epic/module context when dependencies matter.
 4. `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
-5. Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-32`, `BK-34`, `BK-38`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`, `QA Handoff Mirror`, `story points`.
+5. Relevant Engram memories for prior pattern learnings: Ely-style, shift-left workflow pattern, QA Handoff Mirror, story points, and current project-specific memories.
 6. When publishing or auditing existing publication, read live Jira evidence directly too: REST `GET /issue/<KEY>?fields=description,labels,status,<candidate fields>`, `/editmeta`, comments, and changelog. Synced Markdown is useful but not authoritative for rich-text custom fields when cached field catalogs drift.
 7. Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
 
 If labels include `shift-left-reviewed` plus a dated `shift-left-YYYY-MM-DD` from the last 30 days, surface it and ask whether to refresh or reuse. If the Story changed after that label, recommend refresh.
+
+## Jira Mutation Boundary
+
+Jira publication is read-first, dry-run, explicit-approval, bounded-write, checkpoint/resume, and read-back verified. Resolve fields through live `/editmeta` and resolve the site from `{{issue_tracker.atlassian_url}}` or active project configuration. Do not invent custom-field IDs, issue keys, or parent keys. Stop on auth/site mismatch. If Jira evidence or read-back is unavailable, mark the affected result `unverified` rather than claiming success.
+
+`artifact | field | action | status: verified|failed|skipped|unverified | evidence | checkpoint`
 
 ## Principles
 
@@ -128,10 +134,10 @@ Do not leave generic "PO/Dev to decide" notes when an expert can make a responsi
 
 Before publishing any Jira description, AC fallback comment, ATP fallback comment, or QA mirror:
 
-- Author Markdown, convert with `.claude/skills/acli/scripts/md-to-adf.ts`, and publish the ADF output. Never pass raw Markdown to Jira rich-text flags.
+- Author Markdown, convert with `.agents/skills/acli/scripts/md-to-adf.ts`, and publish the ADF output only after approval. Never pass raw Markdown to Jira rich-text flags.
 - Refined AC publication must render as one fenced `gherkin` code block (ADF `codeBlock` with `language: "gherkin"`). Do not publish scenarios as headings, bullets, or plain paragraphs.
 - QA Handoff Mirror should be compact but visually scannable: use tables for ATP/risk summaries, `[!SUCCESS]`/`[!INFO]`/`[!WARNING]`/`[!CAUTION]` panels for handoff status and risks, and status lozenges like `{status:green|READY}` for publication/readiness states.
-- Use BK-39 as the shift-left reference shape and BK-91 / `acli/references/adf-authoring-style.md` as the formatter capability reference when in doubt.
+- Use the current shift-left package contract and `acli/references/adf-authoring-style.md` as the formatter capability reference when in doubt.
 - Verify converted ADF structurally before publishing: AC must contain a `codeBlock` whose language is `gherkin`; QA mirror should contain at least one `panel` or `status` node when it reports readiness/risk.
 
 Live field resolution:
@@ -268,7 +274,7 @@ When dispatching subagents, use this exact briefing format:
 
 1. **Goal** — one sentence
 2. **Context docs** — files to read first
-3. **Project Standards** — compact rules from `.claude/skills/REGISTRY.md`
+3. **Project Standards** — compact rules from `.agents/skills/REGISTRY.md`
 4. **Skills to load** — explicit (e.g. `/shift-left-refinement`)
 5. **Exact instructions** — step-by-step, not vague goals
 6. **Report format** — what to return (files changed, tests passed, blockers)
@@ -277,10 +283,10 @@ When dispatching subagents, use this exact briefing format:
 Example:
 ```
 ## 1. Goal
-Refine BK-34 into a complete shift-left package with ATP DRAFT.
+Refine `<STORY_KEY>` into a complete shift-left package with ATP DRAFT.
 
 ## 2. Context docs
-- .context/PBI/user-management/BK-34-story-key/story.md
+- `.context/PBI/<module>/<STORY_KEY>-<slug>/context.md`
 - .context/business/business-feature-map.md
 
 ## 3. Project Standards
@@ -365,7 +371,7 @@ Return:
 | Condition | Action |
 |-----------|--------|
 | Single story | Continue with single-story workflow |
-| N > 5 stories with ATP DRAFT | Hand off to batch automation |
+| Multiple stories | Delegate selection and orchestration to `/shift-left-testing`; this skill remains single-story |
 
 ### End-to-End Pipeline
 
@@ -380,22 +386,11 @@ Shift-Left → Sprint Testing → Test Documentation → Test Automation
 ### Handoff Pattern
 
 ```
-1. Complete shift-left refinement for all stories
-2. Ensure all stories have ATP DRAFT
-3. Hand off to /sprint-testing for pre-flight:
-   a. Pre-flight checks for all stories
-   b. GO/CONDITIONAL-GO verdicts
-   c. Blocker identification
-4. Hand off to /test-documentation for TC creation:
-   a. Batch TC creation (10 per batch, 1s pause)
-   b. Batch ADF enrichment
-   c. Batch parent field setting
-   d. Batch title standardization
-5. Hand off to /test-automation for batch code:
-   a. Batch Api component creation
-   b. Batch test file creation
-   c. Batch ATC writing
-   d. Batch test execution
+1. Complete this single-story refinement and record the package path.
+2. Delegate batch selection/orchestration to `/shift-left-testing`.
+3. Delegate sprint intake and execution to `/sprint-testing` and `/sprint-testing-refinement`.
+4. Delegate formal TC creation and Jira enrichment to `/test-documentation` and its approved refinements.
+5. Delegate automation code and execution to `/test-automation` or `/regression-testing`; do not duplicate those workflows here.
 ```
 
 ### Handoff Checklist

@@ -25,6 +25,12 @@ Convert Markdown content to Atlassian Document Format (ADF) for Jira rich text f
 - `md-to-adf.ts` — Markdown to ADF converter script
 - `test-documentation/SKILL.md` — TC Description template (§7)
 
+## Jira Mutation Boundary
+
+Jira writes are migration-safe and opt-in only: read the current issue, live `/editmeta`, authenticated identity, and configured site first; produce a dry-run payload; obtain explicit approval; write only the approved issue/field; checkpoint before and after the write; then read back the rendered value. Use `{{issue_tracker.atlassian_url}}` or active project configuration, never a guessed site. Do not invent custom-field IDs or issue/parent keys. Stop on auth/site mismatch. Report each result as `verified`, `failed`, `skipped`, or `unverified` when source or read-back evidence is unavailable.
+
+`issue | field | action | status | evidence | checkpoint`
+
 ## ADF Structure
 
 ### Document Root
@@ -135,24 +141,19 @@ Content here
 
 ### Step 2: Convert to ADF
 ```bash
-bun .claude/skills/acli/scripts/md-to-adf.ts < input.md > output.adf.json
+bun .agents/skills/acli/scripts/md-to-adf.ts < input.md > output.adf.json
 ```
 
 ### Step 3: Validate ADF Structure
 ```bash
-# Check required fields
-jq '.type == "doc" and .version == 1' output.adf.json
-# Check section count
-jq '.content | map(select(.type == "heading")) | length' output.adf.json
+# Run the converter's authoritative validation gate.
+bun .agents/skills/acli/scripts/md-to-adf.ts --check output.adf.json
 ```
 
-### Step 4: Apply to Jira Issue
+### Step 4: Apply to Jira Issue after explicit approval
 ```bash
-curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
-  -X PUT \
-  -H "Content-Type: application/json" \
-  -d "{\"fields\": {\"description\": $(cat output.adf.json)}}" \
-  "$ATLASSIAN_URL/rest/api/3/issue/{KEY}"
+# Use the approved [ISSUE_TRACKER_TOOL] operation and configured Jira site.
+# Do not execute a raw write before dry-run approval.
 ```
 
 ## Validation Rules
@@ -164,7 +165,7 @@ curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
 - [ ] All lists have `content` array
 
 ### Content Validation
-- [ ] Section count >= 10 for TCs
+- [ ] Section structure meets the applicable project template for TCs
 - [ ] No empty sections (use "None identified.")
 - [ ] Gherkin wrapped in code blocks
 - [ ] Tables have proper row/cell structure
@@ -247,7 +248,7 @@ curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
 
 After successful conversion, save:
 - Pattern: ADF structure for Jira rich text
-- Pattern: TC Description template (12 sections)
+- Pattern: project-configured TC Description template
 - Discovery: ADF validation rules
 
 ## Subagent Dispatch Strategy
@@ -255,14 +256,14 @@ After successful conversion, save:
 For complex conversions, use subagents:
 - **Converter subagent**: Generate ADF from Markdown
 - **Validator subagent**: Verify ADF structure
-- **Publisher subagent**: Apply to Jira issues
+- **Publisher subagent**: Prepare an approved dry-run payload; publish only after explicit approval
 
 ## Examples
 
 ### Example 1: TC Description Enrichment
 ```bash
-# Input: Markdown template with 12 sections
-# Process: Convert to ADF, validate, apply
+# Input: Markdown content matching the configured project template
+# Process: Convert to ADF, validate, dry-run, approve, apply, read back
 # Output: TC with enriched ADF description
 ```
 

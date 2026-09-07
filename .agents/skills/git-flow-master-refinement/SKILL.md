@@ -16,7 +16,7 @@ Advisory companion for `/git-flow-master` when a worktree has many modified or u
 - Separating product, test, docs, generated metadata, config, and tooling changes.
 - Creating a commit plan with exact paths per commit.
 - Flagging files that should stay unstaged or need user confirmation.
-- **Staging all changes and creating intelligent commits** when user requests "add all changes to staging" or similar.
+- Preparing an advisory staging and commit plan when user requests review of a dirty worktree.
 - **Expert validation** via `/expert-panel-review` before finalizing the commit plan.
 
 ## Automatic Workflow
@@ -27,8 +27,7 @@ When invoked, this skill:
 2. **Classifies all files** (staged, modified, untracked) by responsibility.
 3. **Creates a commit plan** with atomic conventional commits and exact paths.
 4. **Runs expert validation** via `/expert-panel-review` to verify the plan.
-5. **Executes the commits** one by one after user approval.
-6. **Pushes to the target branch** (default: `main`).
+5. **Hands the approved plan to `/git-flow-master`** for staging, commits, push, PR, or conflict actions.
 
 ## Expert Validation
 
@@ -113,19 +112,10 @@ Return this plan to `/git-flow-master` before any staging:
 - Project checks required by `package.json` and project rules
 ```
 
-## Execution Mode
+## Execution Boundary
 
-When the user requests "add all changes to staging and push to main" or similar:
-
-1. **Stage all changes** using explicit paths (never `git add -A` or `git add .`).
-2. **Classify files** into atomic commits by responsibility.
-3. **Run expert validation** via `/expert-panel-review`.
-4. **Execute commits** one by one with conventional commit messages.
-5. **Push to main** after all commits are complete.
-6. **Report results** — list all commits created and confirm push.
+This refinement is strictly advisory. It never stages, commits, pushes, creates PRs, or resolves conflicts, including automatic mode. Delegate those actions to `/git-flow-master` after the user approves the plan. If repository state cannot be verified, report `unverified` and do not recommend a mutation.
 
 ## Handoff Back To `/git-flow-master`
 
 After the user approves the plan, `/git-flow-master` owns staging, committing, push confirmation, PR creation, and conflict recovery. This skill never mutates git state.
-
-**Exception**: In "automatic mode" (user requests full staging + push), this skill executes the approved plan directly without handing off to `/git-flow-master`.

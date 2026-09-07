@@ -1,6 +1,6 @@
 # Skill Registry (auto-generated)
 
-> Generated: `2026-09-06T19:32:54.937Z`
+> Generated: `2026-09-06T20:28:34.157Z`
 > Generator: `bun scripts/build-skill-registry.ts`
 > Protocol: `.agents/skills/agentic-qa-core/references/skill-resolver.md`
 
@@ -141,7 +141,7 @@ Skills indexed: 39
 - `acli/references/adf-authoring-style.md` — ADF formatting rules
 - `md-to-adf.ts` — Markdown to ADF converter script
 - Load issue list (from file, JQL, or manual list)
-- Split into batches of 10
+- Split into an approved, bounded batch size
 - For each batch:
 - Verify all issues updated
 - Generate report
@@ -446,16 +446,16 @@ Skills indexed: 39
 - Separating product, test, docs, generated metadata, config, and tooling changes.
 - Creating a commit plan with exact paths per commit.
 - Flagging files that should stay unstaged or need user confirmation.
-- **Staging all changes and creating intelligent commits** when user requests "add all changes to staging" or similar.
+- Preparing an advisory staging and commit plan when user requests review of a dirty worktree.
 - **Expert validation** via `/expert-panel-review` before finalizing the commit plan.
 - **Reads repo state** via `/git-flow-master` Step 1 outputs.
 - **Classifies all files** (staged, modified, untracked) by responsibility.
 - **Creates a commit plan** with atomic conventional commits and exact paths.
 - **Runs expert validation** via `/expert-panel-review` to verify the plan.
-- **Executes the commits** one by one after user approval.
-- **Pushes to the target branch** (default: `main`).
+- **Hands the approved plan to `/git-flow-master`** for staging, commits, push, PR, or conflict actions.
 - **Validate commit grouping** — ensure files are correctly classified by responsibility.
 - **Verify commit messages** — check conventional commit format and clarity.
+- **Review safety rules** — confirm no secrets, artifacts, or unrelated changes are staged.
 - (truncated — read full SKILL.md for the rest)
 
 **Read full SKILL.md when**: the compact rules above are insufficient (e.g. novel scenario, debugging, or the briefing tells you to load the full skill).
@@ -660,13 +660,11 @@ Skills indexed: 39
 **Purpose**: Handle API rate limiting with batching, pauses, retry logic, and exponential backoff.
 
 **Compact Rules**:
-- Pause between issues: `1 / (10 * 0.8) = 0.125s` → use 0.5s for safety
-- Pause between batches: `0.5 * 10 = 5s` → use 1s minimum
 - Total items processed
 - Success/fail rate
 - Rate limit incidents
 - Average processing time
-- Total execution time
+- Total execution time against max elapsed time
 - Pattern: rate limiting for Jira Cloud
 - Pattern: batch processing with pauses
 - Discovery: optimal batch sizes for different APIs
@@ -745,7 +743,7 @@ Skills indexed: 39
 - Story title, description, ACs, scope, business rules, source spec, labels, status, points, parent epic, and comments.
 - Parent epic/module context when dependencies matter.
 - `.context/business/*` and `.context/master-test-plan.md` when product/domain/test scope is unclear.
-- Relevant Engram memories for prior pattern learnings: `BK-2`, `BK-18`, `BK-27`, `BK-28`, `BK-32`, `BK-34`, `BK-38`, `BK-91`, `Ely-style`, `shift-left-workflow-pattern`, `QA Handoff Mirror`, `story points`.
+- Relevant Engram memories for prior pattern learnings: Ely-style, shift-left workflow pattern, QA Handoff Mirror, story points, and current project-specific memories.
 - When publishing or auditing existing publication, read live Jira evidence directly too: REST `GET /issue/<KEY>?fields=description,labels,status,<candidate fields>`, `/editmeta`, comments, and changelog. Synced Markdown is useful but not authoritative for rich-text custom fields when cached field catalogs drift.
 - Jira publishing rules when writing rich text: author Markdown, convert to ADF, then verify rendered/read-back content.
 - Jira/source evidence conflicts.
@@ -831,7 +829,7 @@ Skills indexed: 39
 
 **Compact Rules**:
 - **Over-planning**: ATP authored against a stale assumption → wasted Planning effort on TCs that don't reflect current state.
-- **Under-execution**: ATP claims 25 TCs, only 19 get executed, quality posture is unclear (root cause: BK-27 ATP desync).
+- **Under-execution**: ATP claims N TCs, only M get executed, and the quality posture is unclear because the ATP is desynchronized.
 - A Story transitions to `Ready For QA` (or equivalent sprint-ready status).
 - The Story has `shift-left-reviewed` label (dated <30 days) OR an `acceptance-test-plan.md` on disk.
 - The user says "refine this for sprint", "pre-flight check", "QA intake", "before sprint-testing".

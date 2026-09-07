@@ -21,11 +21,17 @@ Industry lineage: this skill is an Agile Test Readiness Review (TRR) — a forma
 Bridge the desync gap between shift-left (pre-sprint AC refinement + ATP draft) and sprint execution (Stage 1 Planning). Without this layer, two failure modes occur:
 
 1. **Over-planning**: ATP authored against a stale assumption → wasted Planning effort on TCs that don't reflect current state.
-2. **Under-execution**: ATP claims 25 TCs, only 19 get executed, quality posture is unclear (root cause: BK-27 ATP desync).
+2. **Under-execution**: ATP claims N TCs, only M get executed, and the quality posture is unclear because the ATP is desynchronized.
 
 This skill detects both before time is invested.
 
 **Modality is one-shot per Story** (D5 rule, mirrored from `test-documentation`): never mix jira-native and jira-xray inside the same Story's ATP. Phase -0.5 resolves the effective TMS modality before any ATP reading or writing.
+
+## Jira Mutation Boundary
+
+This intake layer is read-first and dry-run by default. Any Jira follow-up write requires explicit approval, a bounded target, a checkpoint/resume record, live `/editmeta` and auth/site validation, and read-back verification. Do not invent custom-field IDs, issue keys, parent keys, or Xray keys. Stop on auth/site mismatch. Report Jira-dependent values as `unverified` when evidence is unavailable.
+
+`artifact | field | action | status: verified|failed|skipped|unverified | evidence | checkpoint`
 
 ---
 
@@ -116,7 +122,7 @@ Persist the result to `progress.md` and `plan.md`:
 
 Gotchas (mirror `test-documentation`):
 - **Never mix modalities** inside one Story's ATP (D5); Phase -0.5 is one-shot.
-- `bun xray` requires `ATLASSIAN_URL`/`.xray-cli/config.json` ready; if `/xray-cli` auth fails, that is a hard **NO-GO** with pointer to `.env` keys — do not silently fall back to jira-native.
+- `bun xray` requires the active Jira site and Xray auth to be verified at runtime; if `/xray-cli` auth fails or the configured site differs from the authenticated site, mark the TMS result **UNVERIFIED** and stop. Do not silently fall back to jira-native.
 - The ATP (Test Plan) is a **Jira issue of type `Test Plan`** — a Test Content absent the Story-field model; stage 1 binds test cases to it via `plan add-tests`.
 
 ---
@@ -220,7 +226,7 @@ If bugs found during reconciliation (AC discrepancy, stale assumption), classify
 | **BLOCKING** | Core AC fails or cannot be verified. | Yes |
 | **CRITICAL** | Data integrity, security, or core flow broken. | Yes — escalate |
 
-### 3.2.1 Bug-report handoff guard (BK-182 rule)
+### 3.2.1 Bug-report handoff guard
 
 When pre-flight detects a likely defect, or predicts that `/sprint-testing` may need to file a follow-up bug, record the reporting contract that Stage 3 must satisfy. A Jira Bug is not complete if the repro exists only in a comment.
 
@@ -366,9 +372,9 @@ Before handing off to `/sprint-testing`, record the final reporting requirement 
 | Bug-field completion for every new defect | Bug-report handoff guard §3.2.1 | Every filed Bug must use native Bug fields + rich ADF description. Comment-only bug reports are deemed not audit-ready. |
 | Xray run status + Test evidence (jira-xray) | Xray Test Execution | Stage 3 must update Test Execution runs (`run status --id <runId> --status <status>` where status ∈ PASSED/FAILED/TODO/EXECUTING), pin `Test Environment`, and link bugs to executions (`run defect`) when applicable. Pre-flight pins the environment so Stage 3 has no drift. |
 
-If `/sprint-testing` also posts a separate `QA Testing Complete - <KEY>` comment, keep it as a quick-scan verdict, but do not let it be the only place where environment, test data, verified behaviors, defects, or cleanup notes live. This guard prevents the BK-32/BK-33 failure mode where the main ATR was structured but the completion summary was stranded in a separate comment.
+If `/sprint-testing` also posts a separate `QA Testing Complete - <KEY>` comment, keep it as a quick-scan verdict, but do not let it be the only place where environment, test data, verified behaviors, defects, or cleanup notes live.
 
-Stage 3 must also create an `Expert Panel Review - Sprint Testing Audit <KEY>` closure comment using the same section contract seen in BK-32/BK-33/BK-28/BK-34:
+Stage 3 must also create an `Expert Panel Review - Sprint Testing Audit <KEY>` closure comment using the current `/expert-panel-review` output contract:
 
 ```markdown
 # Expert Panel Review - Sprint Testing Audit <KEY>
@@ -404,7 +410,7 @@ VERDICT: FAILED
 
 Use `FAILED` when execution evidence proves failing behavior or blocking defects. Use `REJECTED` when the report package is not audit-ready even if some execution passed. Use `BLOCKED` when environment/data/tooling prevents a valid verdict. In all negative cases, the red panel must explain whether the next action is rerun, defect filing, data repair, or reporting remediation.
 
-**Canonical accepted layout (BK-38, published as a normal Jira comment)**: accepted-but-nits audits use the following structure — keep the green `VALIDATED` verdict but still flag procedural gaps as acceptable findings:
+**Canonical accepted layout, published as a normal Jira comment**: accepted-but-nits audits use the current expert-panel structure, keeping the green `VALIDATED` verdict while flagging procedural gaps as non-blocking findings:
 
 ```markdown
 ### Expert Panel Review - Sprint Testing Audit <KEY>
@@ -470,7 +476,7 @@ When dispatching subagents for sprint testing, use this exact briefing format:
 
 1. **Goal** — one sentence
 2. **Context docs** — files to read first
-3. **Project Standards** — compact rules from `.claude/skills/REGISTRY.md`
+3. **Project Standards** — compact rules from `.agents/skills/REGISTRY.md`
 4. **Skills to load** — explicit (e.g. `/sprint-testing`)
 5. **Exact instructions** — step-by-step, not vague goals
 6. **Report format** — what to return (files changed, tests passed, blockers)
@@ -479,16 +485,16 @@ When dispatching subagents for sprint testing, use this exact briefing format:
 Example:
 ```
 ## 1. Goal
-Execute Stage 2 (Execution) for BK-34 user story.
+Execute Stage 2 (Execution) for `<STORY_KEY>`.
 
 ## 2. Context docs
-- .context/PBI/user-management/BK-34-story-key/pre-flight-check.md
-- .context/PBI/user-management/BK-34-story-key/acceptance-test-plan.md
+- `.context/PBI/<module>/<STORY_KEY>-<slug>/pre-flight-check.md`
+- `.context/PBI/<module>/<STORY_KEY>-<slug>/acceptance-test-plan.md`
 
 ## 3. Project Standards
 - Skills: REGISTRY.md rules apply
 - Trifuerza: UI + API + DB layers
-- Rate-limiting: 10 per batch, 1s pause
+- Rate-limiting: use the approved bounded configuration and response headers
 
 ## 4. Skills to load
 - /sprint-testing (this skill)
@@ -498,7 +504,7 @@ Execute Stage 2 (Execution) for BK-34 user story.
 a. Read pre-flight-check.md (verdict must be GO/CONDITIONAL-GO)
 b. Execute smoke subset TCs first
 c. Capture evidence per TC (screenshot + trace)
-d. File bugs for any failures using BK-182 rule
+d. Hand off failures using the bug-report handoff guard
 e. Do NOT publish to Jira (user hasn't requested)
 
 ## 6. Report format
@@ -671,13 +677,13 @@ Use this template for the final QA comment in Jira:
 ## Defects Filed
 | Bug Key | Severity | Summary | Status |
 |---|---|---|---|
-| BK-100 | Major | Login fails with SSO | OPEN |
+| `<BUG_KEY>` | Major | Login fails with SSO | OPEN |
 
 ## Evidence
 | Evidence | Attachment | Result |
 |---|---|---|
-| Login flow | BK-34-step01-login.png | SSO redirect works |
-| API response | BK-34-step02-api.json | 403 returned |
+| Login flow | `<STORY_KEY>-step01-login.png` | SSO redirect works |
+| API response | `<STORY_KEY>-step02-api.json` | 403 returned |
 
 ## Risks / Notes
 <any risks, limitations, or notes for next tester>
@@ -693,8 +699,8 @@ Use this template for the final QA comment in Jira:
 
 ## Session Management
 
-- Session state: `.session/sprint-testing-refinement/<JIRA_KEY>/`
-- Single-ticket only (no batch mode).
+- Session state: `.session/sprint-testing-refinement/<scope>/`
+- Single-ticket only; delegate batch orchestration to `/shift-left-testing` or `/sprint-testing`.
 - Progress file: `progress.md` with phase entries.
 - Archive: after verdict delivered + user confirms next step.
 
@@ -735,10 +741,8 @@ Use this template for the final QA comment in Jira:
 1. Complete pre-flight for all stories
 2. Group stories by module/dependency
 3. Hand off to /test-automation for batch processing:
-   a. Batch TC creation (10 per batch, 1s pause)
-   b. Batch parent field setting
-   c. Batch title standardization
-   d. Batch description enrichment
+   a. Use `/test-documentation` for TC creation and its approved batch refinements
+   b. Use approved refinements for parent, title, and description operations
 4. Return to /sprint-testing for execution
 ```
 
@@ -757,7 +761,7 @@ Shift-Left → Sprint Testing → Test Documentation → Test Automation
 - [ ] All stories have pre-flight checks (GO/CONDITIONAL-GO)
 - [ ] Stories grouped by module
 - [ ] Batch size calculated (N stories x M TCs per story)
-- [ ] Rate-limiting configured (10 per batch, 1s pause)
+- [ ] Rate-limiting configured with response headers, bounded jitter, idempotency classification, max elapsed time, and checkpoints
 - [ ] /test-automation skill loaded
 - [ ] Batch processing plan documented
 

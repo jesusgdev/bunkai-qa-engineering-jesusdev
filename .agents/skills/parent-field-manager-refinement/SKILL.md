@@ -24,12 +24,18 @@ Set Jira parent field via REST API. Workaround for acli limitation (cannot set p
 - `acli/SKILL.md` — Jira CLI operations (for verification)
 - `rate-limit-handler-refinement/SKILL.md` — Rate limiting for batch operations
 
+## Jira Mutation Boundary
+
+Read the configured Jira site, authenticated identity, target issue, current parent, issue type, and live edit metadata first. Produce a dry-run diff and wait for explicit approval before writing. Resolve the target parent from the configured QA epic name/key at runtime; never invent or copy a parent key from an example. Bound the issue list, checkpoint each result, support resume, read back the parent, and stop on auth/site mismatch. Report `unverified` when parent identity or read-back cannot be established.
+
+`issue | current parent | target parent | action | status: verified|failed|skipped|unverified | checkpoint`
+
 ## acli Limitation
 
-**Problem**: acli cannot set parent field directly
+**Problem**: acli may not expose parent-field editing for the configured issue type; verify the current capability before using REST.
 ```
 # This does NOT work:
-[ISSUE_TRACKER_TOOL] workitem edit --key BK-320 --parent BK-70
+[ISSUE_TRACKER_TOOL] workitem edit --key <ISSUE_KEY> --parent <PARENT_KEY>
 ```
 
 **Solution**: Use Jira REST API directly
@@ -37,8 +43,8 @@ Set Jira parent field via REST API. Workaround for acli limitation (cannot set p
 curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
   -X PUT \
   -H "Content-Type: application/json" \
-  -d '{"fields": {"parent": {"key": "BK-70"}}}' \
-  "$ATLASSIAN_URL/rest/api/3/issue/BK-320"
+  -d '{"fields": {"parent": {"key": "<PARENT_KEY>"}}}' \
+  "{{issue_tracker.atlassian_url}}rest/api/3/issue/<ISSUE_KEY>"
 ```
 
 ## REST API Pattern
@@ -51,7 +57,7 @@ curl -s -w "%{http_code}" -o /tmp/response.txt \
   -X PUT \
   -H "Content-Type: application/json" \
   -d '{"fields": {"parent": {"key": "PARENT_KEY"}}}' \
-  "$ATLASSIAN_URL/rest/api/3/issue/{ISSUE_KEY}"
+  "{{issue_tracker.atlassian_url}}rest/api/3/issue/{ISSUE_KEY}"
 
 # Verify response
 if [ "$RESPONSE" = "204" ]; then
@@ -62,10 +68,9 @@ fi
 ### Batch Operation
 ```bash
 #!/bin/bash
-PARENT_KEY="BK-70"
-BATCH_SIZE=10
-PAUSE_BETWEEN_ISSUES=0.5
-PAUSE_BETWEEN_BATCHES=1
+PARENT_KEY="<runtime-resolved QA epic key>"
+BATCH_SIZE="approved bounded value"
+MAX_ELAPSED_MS="approved budget"
 
 # Process in batches
 TOTAL=${#ISSUES[@]}
@@ -76,7 +81,7 @@ for ((i=0; i<TOTAL; i+=BATCH_SIZE)); do
     # Check current parent
     CURRENT_PARENT=$(curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
       -X GET -H "Content-Type: application/json" \
-      "$ATLASSIAN_URL/rest/api/3/issue/$ISSUE" | jq -r '.fields.parent.key // "NONE"')
+      "{{issue_tracker.atlassian_url}}rest/api/3/issue/$ISSUE" | jq -r '.fields.parent.key // "NONE"')
     
     if [ "$CURRENT_PARENT" != "$PARENT_KEY" ]; then
       RESPONSE=$(curl -s -w "%{http_code}" -o /tmp/response.txt \
@@ -84,7 +89,7 @@ for ((i=0; i<TOTAL; i+=BATCH_SIZE)); do
         -X PUT \
         -H "Content-Type: application/json" \
         -d "{\"fields\": {\"parent\": {\"key\": \"$PARENT_KEY\"}}}" \
-        "$ATLASSIAN_URL/rest/api/3/issue/$ISSUE")
+        "{{issue_tracker.atlassian_url}}rest/api/3/issue/$ISSUE")
       
       if [ "$RESPONSE" = "204" ]; then
         echo "$ISSUE: ✓ (parent set to $PARENT_KEY)"
@@ -109,7 +114,7 @@ done
 # Get current parent
 PARENT=$(curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
   -X GET -H "Content-Type: application/json" \
-  "$ATLASSIAN_URL/rest/api/3/issue/$ISSUE_KEY" | jq -r '.fields.parent.key // "NONE"')
+  "{{issue_tracker.atlassian_url}}rest/api/3/issue/$ISSUE_KEY" | jq -r '.fields.parent.key // "NONE"')
 
 echo "Current parent: $PARENT"
 ```
@@ -124,7 +129,7 @@ NO_PARENT=0
 while IFS= read -r KEY; do
   PARENT=$(curl -s -u "$ATLASSIAN_EMAIL:$ATLASSIAN_API_TOKEN" \
     -X GET -H "Content-Type: application/json" \
-    "$ATLASSIAN_URL/rest/api/3/issue/$KEY" | jq -r '.fields.parent.key // "NONE"')
+    "{{issue_tracker.atlassian_url}}rest/api/3/issue/$KEY" | jq -r '.fields.parent.key // "NONE"')
   
   if [ "$PARENT" = "$TARGET_PARENT" ]; then
     ((HAS_PARENT++))
@@ -138,13 +143,13 @@ echo "Has parent: $HAS_PARENT"
 echo "Missing parent: $NO_PARENT"
 ```
 
-## Common Parent Keys
+## Parent Resolution
 
 | Parent Key | Purpose | Usage |
 |------------|---------|-------|
-| `BK-70` | QA Test Repository | All test cases |
-| `BK-65` | Sprint Test Plan | Sprint testing artifacts |
-| `BK-34` | Story (example) | Story-specific tests |
+| `{{qa.qa_epics.test_repository_epic.name}}` | `{{qa.qa_epics.test_repository_epic.key}}` | Test cases |
+| `{{qa.qa_epics.test_artifacts_epic.name}}` | `{{qa.qa_epics.test_artifacts_epic.key}}` | Test artifacts |
+| Runtime Story/epic | Runtime-resolved key | Only when explicitly approved |
 
 ## Error Handling
 
@@ -174,21 +179,21 @@ For complex parent field operations, use subagents:
 
 ### Example 1: Single Issue Parent Setting
 ```bash
-# Input: BK-320 needs parent BK-70
-# Process: PUT /rest/api/3/issue/BK-320 with parent
-# Output: BK-320 has parent BK-70
+# Input: approved issue needs a runtime-resolved QA parent
+# Process: dry-run, approve, PUT, then read back
+# Output: verified/failed/unverified parent result
 ```
 
 ### Example 2: Batch Parent Setting
 ```bash
-# Input: 94 TCs need parent BK-70
+# Input: approved issue list needs a runtime-resolved QA parent
 # Process: Batch PUT with rate-limiting
-# Output: 94 TCs with parent BK-70
+# Output: partial verified/failed/unverified report with checkpoint
 ```
 
 ### Example 3: Parent Verification
 ```bash
-# Input: 94 TCs to verify
+# Input: approved issue list to verify
 # Process: GET each issue, check parent
-# Output: 94/94 have correct parent
+# Output: verified count, failed count, and unverified count
 ```

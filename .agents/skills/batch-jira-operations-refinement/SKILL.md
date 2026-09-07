@@ -8,13 +8,13 @@ complementary_categories: [testing-e2e, issue-tracker, tms]
 
 # Batch Jira Operations Refinement
 
-Execute bulk Jira operations with rate-limiting compliance, ADF conversion, parent field setting, and title standardization. Optimized for 50+ issue batches with minimal manual intervention.
+Execute approved bulk Jira operations with rate-limiting compliance, ADF conversion, parent field setting, and title standardization. Batch size is runtime-configured and bounded.
 
 ## Scope
 
 | Use for | Do not use for | Route instead |
 |---------|----------------|---------------|
-| Batch TC enrichment (50+ issues) | Single issue updates | `/acli` |
+| Batch TC enrichment | Single issue updates | `/acli` |
 | Batch parent field setting | Test execution | `/sprint-testing` |
 | Batch title standardization | Test documentation | `/test-documentation` |
 | Batch ADF conversion | Ad-hoc Jira queries | `/acli` |
@@ -26,25 +26,30 @@ Execute bulk Jira operations with rate-limiting compliance, ADF conversion, pare
 - `acli/references/adf-authoring-style.md` — ADF formatting rules
 - `md-to-adf.ts` — Markdown to ADF converter script
 
+## Jira Mutation Boundary
+
+Inspect the configured site, auth identity, issue type, current values, and live edit metadata before planning writes. Produce a dry-run diff and obtain explicit approval before the first mutation. Bound approved issue keys and fields, checkpoint after each item/batch, support resume, and stop on auth/site mismatch, unknown field IDs, unknown parent keys, or ambiguous project scope. Never invent custom-field IDs or parent keys. Read back each write and report partial results; use `unverified` when evidence is unavailable.
+
+`batch | item | action | status: verified|failed|skipped|unverified | evidence | checkpoint`
+
 ## Rate Limiting Rules
 
 | Rule | Value | Notes |
 |------|-------|-------|
-| Jira Cloud limit | ~10 req/sec/user | Apply to all API calls |
-| Batch size | 10 issues per batch | Prevents 429 errors |
-| Pause between batches | 1 second | Allows rate limit recovery |
-| Pause between issues | 0.5 seconds | Within batch safety |
-| Retry logic | 3 attempts with exponential backoff | On 429/500 errors |
+| Service limit | Read response headers and project configuration | Do not assume an undocumented limit |
+| Batch size | Explicitly configured and approved | Checkpoint each batch |
+| Pause/retry | Honor `Retry-After`, otherwise bounded jittered backoff | Respect max elapsed time |
+| Retry logic | Idempotency-aware and bounded | Do not retry non-idempotent writes blindly |
 
 ## Batch Processing Pattern
 
 ```
 1. Load issue list (from file, JQL, or manual list)
-2. Split into batches of 10
+2. Split into an approved, bounded batch size
 3. For each batch:
    a. Process each issue (GET info, generate content, PUT update)
-   b. Pause 0.5s between issues
-   c. Pause 1s between batches
+   b. Honor response guidance or configured jittered delay
+   c. Save a resume checkpoint
 4. Verify all issues updated
 5. Generate report
 ```
@@ -97,7 +102,7 @@ Execute bulk Jira operations with rate-limiting compliance, ADF conversion, pare
 
 **Purpose**: Validate and correct TC title format
 
-**Pattern**: `^BK-\d+: TC\d+: .+`
+**Pattern**: `^{{PROJECT_KEY}}-\d+: TC\d+: .+` (resolve the key at runtime)
 
 **Process**:
 ```bash
@@ -126,9 +131,9 @@ Execute bulk Jira operations with rate-limiting compliance, ADF conversion, pare
 
 ### Issue List File
 ```
-BK-320
-BK-321
-BK-322
+{{PROJECT_KEY}}-<issue-number>
+{{PROJECT_KEY}}-<issue-number>
+{{PROJECT_KEY}}-<issue-number>
 ...
 ```
 
@@ -136,12 +141,12 @@ BK-322
 ```json
 {
   "template": "tc-enrichment-12-sections",
-  "parentKey": "BK-70",
+  "parentKey": "{{qa.qa_epics.test_repository_epic.key}}",
   "targetField": "description",
   "rateLimit": {
-    "batchSize": 10,
-    "pauseBetweenIssues": 0.5,
-    "pauseBetweenBatches": 1
+    "batchSize": "approved bounded value",
+    "maxElapsedMs": "approved budget",
+    "retryAfter": "from response header when present"
   }
 }
 ```
@@ -151,13 +156,12 @@ BK-322
 ### Progress Report
 ```
 === Batch Jira Operations ===
-Total issues: 89
-Batch size: 10
-Total batches: 9
+Total issues: N
+Batch size: configured value
+Total batches: derived
 
-[Lote 1] Tests 1-10...
-BK-320: 204 ✓
-BK-321: 204 ✓
+[Batch 1] Items 1-N...
+{{PROJECT_KEY}}-<issue-number>: verified
 ...
 Pause 1s...
 
@@ -165,17 +169,17 @@ Pause 1s...
 ...
 
 === Final Report ===
-Total processed: 89
-Success: 89
-Failed: 0
-Rate limit errors: 0
+Total processed: N
+Verified: N
+Failed: N
+Unverified: N
 ```
 
 ## Quality Gates
 
 - [ ] All issues return HTTP 204 on PUT
-- [ ] Rate limiting compliance (no 429 errors)
-- [ ] ADF structure validation (12 sections for TCs)
+- [ ] Rate-limit handling used response headers, jitter, idempotency classification, and max elapsed time
+- [ ] ADF structure validation against the configured TC template
 - [ ] Parent field verification (correct parent set)
 - [ ] Title format validation (regex compliance)
 
@@ -183,10 +187,10 @@ Rate limit errors: 0
 
 | Error | Cause | Action |
 |-------|-------|--------|
-| 429 | Rate limit exceeded | Pause 2s, retry |
+| 429 | Rate limit exceeded | Honor `Retry-After`; otherwise bounded jittered retry |
 | 400 | Invalid ADF structure | Regenerate ADF content |
 | 404 | Issue not found | Skip, log, continue |
-| 500 | Server error | Retry 3 times, then skip |
+| 500 | Server error | Retry within the configured max elapsed time, then mark failed/unverified |
 
 ## Engram Updates
 
@@ -207,21 +211,21 @@ For complex batch operations, use subagents:
 
 ### Example 1: Batch TC Enrichment
 ```bash
-# Input: /tmp/bk-candidate-tests.txt (89 TCs)
-# Process: Enrich with 12-section ADF template
-# Output: 89 TCs with enriched descriptions
+# Input: approved issue-list file
+# Process: dry-run, approve, enrich, read back
+# Output: verified/failed/unverified partial report and resume checkpoint
 ```
 
 ### Example 2: Batch Parent Field Setting
 ```bash
-# Input: /tmp/bk-wave-tests.txt (94 TCs)
-# Process: Set parent to BK-70
-# Output: 94 TCs with parent BK-70
+# Input: approved issue-list file and runtime-resolved QA repository epic key
+# Process: set parent only after key verification and approval
+# Output: verified/failed/unverified partial report and resume checkpoint
 ```
 
 ### Example 3: Batch Title Standardization
 ```bash
-# Input: /tmp/bk-non-standard-titles.txt (44 TCs)
-# Process: Standardize to BK-XX: TCYY: format
-# Output: 44 TCs with standardized titles
+# Input: approved issue-list file
+# Process: Standardize to <PROJECT_KEY>-<n>: TCYY: format
+# Output: verified/failed/unverified partial report and resume checkpoint
 ```
