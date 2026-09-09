@@ -1,0 +1,3 @@
+✅ [BK-352] getHeatmapWindowSwitch - PASS (183ms)
+✅ [BK-352] getHeatmapWindowSwitch - PASS (174ms)
+✅ [BK-352] getHeatmapWindowSwitch - PASS (173ms)
