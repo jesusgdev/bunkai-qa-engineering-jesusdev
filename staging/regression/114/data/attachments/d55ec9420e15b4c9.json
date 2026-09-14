@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "4f387ee4-d4f5-430a-bfeb-52e010f332cc",
+    "atcs": [
+      {
+        "id": "88af08e0-7700-467d-a9c5-653fbb7cc702",
+        "slug": "run-execution/atc-55a591f7",
+        "layer": "API",
+        "steps": [
+          {
+            "id": "46127fa8-c4fd-46f8-9d4e-b8f562b7bcad",
+            "content": "Test action",
+            "expected": null,
+            "position": 1,
+            "input_data": null
+          }
+        ],
+        "title": "Tags Test ATC",
+        "status": "unrun",
+        "step_id": "8f64e766-11a4-4052-8431-66553337095a",
+        "position": 1,
+        "assertions": []
+      }
+    ],
+    "tags": [
+      "smoke"
+    ],
+    "title": "Tags Test",
+    "version": 6,
+    "atc_count": 1,
+    "created_at": "2026-09-14T02:20:50.587316+00:00",
+    "updated_at": "2026-09-14T02:20:53.043972+00:00",
+    "workspace_id": "545d5efe-a168-4f32-a4be-a148a2fc96db"
+  }
+}
