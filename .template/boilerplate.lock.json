@@ -73,7 +73,7 @@
   "packageJsonSync": {
     "package.json": {
       "scripts": {
-        "lastSyncedSha": "f043848877ffcc7e5865cedd022766333074efcc",
+        "lastSyncedSha": "477cbad473d1d9f96311a8edb9d9d8463b621c50",
         "appliedKeys": [
           "vars:env:check",
           "env",
@@ -84,26 +84,27 @@
           "tests:map",
           "agents:compat",
           "agents:compat:check",
-          "codex"
+          "codex",
+          "skills:evals"
         ]
       },
       "devDependencies": {
-        "lastSyncedSha": "f043848877ffcc7e5865cedd022766333074efcc",
+        "lastSyncedSha": "477cbad473d1d9f96311a8edb9d9d8463b621c50",
         "appliedKeys": [
           "allure-js-commons"
         ]
       },
       "dependencies": {
-        "lastSyncedSha": "f043848877ffcc7e5865cedd022766333074efcc",
+        "lastSyncedSha": "477cbad473d1d9f96311a8edb9d9d8463b621c50",
         "appliedKeys": []
       },
       "lint-staged": {
-        "lastSyncedSha": "f043848877ffcc7e5865cedd022766333074efcc",
+        "lastSyncedSha": "477cbad473d1d9f96311a8edb9d9d8463b621c50",
         "appliedKeys": []
       }
     }
   },
   "cliVersion": "8.4",
-  "lastSyncedAt": "2026-09-05T23:30:42.165Z",
+  "lastSyncedAt": "2026-09-17T23:34:46.658Z",
   "variableSystemVersion": 1
 }
