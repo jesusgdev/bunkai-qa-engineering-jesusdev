@@ -1,0 +1,4 @@
+❌ [BK-355] verifyEndExcluded - FAIL: expect(received).toBeLessThanOrEqual(expected)
+
+Expected: <= 1790476150289
+Received:    1790476150294
