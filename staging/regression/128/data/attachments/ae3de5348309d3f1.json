@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "chain_invalid",
+    "message": "The chain must include at least one ATC.",
+    "details": {
+      "reason": "chain_invalid",
+      "kind": "empty"
+    },
+    "request_id": "103686d5-890f-404f-8b47-5a095f988e83"
+  }
+}
