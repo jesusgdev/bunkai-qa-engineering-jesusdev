@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "dc78ca76-32e9-4daa-91b3-95e8a3d0a4c6",
+    "atcs": [
+      {
+        "id": "01d379a2-c241-4dad-9c32-20b3ef16f8bf",
+        "slug": "run-execution/atc-465f89e3",
+        "layer": "API",
+        "steps": [
+          {
+            "id": "1cc485f2-015e-4fbf-aa62-d140c22120c6",
+            "content": "Test action",
+            "expected": null,
+            "position": 1,
+            "input_data": null
+          }
+        ],
+        "title": "Reorder Test ATC",
+        "status": "unrun",
+        "step_id": "60402934-83b1-485e-86ed-e7f9fda0c210",
+        "position": 1,
+        "assertions": []
+      }
+    ],
+    "tags": [],
+    "title": "Reorder Test",
+    "version": 1,
+    "atc_count": 1,
+    "created_at": "2026-09-29T03:16:02.086528+00:00",
+    "updated_at": "2026-09-29T03:16:02.086528+00:00",
+    "workspace_id": "545d5efe-a168-4f32-a4be-a148a2fc96db"
+  }
+}
