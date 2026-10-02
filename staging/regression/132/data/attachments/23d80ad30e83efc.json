@@ -1,0 +1,17 @@
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "Request body failed validation.",
+    "details": [
+      {
+        "code": "custom",
+        "path": [
+          "tags",
+          0
+        ],
+        "message": "Tags must not contain commas."
+      }
+    ],
+    "request_id": "21ce0296-7206-4d11-924f-65eb19f05e11"
+  }
+}
