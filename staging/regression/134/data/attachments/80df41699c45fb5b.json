@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "chain_invalid",
+    "message": "The chain must not contain duplicate references.",
+    "details": {
+      "reason": "chain_invalid",
+      "kind": "duplicate"
+    },
+    "request_id": "c81ce6dc-1555-407f-a719-a0676e0a96d0"
+  }
+}
