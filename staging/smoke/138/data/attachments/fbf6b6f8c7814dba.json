@@ -1,0 +1,66 @@
+{
+  "user": {
+    "id": "5441e8c1-3315-4f5e-b678-735f02841488",
+    "email": "bunkai-staging-user@xenievzoau.resend.app"
+  },
+  "workspaces": [
+    {
+      "id": "545d5efe-a168-4f32-a4be-a148a2fc96db",
+      "slug": "bk34-sprint-qa-20260622020420",
+      "name": "BK-34 Sprint QA",
+      "plan": "community",
+      "owner_user_id": "5441e8c1-3315-4f5e-b678-735f02841488",
+      "created_at": "2026-06-22T02:04:24.26841+00:00"
+    },
+    {
+      "id": "50f622c8-402d-4c80-82f7-71e8fe1c8600",
+      "slug": "bk34-sprint-qa-20260622020812",
+      "name": "BK-34 Sprint QA",
+      "plan": "community",
+      "owner_user_id": "5441e8c1-3315-4f5e-b678-735f02841488",
+      "created_at": "2026-06-22T02:08:15.869066+00:00"
+    },
+    {
+      "id": "a222895a-a22a-4193-9c7f-70c43e78bede",
+      "slug": "bk34-sprint-qa-20260622020948",
+      "name": "BK-34 Sprint QA",
+      "plan": "community",
+      "owner_user_id": "5441e8c1-3315-4f5e-b678-735f02841488",
+      "created_at": "2026-06-22T02:09:49.745095+00:00"
+    },
+    {
+      "id": "561d2a7e-9ba9-44a5-94d8-31c6aba6f0da",
+      "slug": "bk38-qa-6f64955a",
+      "name": "BK-38 Run Report Seed",
+      "plan": "community",
+      "owner_user_id": "5441e8c1-3315-4f5e-b678-735f02841488",
+      "created_at": "2026-08-08T20:26:14.067551+00:00"
+    },
+    {
+      "id": "d6c86ebd-d815-44d5-a2b3-9d68c28bcd74",
+      "slug": "bk38-qa-87d9260e",
+      "name": "BK-38 Run Report Seed",
+      "plan": "community",
+      "owner_user_id": "5441e8c1-3315-4f5e-b678-735f02841488",
+      "created_at": "2026-08-08T20:45:36.159185+00:00"
+    },
+    {
+      "id": "988e342e-28a7-49d1-b254-4cd44226ad71",
+      "slug": "bk38-final-857afd31",
+      "name": "BK-38 Seed Final",
+      "plan": "community",
+      "owner_user_id": "5441e8c1-3315-4f5e-b678-735f02841488",
+      "created_at": "2026-08-08T20:45:45.82839+00:00"
+    }
+  ],
+  "active_workspace_id": "545d5efe-a168-4f32-a4be-a148a2fc96db",
+  "active_workspace_role": "owner",
+  "auth": {
+    "source": "bearer",
+    "scopes": [
+      "atc:read",
+      "atc:write",
+      "run:execute"
+    ]
+  }
+}
