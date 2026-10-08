@@ -1,0 +1,19 @@
+{
+  "title": "Defect with evidence",
+  "severity": "P1",
+  "module_id": "c9e05a37-9b4f-4194-a633-9d6f942288a1",
+  "project_id": "d75e73ac-b42a-487e-99e8-ac55859fc392",
+  "evidence": [
+    "https://example.com/evidence/0",
+    "https://example.com/evidence/1",
+    "https://example.com/evidence/2",
+    "https://example.com/evidence/3",
+    "https://example.com/evidence/4",
+    "https://example.com/evidence/5",
+    "https://example.com/evidence/6",
+    "https://example.com/evidence/7",
+    "https://example.com/evidence/8",
+    "https://example.com/evidence/9",
+    "https://example.com/evidence/10"
+  ]
+}
