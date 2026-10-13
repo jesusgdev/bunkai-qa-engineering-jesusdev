@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "id": "35b69a05-6752-4f72-91d3-c99c2081acbb",
+      "tags": [
+        "smoke",
+        "regression"
+      ],
+      "title": "Tags Test",
+      "step_count": 1
+    },
+    {
+      "id": "5afe5bac-c360-4538-a61b-3ecf04234bc3",
+      "tags": [
+        "smoke"
+      ],
+      "title": "Tags Test",
+      "step_count": 1
+    },
+    {
+      "id": "4ea3c35f-92f1-4fb6-9fdb-d496e7f384d2",
+      "tags": [
+        "smoke",
+        "regression"
+      ],
+      "title": "Tags Test",
+      "step_count": 1
+    }
+  ]
+}
