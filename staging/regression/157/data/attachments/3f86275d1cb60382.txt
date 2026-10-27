@@ -1,0 +1,4 @@
+❌ [BK-340] saveStandaloneDefect - FAIL: expect(received).toBe(expected) // Object.is equality
+
+Expected: 201
+Received: 400
