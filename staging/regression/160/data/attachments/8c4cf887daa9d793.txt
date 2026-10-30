@@ -1,0 +1,4 @@
+❌ [BK-339] saveRunLinkedDefect - FAIL: expect(received).toBe(expected) // Object.is equality
+
+Expected: 404
+Received: 400

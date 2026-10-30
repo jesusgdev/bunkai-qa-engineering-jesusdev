@@ -1,0 +1,4 @@
+❌ [BK-343] rejectMissingModule - FAIL: expect(received).toBe(expected) // Object.is equality
+
+Expected: 422
+Received: 400
